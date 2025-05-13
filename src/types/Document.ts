@@ -12,9 +12,5 @@ export interface Document {
     updatedDate: Date;
     createdAt: Date;
     updatedAt: Date;
-    // tags: string[];
-    // isPublic: boolean;
-    // isArchived: boolean;
     filename: string;
-    // thumbnailUrl: string;
 }

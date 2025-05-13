@@ -6,7 +6,7 @@ const isAuthenticated = (app: App) => {
     return (to, from) => {
         const auth = useAuth()
 
-        return auth.isAuthenticated() ? true : { name:  "login" }
+        return auth.isAuthenticated.value ? true : { name:  "login" }
     }
 }
 
@@ -23,11 +23,6 @@ export function createRouter(app: App): Router {
                     description: 'Welcome to the PDF Marker App. Here you can upload and annotate your PDF documents.',
                     icon: 'pi pi-home'
                 }
-            },
-            {
-                path: '/sso/silent-check',
-                name: 'silent-login',
-                component: () => import("@/views/user/SilentCheck.vue"),
             },
             {
                 path: '/login',

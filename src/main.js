@@ -21,14 +21,13 @@ import { vueKeycloak } from "@josempgon/vue-keycloak";
 
 const keycloakConfig = {
     config: {
-        url: 'http://auth.dms.local',
-        realm: 'dms',
-        clientId: 'dms-fe',
+        url: import.meta.env.VITE_AUTH_PROVIDER,
+        realm: import.meta.env.VITE_AUTH_REALM,
+        clientId: import.meta.env.VITE_AUTH_CLIENT_ID,
     },
     initOptions: {
-        flow: "implicit",
         onLoad: "check-sso",
-        silentCheckSsoRedirectUri: `${location.origin}/sso/silent-check`
+        silentCheckSsoRedirectUri: `${location.origin}/silent-sso-check.html`
     }
 }
 
@@ -38,6 +37,7 @@ pinia.use(piniaPluginPersistedstate)
 
 await vueKeycloak.install(app, keycloakConfig)
 
+// app.use(vueKeycloak, keycloakConfig)
 app.use(pinia);
 app.use(createRouter(app));
 app.use(VueQueryPlugin);

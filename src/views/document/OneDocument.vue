@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, provide } from 'vue';
-import type { Comment, Document } from "@/types"
+import { computed, onMounted, ref } from 'vue';
+import type { Document } from "@/types"
 import { useDocuments } from "@/composables/useDocuments.js";
 import { useComments } from "@/composables/useComments.ts";
 import PDFWrapper from "@/components/pdf-viewer/PDFWrapper.vue";
-import CommentTable from "@/components/pdf-viewer/CommentTable.vue";
 
 interface Props {
   documentId: string;
@@ -34,10 +33,8 @@ const unresolvedCount = computed(() => {
   if (loading.value) {
     return 0;
   }
-  console.log("are we here");
-  const unresolved =  commentsApi.getUnresolvedComments(props.documentId).length
-  console.log(unresolved);
-  return unresolved
+
+  return commentsApi.getUnresolvedComments(props.documentId).length
 });
 const resolvedCount = computed(() => {
   if (loading.value) {

@@ -1,6 +1,7 @@
-import axios, { Axios, type AxiosError, type AxiosResponse, HttpStatusCode } from 'axios';
+import axios, { type AxiosError, type AxiosResponse, HttpStatusCode } from 'axios';
 import { useKeycloak } from "@josempgon/vue-keycloak";
 import type { User } from "@/types";
+import { computed } from "vue";
 
 const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
 
@@ -9,8 +10,11 @@ export function useAuth() {
     const kcInstance = kc.keycloak.value;
     const token = kc.token.value;
     const apiClient = axios.create({
-        baseURL: API_URL
+        baseURL: API_URL,
     });
+
+    const decodedToken = computed(() => kc.decodedToken.value);
+    const isAuthenticated = computed(() => kc.isAuthenticated.value);
 
     apiClient.interceptors.request.use(config => {
         config.headers.Authorization = `Bearer ${token}`;
@@ -42,29 +46,23 @@ export function useAuth() {
     }
 
     function getCurrentUser() {
-        if (!isAuthenticated) {
+        if (!isAuthenticated.value) {
             return {
                 name: '',
                 email: '',
                 avatar: '',
             }
         }
-        const decodedToken = kc.decodedToken.value;
 
         return {
-            name: decodedToken?.name,
-            email: decodedToken?.email,
-            avatar: decodedToken?.avatar,
+            name: decodedToken.value?.name,
+            email: decodedToken.value?.email,
+            avatar: decodedToken.value?.avatar,
         } as User
     }
 
-    function isAuthenticated(): boolean {
-        return kc.isAuthenticated.value;
-    }
-
     function getInitials(): string {
-        const decodedToken = kc.decodedToken.value;
-        return (decodedToken?.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase()
+        return (decodedToken.value?.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase()
     }
 
     return {
@@ -74,6 +72,6 @@ export function useAuth() {
         isAuthenticated,
         getCurrentUser,
         getInitials,
-        decodedToken: kc.decodedToken.value,
+        decodedToken,
     };
 }

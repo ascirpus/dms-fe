@@ -23,7 +23,7 @@ const theme = store.theme;
 const userMenu = ref(null);
 const userMenuItems = ref({});
 
-if (auth.isAuthenticated()) {
+if (auth.isAuthenticated.value) {
   userMenuItems.value = [
       {
         label: 'User Options',
