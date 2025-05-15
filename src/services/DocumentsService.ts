@@ -1,37 +1,13 @@
-import type { AxiosInstance } from "axios";
-import type { ApiResponse } from "@/types/response";
 import type { Document } from "@/types";
+import { ApiService } from "@/services/ApiService.ts";
 
-export class DocumentsService {
-    private apiClient: AxiosInstance;
-
-    constructor(apiClient: AxiosInstance) {
-        this.apiClient = apiClient;
-    }
+export class DocumentsService extends ApiService<Document> {
 
     async fetchDocuments(): Promise<Document[]> {
-        try {
-            const response = await this.apiClient.get<ApiResponse<Document[]>>(
-                `/api/documents`
-            );
-
-            return response.data.data;
-        } catch (error) {
-            console.error(`Error fetching comments: ${error}`);
-            throw error;
-        }
+        return this.fetchAll('/api/documents')
     }
 
     async fetchDocumentById(documentId: string): Promise<Document> {
-        try {
-            const response = await this.apiClient.get<ApiResponse<Document>>(
-                `/api/documents/${documentId}`
-            );
-
-            return response.data.data;
-        } catch (error) {
-            console.error(`Error fetching comments: ${error}`);
-            throw error;
-        }
+        return this.fetch(`/api/documents/${documentId}`)
     }
 }

@@ -1,27 +1,13 @@
-import type { AxiosInstance } from 'axios';
 import type { Comment } from "@/types";
 import { CommentMapper } from "@/mappers";
 import type { CommentRequest } from "@/types/requests";
 import type { ApiResponse } from "@/types/response";
+import { ApiService } from "@/services/ApiService.ts";
 
-export class CommentService {
-    private apiClient: AxiosInstance;
-
-    constructor(apiClient: AxiosInstance) {
-        this.apiClient = apiClient;
-    }
+export class CommentService extends ApiService<Comment> {
 
     async fetchComments(documentId: string): Promise<Comment[]> {
-        try {
-            const response = await this.apiClient.get<ApiResponse<Comment[]>>(
-                `/api/documents/${documentId}/comments`
-            );
-
-            return response.data.data;
-        } catch (error) {
-            console.error(`Error fetching comments: ${error}`);
-            throw error;
-        }
+        return this.fetchAll(`/api/documents/${documentId}/comments`)
     }
 
     async createComment(commentRequest: CommentRequest): Promise<Comment> {

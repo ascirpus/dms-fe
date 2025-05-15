@@ -1,14 +1,17 @@
 import axios, { type AxiosError, type AxiosResponse, HttpStatusCode } from 'axios';
 import { useKeycloak } from "@josempgon/vue-keycloak";
 import type { User } from "@/types";
-import { computed } from "vue";
+import { computed, watch } from "vue";
 
 const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
 
+/**
+ * This is kind of messy, it provides both an API Client with a token AND token information
+ */
 export function useAuth() {
     const kc = useKeycloak();
     const kcInstance = kc.keycloak.value;
-    const token = kc.token.value;
+    const token = kc.token;
     const apiClient = axios.create({
         baseURL: API_URL,
     });
@@ -17,7 +20,16 @@ export function useAuth() {
     const isAuthenticated = computed(() => kc.isAuthenticated.value);
 
     apiClient.interceptors.request.use(config => {
-        config.headers.Authorization = `Bearer ${token}`;
+
+        kcInstance?.updateToken(60).then((isRefreshed) => {
+             if (isRefreshed) {
+                 console.log("Token refreshed!");
+             }
+        }).catch((err) => {
+            console.log("Failed to refresh token: ", err)
+        });
+
+        config.headers.Authorization = `Bearer ${token.value}`;
         return config;
     });
 
@@ -26,6 +38,7 @@ export function useAuth() {
             return success
         },
         (error: AxiosError) => {
+            console.log(error)
             if (error.status == HttpStatusCode.Unauthorized) {
                 console.error("[dms-fe] User not found in API backend database");
                 console.debug("Log the user out and redirect to /login")
