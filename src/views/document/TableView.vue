@@ -68,7 +68,7 @@ export default defineComponent({
 
     // Navigate to document viewer
     const openDocument = (documentId) => {
-      router.push({ name: 'document-viewer', params: { id: documentId } });
+      router.push({ name: 'document-details', params: { id: documentId } });
     };
 
     // Format file size

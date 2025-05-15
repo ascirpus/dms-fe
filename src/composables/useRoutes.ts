@@ -36,6 +36,22 @@ export function createRouter(app: App): Router {
                 component: () => import("@/views/user/Profile.vue"),
             },
             {
+                path: '/projects',
+                beforeEnter: isAuthenticated(app),
+                children: [
+                    {
+                        path: '',
+                        name: 'projects',
+                        component: () => import("@/views/project/ProjectList.vue"),
+                    },
+                    {
+                        path: ':id',
+                        name: 'project-details',
+                        component: () => import("@/views/project/ProjectDetail.vue"),
+                    }
+                ]
+            },
+            {
                 path: '/documents',
                 meta: {
                     title: 'Documents',
@@ -51,7 +67,7 @@ export function createRouter(app: App): Router {
                     },
                     {
                         path: ':id',
-                        name: 'document-viewer',
+                        name: 'document-details',
                         component: () => import('@/views/document/OneDocument.vue'),
                         props: route => ({ documentId: route.params.id }),
                     }

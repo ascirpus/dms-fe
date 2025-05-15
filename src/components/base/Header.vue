@@ -77,7 +77,7 @@ const toggleUserMenu = (event) => {
 
 // Navigation functions
 const navigateTo = (route) => {
-  router.push({ name: 'profile' });
+  router.push({ name: route });
   toast.add({ severity: 'info', summary: 'Navigation', detail: `Navigating to ${route}`, life: 3000 });
   // In a real app, you would use router.push(route)
 };

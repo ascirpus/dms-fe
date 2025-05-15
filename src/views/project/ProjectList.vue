@@ -1,3 +1,211 @@
+<script setup lang="ts">
+import { ref, reactive, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+import { useVuelidate } from '@vuelidate/core';
+import { required, maxLength } from '@vuelidate/validators';
+import type { Project } from '@/types/Project';
+
+// PrimeVue Components
+import Button from 'primevue/button';
+import ProgressSpinner from 'primevue/progressspinner';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import Menu from 'primevue/menu';
+import ConfirmDialog from 'primevue/confirmdialog';
+import { useAuth } from "@/composables/useAuth.ts";
+import { ProjectsService } from "@/services/ProjectsService.ts";
+
+const router = useRouter();
+const toast = useToast();
+const confirm = useConfirm();
+const projectMenu = ref();
+const auth = useAuth();
+
+const api = new ProjectsService(auth.apiClient);
+
+// State
+const loading = ref(true);
+const error = ref<string | null>(null);
+const projects = ref<Project[]>([]);
+const createProjectDialog = ref(false);
+const saving = ref(false);
+const newProject = reactive({
+  name: '',
+  description: ''
+});
+
+// Validation rules
+const rules = computed(() => ({
+  name: { required, maxLength: maxLength(255) }
+}));
+const v$ = useVuelidate(rules, newProject);
+
+// Menu items for project context menu
+const menuItems = ref([
+  {
+    label: 'Edit',
+    icon: 'pi pi-pencil',
+    command: () => { editSelectedProject(); }
+  },
+  {
+    label: 'Delete',
+    icon: 'pi pi-trash',
+    command: () => { confirmDeleteProject(); }
+  }
+]);
+
+// Selected project for menu actions
+const selectedProject = ref<Project | null>(null);
+
+// Fetch projects on component mount
+onMounted(() => {
+  fetchProjects();
+});
+
+// Methods
+async function fetchProjects() {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    await api.fetchProjects().then((response) => {
+      projects.value = response;
+    });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Unknown error occurred';
+    console.error('Error fetching projects:', err);
+  } finally {
+    loading.value = false;
+  }
+}
+
+function openCreateProjectDialog() {
+  newProject.name = '';
+  newProject.description = '';
+  v$.value.$reset();
+  createProjectDialog.value = true;
+}
+
+async function createProject() {
+  const isValid = await v$.value.$validate();
+  if (!isValid) return;
+
+  saving.value = true;
+
+  try {
+    // Replace with your actual API call
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newProject)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create project');
+    }
+
+    const createdProject = await response.json();
+    projects.value.push(createdProject);
+
+    createProjectDialog.value = false;
+    toast.add({
+      severity: 'success',
+      summary: 'Project Created',
+      detail: `Project "${createdProject.name}" has been created successfully.`,
+      life: 3000
+    });
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: err instanceof Error ? err.message : 'Failed to create project',
+      life: 5000
+    });
+  } finally {
+    saving.value = false;
+  }
+}
+
+function navigateToProject(id: string) {
+  router.push({ name: 'project-details', params: { id } });
+}
+
+function openProjectMenu(event: Event, project: Project) {
+  event.stopPropagation();
+  selectedProject.value = project;
+  projectMenu.value.toggle(event);
+}
+
+function editSelectedProject() {
+  if (selectedProject.value) {
+    router.push({
+      name: 'project-details',
+      params: { id: selectedProject.value.id }
+    });
+  }
+}
+
+function confirmDeleteProject() {
+  if (!selectedProject.value) return;
+
+  confirm.require({
+    message: `Are you sure you want to delete "${selectedProject.value.name}"?`,
+    header: 'Delete Project',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: () => deleteProject(),
+    reject: () => {
+      // Do nothing
+    }
+  });
+}
+
+async function deleteProject() {
+  if (!selectedProject.value) return;
+
+  try {
+    // Replace with your actual API call
+    const response = await fetch(`/api/projects/${selectedProject.value.id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete project');
+    }
+
+    // Remove project from list
+    projects.value = projects.value.filter(p => p.id !== selectedProject.value?.id);
+
+    toast.add({
+      severity: 'success',
+      summary: 'Project Deleted',
+      detail: `Project "${selectedProject.value.name}" has been deleted.`,
+      life: 3000
+    });
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: err instanceof Error ? err.message : 'Failed to delete project',
+      life: 5000
+    });
+  }
+}
+
+function formatDate(dateString: Date): string {
+  return new Intl.DateTimeFormat('default', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(dateString);
+}
+</script>
+
 <template>
   <div class="flex flex-col min-h-screen">
     <header class="bg-white shadow">
@@ -175,211 +383,3 @@
     <ConfirmDialog></ConfirmDialog>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
-import { useConfirm } from 'primevue/useconfirm';
-import { useVuelidate } from '@vuelidate/core';
-import { required, maxLength } from '@vuelidate/validators';
-import type { Project } from '@/types/Project';
-
-// PrimeVue Components
-import Button from 'primevue/button';
-import ProgressSpinner from 'primevue/progressspinner';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import Menu from 'primevue/menu';
-import ConfirmDialog from 'primevue/confirmdialog';
-
-const router = useRouter();
-const toast = useToast();
-const confirm = useConfirm();
-const projectMenu = ref();
-
-// State
-const loading = ref(true);
-const error = ref<string | null>(null);
-const projects = ref<Project[]>([]);
-const createProjectDialog = ref(false);
-const saving = ref(false);
-const newProject = reactive({
-  name: '',
-  description: ''
-});
-
-// Validation rules
-const rules = computed(() => ({
-  name: { required, maxLength: maxLength(255) }
-}));
-const v$ = useVuelidate(rules, newProject);
-
-// Menu items for project context menu
-const menuItems = ref([
-  {
-    label: 'Edit',
-    icon: 'pi pi-pencil',
-    command: () => { editSelectedProject(); }
-  },
-  {
-    label: 'Delete',
-    icon: 'pi pi-trash',
-    command: () => { confirmDeleteProject(); }
-  }
-]);
-
-// Selected project for menu actions
-const selectedProject = ref<Project | null>(null);
-
-// Fetch projects on component mount
-onMounted(() => {
-  fetchProjects();
-});
-
-// Methods
-async function fetchProjects() {
-  loading.value = true;
-  error.value = null;
-
-  try {
-    // Replace with your actual API call
-    const response = await fetch('/api/projects');
-    if (!response.ok) {
-      throw new Error('Failed to fetch projects');
-    }
-
-    projects.value = await response.json();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error fetching projects:', err);
-  } finally {
-    loading.value = false;
-  }
-}
-
-function openCreateProjectDialog() {
-  newProject.name = '';
-  newProject.description = '';
-  v$.value.$reset();
-  createProjectDialog.value = true;
-}
-
-async function createProject() {
-  const isValid = await v$.value.$validate();
-  if (!isValid) return;
-
-  saving.value = true;
-
-  try {
-    // Replace with your actual API call
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newProject)
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create project');
-    }
-
-    const createdProject = await response.json();
-    projects.value.push(createdProject);
-
-    createProjectDialog.value = false;
-    toast.add({
-      severity: 'success',
-      summary: 'Project Created',
-      detail: `Project "${createdProject.name}" has been created successfully.`,
-      life: 3000
-    });
-  } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: err instanceof Error ? err.message : 'Failed to create project',
-      life: 5000
-    });
-  } finally {
-    saving.value = false;
-  }
-}
-
-function navigateToProject(id: string) {
-  router.push({ name: 'project-detail', params: { id } });
-}
-
-function openProjectMenu(event: Event, project: Project) {
-  event.stopPropagation();
-  selectedProject.value = project;
-  projectMenu.value.toggle(event);
-}
-
-function editSelectedProject() {
-  if (selectedProject.value) {
-    router.push({
-      name: 'project-edit',
-      params: { id: selectedProject.value.id }
-    });
-  }
-}
-
-function confirmDeleteProject() {
-  if (!selectedProject.value) return;
-
-  confirm.require({
-    message: `Are you sure you want to delete "${selectedProject.value.name}"?`,
-    header: 'Delete Project',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: () => deleteProject(),
-    reject: () => {
-      // Do nothing
-    }
-  });
-}
-
-async function deleteProject() {
-  if (!selectedProject.value) return;
-
-  try {
-    // Replace with your actual API call
-    const response = await fetch(`/api/projects/${selectedProject.value.id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to delete project');
-    }
-
-    // Remove project from list
-    projects.value = projects.value.filter(p => p.id !== selectedProject.value?.id);
-
-    toast.add({
-      severity: 'success',
-      summary: 'Project Deleted',
-      detail: `Project "${selectedProject.value.name}" has been deleted.`,
-      life: 3000
-    });
-  } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: err instanceof Error ? err.message : 'Failed to delete project',
-      life: 5000
-    });
-  }
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('default', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(date);
-}
-</script>
