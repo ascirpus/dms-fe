@@ -7,13 +7,15 @@ import { FloatLabel, InputText, Button } from "primevue";
 
 interface Props {
   pageNumber: number;
+  projectId: string;
   documentId: string;
+  fileId: string;
 }
 
 const props = defineProps<Props>()
 const pdfComponent = inject<Ref<HTMLElement>>('pdfComponentRef')!!
 
-const { comments, addComment } = useComments(pdfComponent);
+const { comments, addComment, resolveComment } = useComments();
 const emit = defineEmits(['marker-resolved', 'marker-created']);
 
 const appState =  useMainStore();
@@ -54,16 +56,18 @@ const saveNewMarker = async () => {
     return;
   }
 
-  const newMarker = addComment(
-      props.documentId,
-      newMarkerComment.value,
-      {
-        pageNumber: props.pageNumber,
-        position: newMarkerPosition.value
-      }
+  try {
+    const newMarker = await addComment(
+        props.projectId,
+        props.documentId,
+        props.fileId,
+        newMarkerComment.value,
+        {
+          pageNumber: props.pageNumber,
+          position: newMarkerPosition.value
+        }
     );
 
-  try {
     emit('marker-created', newMarker);
     cancelMarkerPlacement();
   } catch (error) {

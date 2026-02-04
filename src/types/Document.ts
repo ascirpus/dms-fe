@@ -14,14 +14,21 @@ export enum DocumentType {
     INVOICE = 'Invoice'
 }
 
+export interface FileVersion {
+    id: string;
+    filename: string;
+    version: number;
+    uploadedAt: string;
+    uploadedBy: string;
+    downloadUrl: string;
+}
+
 export interface Document {
     id: string;
     title: string;
-    content: string;
+    documentTypeId: string;
+    description?: string;
     status: DocumentStatus;
-
-    updatedDate: Date;
-    createdAt: Date;
-    updatedAt: Date;
-    filename: string;
+    currentVersion?: FileVersion;
+    versions: FileVersion[];
 }

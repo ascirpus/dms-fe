@@ -108,7 +108,7 @@ const jumpToMarker = (comment: Comment) => {
           <div class="flex items-start gap-3">
             <!-- Avatar (placeholder) -->
             <Avatar
-                :image="comment.author.avatar || undefined"
+                :image="comment.author.picture || undefined"
                 :label="comment.author.name.charAt(0)"
                 shape="circle"
                 class="flex-shrink-0"
@@ -186,7 +186,7 @@ const jumpToMarker = (comment: Comment) => {
             <div class="flex items-start gap-3">
               <!-- Avatar (placeholder) -->
               <Avatar
-                  :image="reply.author.avatar || undefined"
+                  :image="reply.author.picture || undefined"
                   :label="reply.author.name.charAt(0)"
                   shape="circle"
                   class="flex-shrink-0 w-8 h-8"

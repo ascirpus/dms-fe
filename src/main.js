@@ -10,7 +10,7 @@ import { createRouter } from './composables/useRoutes.js'
 
 // Import PrimeVue core
 import PrimeVue from 'primevue/config';
-import Aura from '@primeuix/themes/aura';
+import CedarStack from './theme/cedarstack.js';
 import 'primeicons/primeicons.css';
 import './style.css';
 
@@ -27,37 +27,41 @@ const keycloakConfig = {
     },
     initOptions: {
         onLoad: "check-sso",
-        silentCheckSsoRedirectUri: `${location.origin}/silent-sso-check.html`
+        checkLoginIframe: false,
     }
 }
 
-const app = createApp(App);
-const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate)
+async function initializeApp() {
+    const app = createApp(App);
+    const pinia = createPinia();
+    pinia.use(piniaPluginPersistedstate);
 
-await vueKeycloak.install(app, keycloakConfig)
+    // Pinia must be registered before keycloak so authStore is available
+    app.use(pinia);
 
-// app.use(vueKeycloak, keycloakConfig)
-app.use(pinia);
-app.use(createRouter(app));
-app.use(VueQueryPlugin);
+    await vueKeycloak.install(app, keycloakConfig);
+    app.use(createRouter(app));
+    app.use(VueQueryPlugin);
 
-app.use(PrimeVue, {
-    ripple: true,
-    theme: {
-        preset: Aura,
-        options: {
-            cssLayer: {
-                name: 'primevue',
-                order: 'theme, base, primevue'
+    app.use(PrimeVue, {
+        ripple: true,
+        theme: {
+            preset: CedarStack,
+            options: {
+                darkModeSelector: 'html.dark',
+                cssLayer: {
+                    name: 'primevue',
+                    order: 'tailwind-base, primevue, tailwind-utilities'
+                }
             }
         }
-    }
-});
+    });
 
-app.use(VuePdf);
-app.use(ToastService);
-app.use(ConfirmationService);
+    app.use(VuePdf);
+    app.use(ToastService);
+    app.use(ConfirmationService);
 
-app.mount('#app');
+    app.mount('#app');
+}
 
+initializeApp();

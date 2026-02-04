@@ -8,7 +8,6 @@ export interface Comment {
     author: User;
     isResolved: boolean;
     createdAt: string;
-    parentId: string;
 }
 
 export interface Marker {

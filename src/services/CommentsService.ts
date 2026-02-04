@@ -6,13 +6,13 @@ import { ApiService } from "@/services/ApiService.ts";
 
 export class CommentService extends ApiService<Comment> {
 
-    async fetchComments(documentId: string): Promise<Comment[]> {
-        return this.fetchAll(`/api/documents/${documentId}/comments`)
+    async fetchComments(projectId: string, documentId: string): Promise<Comment[]> {
+        return this.fetchAll(`/api/projects/${projectId}/documents/${documentId}/comments`)
     }
 
-    async createComment(commentRequest: CommentRequest): Promise<Comment> {
+    async createComment(projectId: string, documentId: string, commentRequest: CommentRequest): Promise<Comment> {
         return await this.apiClient.post<ApiResponse<Comment>>(
-            `/api/documents/${commentRequest.documentId}/comments`,
+            `/api/projects/${projectId}/documents/${documentId}/comments`,
             commentRequest
         ).then(response => {
             return CommentMapper.fromResponse(response.data);
@@ -23,14 +23,12 @@ export class CommentService extends ApiService<Comment> {
         });
     }
 
-    async resolveComment(documentId: string, commentId: string): Promise<Comment> {
+    async resolveComment(projectId: string, documentId: string, commentId: string): Promise<void> {
         try {
-            const response = await this.apiClient.patch<ApiResponse<Comment>>(
-                `/api/documents/${documentId}/comments/${commentId}/resolve`,
+            await this.apiClient.post<ApiResponse<void>>(
+                `/api/projects/${projectId}/documents/${documentId}/comments/${commentId}/resolve`,
                 {}
             );
-
-            return CommentMapper.fromResponse(response.data);
         } catch (error) {
             console.error(`Error resolving comment: ${error}`);
             throw error;

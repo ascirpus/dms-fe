@@ -8,7 +8,9 @@ import { useMainStore } from "@/stores/mainStore.ts";
 
 interface Props {
   pdfUrl: string;
+  projectId: string;
   documentId: string;
+  fileId: string;
 }
 
 const props = defineProps<Props>();
@@ -71,7 +73,9 @@ appState.$subscribe((mutations, state) => {
       <Markers
           :key="currentPage"
           :page-number="currentPage"
+          :project-id="projectId"
           :document-id="documentId"
+          :file-id="fileId"
       />
 
       <Controls

@@ -7,6 +7,7 @@ import { useAuth } from "@/composables/useAuth.ts";
 import { CommentService } from "@/services/CommentsService.ts";
 
 type MutationParams = {
+    projectId: string,
     documentId: string,
     commentId: string
 }
@@ -20,10 +21,10 @@ export function useComments() {
     const commentService = new CommentService(apiClient);
     const queryClient = useQueryClient();
 
-    async function fetchComments(documentId: string): Promise<Comment[]> {
+    async function fetchComments(projectId: string, documentId: string): Promise<Comment[]> {
         await queryClient.fetchQuery<Comment[]>({
-            queryKey: [`comments-${documentId}`],
-            queryFn: async () => await commentService.fetchComments(documentId)
+            queryKey: [`comments-${projectId}-${documentId}`],
+            queryFn: async () => await commentService.fetchComments(projectId, documentId)
         }).then((response: Comment[]) => {
             comments.value = response;
         });
@@ -32,45 +33,46 @@ export function useComments() {
     }
 
     const resolveCommentMutation = useMutation({
-        mutationFn: async (params: MutationParams): Promise<Comment> =>
-            await commentService.resolveComment(params.documentId, params.commentId),
+        mutationFn: async (params: MutationParams): Promise<void> =>
+            await commentService.resolveComment(params.projectId, params.documentId, params.commentId),
         onSuccess: (_, params: MutationParams) => {
-            const { commentId, documentId } = params;
+            const { commentId, projectId, documentId } = params;
             const comment = comments.value.find(c => c.id === commentId);
             if (comment) {
                 comment.isResolved = true;
             }
 
-            if (documentId) {
-                queryClient.invalidateQueries([`comments-${documentId}`]);
-            }
+            queryClient.invalidateQueries([`comments-${projectId}-${documentId}`]);
         }
     });
 
-    function resolveComment(comment: Comment) {
-        return resolveCommentMutation.mutateAsync({ commentId: comment.id, documentId: comment.documentId });
+    function resolveComment(projectId: string, comment: Comment) {
+        return resolveCommentMutation.mutateAsync({ projectId, commentId: comment.id, documentId: comment.documentId });
     }
 
+    type CreateCommentParams = {
+        projectId: string;
+        documentId: string;
+        request: CommentRequest;
+    };
+
     const createCommentMutation = useMutation({
-        mutationFn: async (commentRequest: CommentRequest): Promise<Comment> => await commentService.createComment(commentRequest),
-        onSuccess: (comment, variables) => {
+        mutationFn: async (params: CreateCommentParams): Promise<Comment> =>
+            await commentService.createComment(params.projectId, params.documentId, params.request),
+        onSuccess: (comment) => {
             comments.value.push(comment)
         }
     });
 
     function addComment(
+        projectId: string,
         documentId: string,
+        fileId: string,
         comment: string,
         marker: { pageNumber: number, position: { x: number, y: number } } | null,
-    ): string {
-
-        const request = CommentMapper.toRequest(
-            documentId,
-            comment,
-            marker
-        );
-
-        return createCommentMutation.mutateAsync(request);
+    ) {
+        const request = CommentMapper.toRequest(fileId, comment, marker);
+        return createCommentMutation.mutateAsync({ projectId, documentId, request });
     }
 
     function getCommentsByDocumentId(documentId: string) {

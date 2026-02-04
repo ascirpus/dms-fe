@@ -1,58 +1,135 @@
 import { defineStore } from 'pinia'
 import type { User } from '@/types/User';
-import type { User as AuthUser } from '@auth0/auth0-spa-js/dist/typings/global';
 import { jwtDecode, type JwtPayload } from "jwt-decode";
 
-export type RootState = {
+interface TokenPayload extends JwtPayload {
+    name?: string;
+    email?: string;
+    preferred_username?: string;
+    given_name?: string;
+    family_name?: string;
+    picture?: string;
+    permissions?: string[];
+}
+
+export type AuthState = {
     user: User | null,
-    error: string, // do something with error or lose it
-    token: string | null,
+    error: string,
+    accessToken: string | null,
+    refreshToken: string | null,
+    idToken: string | null,
     permissions: string[],
+    tokenExpiry: number | null,
 }
 
 export const useAuthStore = defineStore('auth', {
-    actions: {
-        login(payload: AuthUser) {
-            this.user = {
-                email: payload.email,
-                name: payload.nickname,
-                avatar: payload.picture
-            } as User
-            this.error = ''
-        },
-        logout() {
-            this.user = null
-        },
-        saveAndProcessToken(token: string) {
-            const { permissions } = jwtDecode<JwtPayload & { permissions: [] }>(token)
+    state: () => ({
+        user: null,
+        error: '',
+        accessToken: null,
+        refreshToken: null,
+        idToken: null,
+        permissions: [],
+        tokenExpiry: null,
+    } as AuthState),
 
-            this.token = token;
-            this.permissions = permissions
+    getters: {
+        email: (state: AuthState): string => state.user?.email ?? '',
+        name: (state: AuthState): string => state.user?.name ?? '',
+        picture: (state: AuthState): string => state.user?.picture ?? '',
+        isTokenExpired: (state: AuthState): boolean => {
+            if (!state.tokenExpiry) return true;
+            // Add 10 second buffer
+            return Date.now() >= (state.tokenExpiry - 10000);
         },
-        syncUser(user: AuthUser, isAuthenticated: boolean) {
-            // the user has logged out -- log out and you're done
-            if (!isAuthenticated && this.isAuthenticated) {
-                this.logout()
-            }
-
-            // the user has logged in or the user changed...?
-            else if ((isAuthenticated && !this.isAuthenticated) || (user?.email != this?.email)) {
-                this.login(user)
+        isAuthenticated(): boolean {
+            return !!this.accessToken && !this.isTokenExpired;
+        },
+        initials: (state: AuthState): string => (state.user?.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase(),
+        decodedToken: (state: AuthState): TokenPayload | null => {
+            if (!state.accessToken) return null;
+            try {
+                return jwtDecode<TokenPayload>(state.accessToken);
+            } catch {
+                return null;
             }
         },
     },
 
-    state: () => ({
-        user: null,
-        error: '',
-        token: null,
-    } as RootState),
+    actions: {
+        setTokens(accessToken: string, refreshToken: string, idToken: string) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.idToken = idToken;
 
-    getters: {
-        email: (state: RootState): string => state.user?.email ?? '',
-        name: (state: RootState): string => state.user?.name ?? '',
-        avatar: (state: RootState): string => state.user?.avatar ?? '',
-        isAuthenticated: (state: RootState): boolean => !!(state.user?.email),
-        initials: (state: RootState): string => (state.user?.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase(),
-    }
+            try {
+                const decoded = jwtDecode<TokenPayload>(accessToken);
+                this.tokenExpiry = decoded.exp ? decoded.exp * 1000 : null;
+                this.permissions = decoded.permissions || [];
+
+                this.user = {
+                    email: decoded.email || decoded.preferred_username || '',
+                    name: decoded.name || `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim(),
+                    picture: decoded.picture || '',
+                };
+            } catch (err) {
+                console.error('[authStore] Failed to decode token:', err);
+                this.error = 'Failed to decode authentication token';
+            }
+        },
+
+        async refreshAccessToken(): Promise<boolean> {
+            if (!this.refreshToken) {
+                console.log('[authStore] No refresh token available');
+                return false;
+            }
+
+            try {
+                const tokenUrl = `${import.meta.env.VITE_AUTH_PROVIDER}/realms/${import.meta.env.VITE_AUTH_REALM}/protocol/openid-connect/token`;
+
+                const params = new URLSearchParams();
+                params.append('grant_type', 'refresh_token');
+                params.append('client_id', import.meta.env.VITE_AUTH_CLIENT_ID);
+                params.append('refresh_token', this.refreshToken);
+
+                const response = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params,
+                });
+
+                if (response.ok) {
+                    const tokens = await response.json();
+                    this.setTokens(tokens.access_token, tokens.refresh_token, tokens.id_token);
+                    console.log('[authStore] Token refreshed successfully');
+                    return true;
+                } else {
+                    console.error('[authStore] Token refresh failed:', await response.text());
+                    this.logout();
+                    return false;
+                }
+            } catch (err) {
+                console.error('[authStore] Token refresh error:', err);
+                this.logout();
+                return false;
+            }
+        },
+
+        logout() {
+            this.user = null;
+            this.accessToken = null;
+            this.refreshToken = null;
+            this.idToken = null;
+            this.permissions = [];
+            this.tokenExpiry = null;
+            this.error = '';
+        },
+    },
+
+    persist: {
+        storage: localStorage,
+        pick: ['accessToken', 'refreshToken', 'idToken', 'user', 'tokenExpiry', 'permissions'],
+    },
 })

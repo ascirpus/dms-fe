@@ -27,13 +27,34 @@ export function createRouter(app: App): Router {
             {
                 path: '/login',
                 name: 'login',
-                component: () => import("@/views/user/Login.vue"),
+                beforeEnter: () => {
+                    const auth = useAuth();
+                    auth.login();
+                    return false; // Prevent navigation, Keycloak will redirect
+                },
+                component: () => import("@/views/user/Login.vue"), // Fallback, won't render
+            },
+            {
+                path: '/password-recovery',
+                name: 'password-recovery',
+                component: () => import("@/views/user/PasswordRecovery.vue"),
+            },
+            {
+                path: '/complete-setup',
+                name: 'complete-setup',
+                component: () => import("@/views/user/CompleteAccountSetup.vue"),
             },
             {
                 path: '/profile',
                 name: 'profile',
                 beforeEnter: isAuthenticated(app),
                 component: () => import("@/views/user/Profile.vue"),
+            },
+            {
+                path: '/notifications',
+                name: 'notifications',
+                beforeEnter: isAuthenticated(app),
+                component: () => import("@/views/user/Notifications.vue"),
             },
             {
                 path: '/projects',
@@ -48,28 +69,11 @@ export function createRouter(app: App): Router {
                         path: ':id',
                         name: 'project-details',
                         component: () => import("@/views/project/ProjectDetail.vue"),
-                    }
-                ]
-            },
-            {
-                path: '/documents',
-                meta: {
-                    title: 'Documents',
-                    description: 'View and manage your uploaded documents.',
-                    icon: 'pi pi-folder'
-                },
-                beforeEnter: isAuthenticated(app),
-                children: [
-                    {
-                        path: '',
-                        name: 'document',
-                        component: () => import('@/views/document/TableView.vue'),
                     },
                     {
-                        path: ':id',
-                        name: 'document-details',
-                        component: () => import('@/views/document/OneDocument.vue'),
-                        props: route => ({ documentId: route.params.id }),
+                        path: ':id/documents/:documentId',
+                        name: 'project-document',
+                        component: () => import("@/views/project/DocumentViewer.vue"),
                     }
                 ]
             },
@@ -87,7 +91,7 @@ export function createRouter(app: App): Router {
     });
 
     router.beforeEach((to, from, next) => {
-        document.title = to.meta.title ? `${to.meta.title} - PDF Marker App` : 'PDF Marker App'
+        document.title = to.meta.title ? `${to.meta.title} - CedarStack` : 'CedarStack - Intelligent Document Hub';
         next()
     })
 

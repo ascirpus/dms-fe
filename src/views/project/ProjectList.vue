@@ -1,190 +1,115 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
-import { useVuelidate } from '@vuelidate/core';
-import { required, maxLength } from '@vuelidate/validators';
-import type { Project } from '@/types/Project';
+import { FilterMatchMode } from '@primevue/core/api';
 
 // PrimeVue Components
 import Button from 'primevue/button';
-import ProgressSpinner from 'primevue/progressspinner';
-import Dialog from 'primevue/dialog';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import Menu from 'primevue/menu';
-import ConfirmDialog from 'primevue/confirmdialog';
-import { useAuth } from "@/composables/useAuth.ts";
-import { ProjectsService } from "@/services/ProjectsService.ts";
+import InputIcon from 'primevue/inputicon';
+import IconField from 'primevue/iconfield';
+import Paginator from 'primevue/paginator';
+import Popover from 'primevue/popover';
+import ToggleSwitch from 'primevue/toggleswitch';
+import { useProjects } from "@/composables/useProjects";
+import type { ProjectListItem } from "@/services/ProjectsService";
+import NewProjectDialog from "@/components/project/NewProjectDialog.vue";
+import type { Project } from "@/types/Project";
 
 const router = useRouter();
 const toast = useToast();
 const confirm = useConfirm();
-const projectMenu = ref();
-const auth = useAuth();
 
-const api = new ProjectsService(auth.apiClient);
+const {
+  projects,
+  loading,
+  error,
+  refetchProjects,
+  getProjectUrl,
+  createProject,
+  deleteProject,
+} = useProjects();
 
-// State
-const loading = ref(true);
-const error = ref<string | null>(null);
-const projects = ref<Project[]>([]);
-const createProjectDialog = ref(false);
-const saving = ref(false);
-const newProject = reactive({
-  name: '',
-  description: ''
+const showNewProjectDialog = ref(false);
+
+// Settings popover
+const settingsPopover = ref();
+const columnSettings = reactive({
+  project: true,
+  description: true,
+  documents: true,
+  modifiedDate: false,
+  status: false,
+  version: false,
+  createdBy: false,
+  updatedBy: false
 });
 
-// Validation rules
-const rules = computed(() => ({
-  name: { required, maxLength: maxLength(255) }
-}));
-const v$ = useVuelidate(rules, newProject);
-
-// Menu items for project context menu
-const menuItems = ref([
-  {
-    label: 'Edit',
-    icon: 'pi pi-pencil',
-    command: () => { editSelectedProject(); }
-  },
-  {
-    label: 'Delete',
-    icon: 'pi pi-trash',
-    command: () => { confirmDeleteProject(); }
-  }
-]);
-
-// Selected project for menu actions
-const selectedProject = ref<Project | null>(null);
-
-// Fetch projects on component mount
-onMounted(() => {
-  fetchProjects();
+// Search and filters
+const globalFilter = ref('');
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 
-// Methods
-async function fetchProjects() {
-  loading.value = true;
-  error.value = null;
+// Pagination
+const first = ref(0);
+const rows = ref(10);
+const totalRecords = computed(() => projects.value?.length ?? 0);
 
-  try {
-    await api.fetchProjects().then((response) => {
-      projects.value = response;
-    });
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error fetching projects:', err);
-  } finally {
-    loading.value = false;
-  }
+// Helper to truncate description for preview
+function truncateDescription(description: string | null, maxLength = 80): string {
+  if (!description) return '—';
+  if (description.length <= maxLength) return description;
+  return description.substring(0, maxLength) + '...';
 }
 
-function openCreateProjectDialog() {
-  newProject.name = '';
-  newProject.description = '';
-  v$.value.$reset();
-  createProjectDialog.value = true;
+// Settings popover methods
+function toggleSettings(event: Event) {
+  settingsPopover.value.toggle(event);
 }
 
-async function createProject() {
-  const isValid = await v$.value.$validate();
-  if (!isValid) return;
-
-  saving.value = true;
-
-  try {
-    // Replace with your actual API call
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newProject)
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create project');
-    }
-
-    const createdProject = await response.json();
-    projects.value.push(createdProject);
-
-    createProjectDialog.value = false;
-    toast.add({
-      severity: 'success',
-      summary: 'Project Created',
-      detail: `Project "${createdProject.name}" has been created successfully.`,
-      life: 3000
-    });
-  } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: err instanceof Error ? err.message : 'Failed to create project',
-      life: 5000
-    });
-  } finally {
-    saving.value = false;
-  }
-}
-
-function navigateToProject(id: string) {
-  router.push({ name: 'project-details', params: { id } });
-}
-
-function openProjectMenu(event: Event, project: Project) {
-  event.stopPropagation();
-  selectedProject.value = project;
-  projectMenu.value.toggle(event);
-}
-
-function editSelectedProject() {
-  if (selectedProject.value) {
-    router.push({
-      name: 'project-details',
-      params: { id: selectedProject.value.id }
-    });
-  }
-}
-
-function confirmDeleteProject() {
-  if (!selectedProject.value) return;
-
-  confirm.require({
-    message: `Are you sure you want to delete "${selectedProject.value.name}"?`,
-    header: 'Delete Project',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: () => deleteProject(),
-    reject: () => {
-      // Do nothing
-    }
+// Handle project created from dialog
+function onProjectCreated(project: Project) {
+  showNewProjectDialog.value = false;
+  toast.add({
+    severity: 'success',
+    summary: 'Project Created',
+    detail: `Project "${project.name}" has been created successfully.`,
+    life: 3000
   });
 }
 
-async function deleteProject() {
-  if (!selectedProject.value) return;
+function navigateToProject(item: ProjectListItem) {
+  router.push({ name: 'project-details', params: { id: getProjectUrl(item.project) } });
+}
 
+function editRow(item: ProjectListItem) {
+  router.push({ name: 'project-details', params: { id: getProjectUrl(item.project) } });
+}
+
+function confirmDeleteRow(item: ProjectListItem) {
+  confirm.require({
+    message: `Are you sure you want to delete "${item.project.name}"?`,
+    header: 'Delete Project',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: () => handleDeleteProject(item.project.id),
+    reject: () => {}
+  });
+}
+
+async function handleDeleteProject(projectId: string) {
   try {
-    // Replace with your actual API call
-    const response = await fetch(`/api/projects/${selectedProject.value.id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to delete project');
-    }
-
-    // Remove project from list
-    projects.value = projects.value.filter(p => p.id !== selectedProject.value?.id);
+    await deleteProject(projectId);
 
     toast.add({
       severity: 'success',
       summary: 'Project Deleted',
-      detail: `Project "${selectedProject.value.name}" has been deleted.`,
+      detail: 'Project has been deleted successfully.',
       life: 3000
     });
   } catch (err) {
@@ -197,189 +122,410 @@ async function deleteProject() {
   }
 }
 
-function formatDate(dateString: Date): string {
-  return new Intl.DateTimeFormat('default', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(dateString);
+function clearFilters() {
+  globalFilter.value = '';
+  filters.value.global.value = null;
+}
+
+function onPageChange(event: { first: number; rows: number }) {
+  first.value = event.first;
+  rows.value = event.rows;
 }
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen">
-    <header class="bg-white shadow">
-      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
+  <div class="projects-view">
+    <!-- Table Container -->
+    <div class="data-table-container">
+      <!-- Toolbar -->
+      <div class="table-toolbar">
+        <div class="table-toolbar-left">
+          <Button
+            icon="pi pi-filter-slash"
+            label="Clear"
+            outlined
+            size="small"
+            @click="clearFilters"
+          />
+        </div>
+
+        <div class="table-toolbar-right">
+          <Button
+            icon="pi pi-plus"
+            label="New Project"
+            outlined
+            size="small"
+            @click="showNewProjectDialog = true"
+          />
+          <Button
+            icon="pi pi-cog"
+            outlined
+            size="small"
+            aria-label="Settings"
+            @click="toggleSettings"
+          />
+          <Popover ref="settingsPopover" class="settings-popover">
+            <div class="settings-panel">
+              <div class="settings-header">Columns</div>
+              <div class="settings-item settings-item-disabled">
+                <span class="settings-label">Project</span>
+                <ToggleSwitch v-model="columnSettings.project" disabled />
+              </div>
+              <div class="settings-item settings-item-disabled">
+                <span class="settings-label">Description</span>
+                <ToggleSwitch v-model="columnSettings.description" disabled />
+              </div>
+              <div class="settings-item">
+                <i class="pi pi-ellipsis-v drag-handle"></i>
+                <span class="settings-label">Documents</span>
+                <ToggleSwitch v-model="columnSettings.documents" />
+              </div>
+              <div class="settings-item">
+                <i class="pi pi-ellipsis-v drag-handle"></i>
+                <span class="settings-label">Modified Date</span>
+                <ToggleSwitch v-model="columnSettings.modifiedDate" />
+              </div>
+              <div class="settings-item">
+                <i class="pi pi-ellipsis-v drag-handle"></i>
+                <span class="settings-label">Status</span>
+                <ToggleSwitch v-model="columnSettings.status" />
+              </div>
+              <div class="settings-item">
+                <i class="pi pi-ellipsis-v drag-handle"></i>
+                <span class="settings-label">Version</span>
+                <ToggleSwitch v-model="columnSettings.version" />
+              </div>
+              <div class="settings-item">
+                <i class="pi pi-ellipsis-v drag-handle"></i>
+                <span class="settings-label">Created By</span>
+                <ToggleSwitch v-model="columnSettings.createdBy" />
+              </div>
+              <div class="settings-item">
+                <i class="pi pi-ellipsis-v drag-handle"></i>
+                <span class="settings-label">Updated By</span>
+                <ToggleSwitch v-model="columnSettings.updatedBy" />
+              </div>
+            </div>
+          </Popover>
+          <IconField>
+            <InputIcon class="pi pi-search" />
+            <InputText
+              v-model="globalFilter"
+              placeholder="Search"
+              size="small"
+              @input="filters.global.value = globalFilter"
+            />
+          </IconField>
+        </div>
       </div>
-    </header>
 
-    <main class="flex-grow">
-      <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Loading State -->
-        <div v-if="loading" class="flex justify-center py-12">
-          <ProgressSpinner />
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <i class="pi pi-exclamation-triangle text-red-400 text-lg"></i>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
-                Error loading projects
-              </h3>
-              <div class="mt-2 text-sm text-red-700">
-                {{ error }}
-              </div>
-              <div class="mt-4">
-                <Button
-                    icon="pi pi-refresh"
-                    label="Try Again"
-                    severity="danger"
-                    outlined
-                    @click="fetchProjects"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Project List -->
-        <div v-else>
-          <!-- Create Project Button -->
-          <div class="mb-6 flex justify-between items-center">
-            <div class="flex-1"></div>
+      <!-- Data Table -->
+      <DataTable
+        :value="projects"
+        :loading="loading"
+        :filters="filters"
+        :globalFilterFields="['project.name', 'project.description']"
+        :first="first"
+        :rows="rows"
+        dataKey="project.id"
+        stripedRows
+        @row-click="(e) => navigateToProject(e.data)"
+        class="projects-table"
+        :pt="{
+          table: { class: 'w-full' },
+          bodyRow: { class: 'cursor-pointer hover:bg-gray-50' }
+        }"
+      >
+        <template #empty>
+          <div class="empty-state">
+            <i class="pi pi-folder-open"></i>
+            <h3>No projects found</h3>
+            <p>Get started by creating a new project.</p>
             <Button
-                icon="pi pi-plus"
-                label="New Project"
-                @click="openCreateProjectDialog"
-                severity="primary"
+              icon="pi pi-plus"
+              label="Create Project"
+              @click="openCreateProjectDialog"
             />
           </div>
+        </template>
 
-          <!-- No Projects State -->
-          <div v-if="!projects.length" class="text-center py-12 bg-gray-50 rounded-lg">
-            <i class="pi pi-folder-open text-5xl text-gray-400 mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900">No projects found</h3>
-            <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
-            <div class="mt-6">
+        <template #loading>
+          <div class="loading-state">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Loading projects...</span>
+          </div>
+        </template>
+
+        <Column field="project.name" header="Project" sortable style="min-width: 200px">
+          <template #body="{ data }">
+            <span class="project-link">{{ data.project.name }}</span>
+          </template>
+        </Column>
+
+        <Column field="project.description" header="Description" sortable style="min-width: 300px">
+          <template #body="{ data }">
+            <span class="description-preview">{{ truncateDescription(data.project.description) }}</span>
+          </template>
+        </Column>
+
+        <!-- Document Name column - commented out until API returns document details
+        <Column field="documentName" header="Document Name" sortable style="min-width: 200px">
+          <template #body="{ data }">
+            <span class="document-link">{{ data.documentName }}</span>
+          </template>
+        </Column>
+        -->
+
+        <Column field="document_count" header="Documents" sortable style="min-width: 120px">
+          <template #body="{ data }">
+            <span class="document-count">{{ data.document_count }}</span>
+          </template>
+        </Column>
+
+        <Column header="" style="width: 100px" :exportable="false">
+          <template #body="{ data }">
+            <div class="action-buttons">
               <Button
-                  icon="pi pi-plus"
-                  label="Create Project"
-                  @click="openCreateProjectDialog"
-                  severity="primary"
+                icon="pi pi-pencil"
+                text
+                rounded
+                size="small"
+                aria-label="Edit"
+                @click.stop="editRow(data)"
+              />
+              <Button
+                icon="pi pi-trash"
+                text
+                rounded
+                size="small"
+                severity="danger"
+                aria-label="Delete"
+                @click.stop="confirmDeleteRow(data)"
               />
             </div>
-          </div>
+          </template>
+        </Column>
+      </DataTable>
 
-          <!-- Projects Grid -->
-          <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div
-                v-for="project in projects"
-                :key="project.id"
-                class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                @click="navigateToProject(project.id)"
-            >
-              <div class="px-4 py-5 sm:p-6">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                    <i class="pi pi-folder text-blue-600 text-xl"></i>
-                  </div>
-                  <div class="ml-5 w-0 flex-1">
-                    <h3 class="text-lg font-medium text-gray-900 truncate">
-                      {{ project.name }}
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                      {{ formatDate(project.createdAt) }}
-                    </p>
-                  </div>
-                </div>
-                <div class="mt-4">
-                  <p class="text-sm text-gray-500 line-clamp-2">
-                    {{ project.description || 'No description provided' }}
-                  </p>
-                </div>
-                <div class="mt-6 flex items-center justify-between">
-                  <div class="flex">
-                    <!-- Display users or document count -->
-                    <div class="text-sm text-gray-500 flex items-center">
-                      <i class="pi pi-file mr-1"></i>
-                      {{ project.documents?.length || 0 }} documents
-                    </div>
-                  </div>
-                  <Button
-                      icon="pi pi-ellipsis-v"
-                      text
-                      rounded
-                      aria-label="Options"
-                      @click.stop="openProjectMenu($event, project)"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Project Context Menu -->
-    <Menu ref="projectMenu" :model="menuItems" :popup="true" />
-
-    <!-- Create Project Dialog -->
-    <Dialog
-        v-model:visible="createProjectDialog"
-        header="Create Project"
-        :modal="true"
-        :style="{ width: '450px' }"
-        :closable="true"
-    >
-      <div class="flex flex-col gap-4">
-        <div class="field">
-          <label for="name" class="block text-sm font-medium text-gray-700">Project Name</label>
-          <InputText
-              id="name"
-              v-model="newProject.name"
-              class="w-full mt-1"
-              :class="{ 'p-invalid': v$.name.$invalid && v$.name.$dirty }"
-              aria-describedby="name-error"
-          />
-          <small id="name-error" class="p-error" v-if="v$.name.$invalid && v$.name.$dirty">
-            {{ v$.name.$errors[0].$message }}
-          </small>
-        </div>
-
-        <div class="field">
-          <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-          <Textarea
-              id="description"
-              v-model="newProject.description"
-              rows="3"
-              class="w-full mt-1"
-          />
-        </div>
-      </div>
-
-      <template #footer>
-        <Button
-            label="Cancel"
-            icon="pi pi-times"
-            @click="createProjectDialog = false"
-            text
+      <!-- Pagination -->
+      <div class="table-pagination">
+        <Paginator
+          :first="first"
+          :rows="rows"
+          :totalRecords="totalRecords"
+          :rowsPerPageOptions="[10, 20, 50]"
+          @page="onPageChange"
+          template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
         />
-        <Button
-            label="Save"
-            icon="pi pi-check"
-            @click="createProject"
-            :loading="saving"
-            :disabled="v$.$invalid"
-        />
-      </template>
-    </Dialog>
+      </div>
+    </div>
 
-    <!-- Delete Confirmation Dialog -->
-    <ConfirmDialog></ConfirmDialog>
+    <!-- New Project Dialog -->
+    <NewProjectDialog
+      v-model:visible="showNewProjectDialog"
+      @created="onProjectCreated"
+    />
   </div>
 </template>
+
+<style scoped>
+.projects-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.data-table-container {
+  background-color: var(--ui-input-fill-default);
+  border: 1px solid var(--ui-input-fill-disabled);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ui-button-outlined-stroke);
+  gap: 16px;
+}
+
+.table-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.projects-table {
+  flex: 1;
+}
+
+.projects-table :deep(.p-datatable-thead > tr > th) {
+  background-color: var(--surface-ground);
+  color: var(--ui-input-label);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px;
+  border-color: var(--ui-button-outlined-stroke);
+}
+
+.projects-table :deep(.p-datatable-tbody > tr > td) {
+  padding: 16px;
+  border-color: var(--ui-button-outlined-stroke);
+  font-size: 14px;
+  color: var(--ui-input-label);
+}
+
+.projects-table :deep(.p-datatable-tbody > tr:hover) {
+  background-color: var(--surface-ground);
+}
+
+.project-link {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.description-preview {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.document-count {
+  font-weight: 500;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.6;
+}
+
+.action-buttons:hover {
+  opacity: 1;
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px;
+  border-top: 1px solid var(--ui-button-outlined-stroke);
+}
+
+.table-pagination :deep(.p-paginator) {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--text-muted);
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  margin: 0 0 24px 0;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: var(--text-secondary);
+}
+
+.loading-state i {
+  font-size: 24px;
+}
+
+/* Settings Panel Styles */
+.settings-panel {
+  min-width: 247px;
+  background: white;
+  border-radius: 12px;
+}
+
+.settings-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ui-input-label);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--ui-button-primary);
+}
+
+.settings-item-disabled {
+  padding-left: 16px;
+}
+
+.settings-item-disabled .settings-label {
+  flex: 1;
+}
+
+.settings-item .drag-handle {
+  color: var(--text-secondary);
+  cursor: grab;
+}
+
+.settings-item .settings-label {
+  flex: 1;
+}
+
+.settings-item :deep(.p-toggleswitch) {
+  --p-toggleswitch-checked-background: var(--ui-button-primary);
+}
+
+.settings-item-disabled :deep(.p-toggleswitch) {
+  --p-toggleswitch-checked-background: var(--ui-input-fill-disabled);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-toolbar-right {
+    flex-wrap: wrap;
+  }
+}
+</style>

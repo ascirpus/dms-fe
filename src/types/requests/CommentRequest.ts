@@ -7,8 +7,7 @@ export interface MarkerRequest {
 }
 
 export interface CommentRequest {
-    documentId: string;
+    fileId: string;
     comment: string;
-    isResolved?: boolean;
     marker?: MarkerRequest | null;
 }

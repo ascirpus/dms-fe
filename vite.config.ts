@@ -19,11 +19,12 @@ export default defineConfig({
     assetsInlineLimit: 4096 // 4kb - files smaller than this will be inlined as base64
   },
   server: {
-    host: 'dms.local',
-    open: 'https://dms.local:5173',
+    host: 'dms.internal',
+    host: 'dms.internal',
+    open: 'https://dms.internal:5173',
     proxy: {
       '/api': {
-        target: 'http://dms.local:8080',
+        target: 'http://api.dms.internal:8080',
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, '') // The local API has a slightly different path

@@ -1,81 +1,145 @@
-import axios, { type AxiosError, type AxiosResponse, HttpStatusCode } from 'axios';
+import axios, { type AxiosError, type AxiosResponse, HttpStatusCode, type AxiosInstance } from 'axios';
 import { useKeycloak } from "@josempgon/vue-keycloak";
+import { useAuthStore } from "@/stores/authStore";
 import type { User } from "@/types";
-import { computed, watch } from "vue";
+import { computed } from "vue";
 
 const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
 
+let apiClientInstance: AxiosInstance | null = null;
+let interceptorsRegistered = false;
+
 /**
- * This is kind of messy, it provides both an API Client with a token AND token information
+ * Auth composable that handles both direct login (via authStore) and Keycloak SSO
+ * Priority: authStore tokens > keycloak tokens
  */
 export function useAuth() {
+    const authStore = useAuthStore();
     const kc = useKeycloak();
     const kcInstance = kc.keycloak.value;
-    const token = kc.token;
-    const apiClient = axios.create({
-        baseURL: API_URL,
-    });
 
-    const decodedToken = computed(() => kc.decodedToken.value);
-    const isAuthenticated = computed(() => kc.isAuthenticated.value);
+    // Create axios instance only once
+    if (!apiClientInstance) {
+        apiClientInstance = axios.create({
+            baseURL: API_URL,
+        });
+    }
+    const apiClient = apiClientInstance;
 
-    apiClient.interceptors.request.use(config => {
+    const decodedToken = computed(() => authStore.decodedToken || kc.decodedToken.value);
+    const isAuthenticated = computed(() => authStore.isAuthenticated || kc.isAuthenticated.value);
 
-        kcInstance?.updateToken(60).then((isRefreshed) => {
-             if (isRefreshed) {
-                 console.log("Token refreshed!");
-             }
-        }).catch((err) => {
-            console.log("Failed to refresh token: ", err)
+    // Register interceptors only once
+    if (!interceptorsRegistered) {
+        interceptorsRegistered = true;
+
+        // Request interceptor: refresh token if needed and add auth header
+        apiClient.interceptors.request.use(async config => {
+            const store = useAuthStore();
+            const keycloak = useKeycloak();
+
+            if (store.accessToken) {
+                if (store.isTokenExpired && store.refreshToken) {
+                    await store.refreshAccessToken();
+                }
+            } else if (keycloak.keycloak.value) {
+                try {
+                    await keycloak.keycloak.value.updateToken(60);
+                } catch (err) {
+                    console.log("Failed to refresh keycloak token:", err);
+                }
+            }
+
+            const currentToken = store.accessToken || keycloak.token.value;
+            if (currentToken) {
+                config.headers.Authorization = `Bearer ${currentToken}`;
+            }
+            return config;
         });
 
-        config.headers.Authorization = `Bearer ${token.value}`;
-        return config;
-    });
+        apiClient.interceptors.response.use(
+            (success: AxiosResponse): AxiosResponse => {
+                return success;
+            },
+            (error: AxiosError) => {
+                console.log(error);
+                const store = useAuthStore();
+                const keycloak = useKeycloak();
 
-    apiClient.interceptors.response.use(
-        (success: AxiosResponse): AxiosResponse => {
-            return success
-        },
-        (error: AxiosError) => {
-            console.log(error)
-            if (error.status == HttpStatusCode.Unauthorized) {
-                console.error("[dms-fe] User not found in API backend database");
-                console.debug("Log the user out and redirect to /login")
+                // Only logout if we had a token and got 401 (token was rejected)
+                // Don't logout if we never had a token (prevents logout during HMR/init)
+                if (error.status == HttpStatusCode.Unauthorized) {
+                    const hadToken = store.accessToken || keycloak.token.value;
+                    if (hadToken) {
+                        console.error("[dms-fe] Unauthorized - logging out");
+                        store.logout();
+                    }
+                }
+                return Promise.reject(error);
             }
-            return Promise.reject(error);
-        }
-    )
+        );
+    }
 
     function login() {
-        kcInstance?.login();
+        // Redirect to Keycloak login page
+        if (kcInstance) {
+            kcInstance.login({
+                redirectUri: window.location.origin
+            });
+        }
     }
 
     function logout() {
+        // Clear authStore tokens
+        authStore.logout();
 
-        kcInstance?.logout({
-            redirectUri: window.location.origin
-        });
+        // Also logout from keycloak if we have a session there
+        if (kc.isAuthenticated.value && kcInstance) {
+            kcInstance.logout({
+                redirectUri: window.location.origin
+            });
+        } else {
+            // Just redirect to home
+            window.location.href = '/';
+        }
     }
 
-    function getCurrentUser() {
+    function getCurrentUser(): User {
         if (!isAuthenticated.value) {
             return {
                 name: '',
                 email: '',
-                avatar: '',
-            }
+                picture: '',
+            };
         }
 
+        if (authStore.user?.name) {
+            return authStore.user;
+        }
+
+        const token = decodedToken.value as Record<string, unknown> | null;
+        if (!token) {
+            return { name: '', email: '', picture: '' };
+        }
+
+        // Build name from various possible claims
+        const name = (token.name as string) ||
+            `${token.given_name || ''} ${token.family_name || ''}`.trim() ||
+            (token.preferred_username as string) ||
+            '';
+
+        const picture = token.picture as string || '';
+
         return {
-            name: decodedToken.value?.name,
-            email: decodedToken.value?.email,
-            avatar: decodedToken.value?.avatar,
-        } as User
+            name,
+            email: (token.email as string),
+            picture,
+        };
     }
 
     function getInitials(): string {
-        return (decodedToken.value?.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase()
+        const user = getCurrentUser();
+        return (user.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase();
     }
 
     return {
@@ -86,5 +150,6 @@ export function useAuth() {
         getCurrentUser,
         getInitials,
         decodedToken,
+        authStore,
     };
 }

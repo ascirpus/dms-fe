@@ -4,11 +4,10 @@ import type { ApiResponse } from "@/types/response";
 
 export class CommentMapper {
 
-    static toRequest(documentId: string, comment: string, marker?: MarkerRequest | null, isResolved = false): CommentRequest {
+    static toRequest(fileId: string, comment: string, marker?: MarkerRequest | null): CommentRequest {
         const request: CommentRequest = {
-            documentId,
+            fileId,
             comment,
-            isResolved
         };
 
         if (marker) {
@@ -19,7 +18,6 @@ export class CommentMapper {
     }
 
     static fromResponse(response: ApiResponse<Comment>): Comment {
-
         return response.data;
     }
 }
