@@ -42,24 +42,34 @@ export function useNotifications() {
 
   const markReadMutation = useMutation({
     mutationFn: async (notificationId: string) => await notificationsService.markRead(notificationId),
-    onSuccess: (_, notificationId: string) => {
+    onSuccess: async (_, notificationId: string) => {
       const notification = notifications.value.find((n) => n.id === notificationId);
       if (notification) {
         notification.read = true;
       }
+      // Optimistically update unread count
+      if (unreadCount.value > 0) {
+        unreadCount.value--;
+      }
       queryClient.invalidateQueries(['notifications']);
       queryClient.invalidateQueries(['notifications-unread-count']);
+      // Refetch to ensure accuracy
+      await fetchUnreadCount();
     },
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: async () => await notificationsService.markAllRead(),
-    onSuccess: () => {
+    onSuccess: async () => {
       notifications.value.forEach((n) => {
         n.read = true;
       });
+      // Set unread count to 0
+      unreadCount.value = 0;
       queryClient.invalidateQueries(['notifications']);
       queryClient.invalidateQueries(['notifications-unread-count']);
+      // Refetch to ensure accuracy
+      await fetchUnreadCount();
     },
   });
 

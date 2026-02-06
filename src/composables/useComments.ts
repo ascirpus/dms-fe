@@ -68,10 +68,11 @@ export function useComments() {
         projectId: string,
         documentId: string,
         fileId: string,
+        fileVersion: number,
         comment: string,
         marker: { pageNumber: number, position: { x: number, y: number } } | null,
     ) {
-        const request = CommentMapper.toRequest(fileId, comment, marker);
+        const request = CommentMapper.toRequest(fileId, fileVersion, comment, marker);
         return createCommentMutation.mutateAsync({ projectId, documentId, request });
     }
 

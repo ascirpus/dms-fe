@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAuth } from "@/composables/useAuth";
+import { getDisplayName } from '@/utils/avatar';
 
 // PrimeVue Components
 import Button from 'primevue/button';
@@ -71,12 +72,12 @@ const fullName = computed(() => {
   if (profileData.value.firstName || profileData.value.lastName) {
     return `${profileData.value.firstName} ${profileData.value.lastName}`.trim();
   }
-  return user?.name || 'User';
+  return getDisplayName(user ?? { email: '' });
 });
 
 // Initialize profile data from user/token
 onMounted(() => {
-  const nameParts = (user?.name || '').split(' ');
+  const nameParts = getDisplayName(user ?? { email: '' }).split(' ');
   profileData.value = {
     firstName: decodedToken.value?.given_name || nameParts[0] || '',
     lastName: decodedToken.value?.family_name || nameParts.slice(1).join(' ') || '',

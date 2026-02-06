@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { FilterMatchMode } from '@primevue/core/api';
-
 // PrimeVue Components
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -13,8 +12,6 @@ import InputText from 'primevue/inputtext';
 import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
 import Paginator from 'primevue/paginator';
-import Popover from 'primevue/popover';
-import ToggleSwitch from 'primevue/toggleswitch';
 import { useProjects } from "@/composables/useProjects";
 import type { ProjectListItem } from "@/services/ProjectsService";
 import NewProjectDialog from "@/components/project/NewProjectDialog.vue";
@@ -36,20 +33,7 @@ const {
 
 const showNewProjectDialog = ref(false);
 
-// Settings popover
-const settingsPopover = ref();
-const columnSettings = reactive({
-  project: true,
-  description: true,
-  documents: true,
-  modifiedDate: false,
-  status: false,
-  version: false,
-  createdBy: false,
-  updatedBy: false
-});
-
-// Search and filters
+// Table filter
 const globalFilter = ref('');
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -65,11 +49,6 @@ function truncateDescription(description: string | null, maxLength = 80): string
   if (!description) return '—';
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength) + '...';
-}
-
-// Settings popover methods
-function toggleSettings(event: Event) {
-  settingsPopover.value.toggle(event);
 }
 
 // Handle project created from dialog
@@ -88,7 +67,7 @@ function navigateToProject(item: ProjectListItem) {
 }
 
 function editRow(item: ProjectListItem) {
-  router.push({ name: 'project-details', params: { id: getProjectUrl(item.project) } });
+  router.push({ name: 'project-settings', params: { id: getProjectUrl(item.project) } });
 }
 
 function confirmDeleteRow(item: ProjectListItem) {
@@ -122,11 +101,6 @@ async function handleDeleteProject(projectId: string) {
   }
 }
 
-function clearFilters() {
-  globalFilter.value = '';
-  filters.value.global.value = null;
-}
-
 function onPageChange(event: { first: number; rows: number }) {
   first.value = event.first;
   rows.value = event.rows;
@@ -135,21 +109,19 @@ function onPageChange(event: { first: number; rows: number }) {
 
 <template>
   <div class="projects-view">
+    <!-- Error State -->
+    <div v-if="error" class="error-container">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Error loading projects</h3>
+      <p>{{ error instanceof Error ? error.message : 'An unexpected error occurred' }}</p>
+      <Button icon="pi pi-refresh" label="Try Again" @click="refetchProjects" />
+    </div>
+
     <!-- Table Container -->
-    <div class="data-table-container">
+    <div v-else class="data-table-container">
       <!-- Toolbar -->
       <div class="table-toolbar">
         <div class="table-toolbar-left">
-          <Button
-            icon="pi pi-filter-slash"
-            label="Clear"
-            outlined
-            size="small"
-            @click="clearFilters"
-          />
-        </div>
-
-        <div class="table-toolbar-right">
           <Button
             icon="pi pi-plus"
             label="New Project"
@@ -157,61 +129,14 @@ function onPageChange(event: { first: number; rows: number }) {
             size="small"
             @click="showNewProjectDialog = true"
           />
-          <Button
-            icon="pi pi-cog"
-            outlined
-            size="small"
-            aria-label="Settings"
-            @click="toggleSettings"
-          />
-          <Popover ref="settingsPopover" class="settings-popover">
-            <div class="settings-panel">
-              <div class="settings-header">Columns</div>
-              <div class="settings-item settings-item-disabled">
-                <span class="settings-label">Project</span>
-                <ToggleSwitch v-model="columnSettings.project" disabled />
-              </div>
-              <div class="settings-item settings-item-disabled">
-                <span class="settings-label">Description</span>
-                <ToggleSwitch v-model="columnSettings.description" disabled />
-              </div>
-              <div class="settings-item">
-                <i class="pi pi-ellipsis-v drag-handle"></i>
-                <span class="settings-label">Documents</span>
-                <ToggleSwitch v-model="columnSettings.documents" />
-              </div>
-              <div class="settings-item">
-                <i class="pi pi-ellipsis-v drag-handle"></i>
-                <span class="settings-label">Modified Date</span>
-                <ToggleSwitch v-model="columnSettings.modifiedDate" />
-              </div>
-              <div class="settings-item">
-                <i class="pi pi-ellipsis-v drag-handle"></i>
-                <span class="settings-label">Status</span>
-                <ToggleSwitch v-model="columnSettings.status" />
-              </div>
-              <div class="settings-item">
-                <i class="pi pi-ellipsis-v drag-handle"></i>
-                <span class="settings-label">Version</span>
-                <ToggleSwitch v-model="columnSettings.version" />
-              </div>
-              <div class="settings-item">
-                <i class="pi pi-ellipsis-v drag-handle"></i>
-                <span class="settings-label">Created By</span>
-                <ToggleSwitch v-model="columnSettings.createdBy" />
-              </div>
-              <div class="settings-item">
-                <i class="pi pi-ellipsis-v drag-handle"></i>
-                <span class="settings-label">Updated By</span>
-                <ToggleSwitch v-model="columnSettings.updatedBy" />
-              </div>
-            </div>
-          </Popover>
+        </div>
+
+        <div class="table-toolbar-right">
           <IconField>
-            <InputIcon class="pi pi-search" />
+            <InputIcon class="pi pi-filter" />
             <InputText
               v-model="globalFilter"
-              placeholder="Search"
+              placeholder="Filter projects..."
               size="small"
               @input="filters.global.value = globalFilter"
             />
@@ -244,7 +169,7 @@ function onPageChange(event: { first: number; rows: number }) {
             <Button
               icon="pi pi-plus"
               label="Create Project"
-              @click="openCreateProjectDialog"
+              @click="showNewProjectDialog = true"
             />
           </div>
         </template>
@@ -334,6 +259,36 @@ function onPageChange(event: { first: number; rows: number }) {
   flex-direction: column;
   gap: 16px;
   height: 100%;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+}
+
+.error-container i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--color-danger, #e74c3c);
+}
+
+.error-container h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 8px 0;
+}
+
+.error-container p {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
 }
 
 .data-table-container {
@@ -467,54 +422,6 @@ function onPageChange(event: { first: number; rows: number }) {
 
 .loading-state i {
   font-size: 24px;
-}
-
-/* Settings Panel Styles */
-.settings-panel {
-  min-width: 247px;
-  background: white;
-  border-radius: 12px;
-}
-
-.settings-header {
-  padding: 12px 16px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--ui-input-label);
-}
-
-.settings-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: var(--ui-button-primary);
-}
-
-.settings-item-disabled {
-  padding-left: 16px;
-}
-
-.settings-item-disabled .settings-label {
-  flex: 1;
-}
-
-.settings-item .drag-handle {
-  color: var(--text-secondary);
-  cursor: grab;
-}
-
-.settings-item .settings-label {
-  flex: 1;
-}
-
-.settings-item :deep(.p-toggleswitch) {
-  --p-toggleswitch-checked-background: var(--ui-button-primary);
-}
-
-.settings-item-disabled :deep(.p-toggleswitch) {
-  --p-toggleswitch-checked-background: var(--ui-input-fill-disabled);
 }
 
 /* Responsive */

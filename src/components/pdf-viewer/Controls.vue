@@ -1,20 +1,39 @@
 <script setup lang="ts">
-import { useMainStore } from "@/stores/mainStore.ts";
-import Button from 'primevue/button';
-import { ref } from "vue";
+import { ref } from 'vue';
+import { Button, Menu } from 'primevue';
 
 interface Props {
   currentPage: number;
   pageCount: number;
+  variant?: 'top' | 'bottom';
+  versioningEnabled?: boolean;
+  markerEnabled?: boolean;
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits(['update:page', 'toggle-marker']);
-const mainStore = useMainStore();
+const props = withDefaults(defineProps<Props>(), {
+  variant: 'top',
+  versioningEnabled: false,
+  markerEnabled: false,
+});
 
-const markerEnabled = ref(mainStore.documentMarker)
+const emit = defineEmits<{
+  'update:page': [page: number];
+  'toggle-pan': [];
+  'toggle-marker': [];
+  'show-all-comments': [];
+  'show-my-comments': [];
+  'expand-all-comments': [];
+  'collapse-all-comments': [];
+  'show-version-history': [];
+  'confirm-version': [];
+  'show-document-info': [];
+  'download': [];
+  'print': [];
+  'share': [];
+}>();
 
-const currentPage = ref(1);
+const currentPage = ref(props.currentPage);
+
 const previousPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
@@ -29,44 +48,118 @@ const nextPage = () => {
   }
 };
 
-const enableMarker = () => {
-  const state = !markerEnabled.value;
+// Bottom toolbar dropdown menus
+const commentsMenu = ref();
+const versionMenu = ref();
+const moreMenu = ref();
 
-  mainStore.toggleDocumentMarker(state);
-  // Emit the new value after toggling
-  emit('toggle-marker', state);
-  markerEnabled.value = state;
-};
+const commentsMenuItems = ref([
+  { label: 'Show All Comments', icon: 'pi pi-comments', command: () => emit('show-all-comments') },
+  { label: 'Show My Comments', icon: 'pi pi-user', command: () => emit('show-my-comments') },
+  { separator: true },
+  { label: 'Expand All Comments', icon: 'pi pi-angle-double-down', command: () => emit('expand-all-comments') },
+  { label: 'Collapse All Comments', icon: 'pi pi-angle-double-up', command: () => emit('collapse-all-comments') },
+]);
 
-mainStore.$subscribe((mutations, state) => {
-  markerEnabled.value = state.documentMarker;
-})
+const versionMenuItems = ref([
+  { label: 'Show Version History', icon: 'pi pi-history', command: () => emit('show-version-history') },
+  { label: 'Confirm Version', icon: 'pi pi-check-circle', command: () => emit('confirm-version') },
+]);
 
+const moreMenuItems = ref([
+  { label: 'Download', icon: 'pi pi-download', command: () => emit('download') },
+  { label: 'Print', icon: 'pi pi-print', command: () => emit('print') },
+  { label: 'Share', icon: 'pi pi-share-alt', command: () => emit('share') },
+]);
 </script>
 
 <template>
-  <div class="pdf-controls">
-    <div class="left-controls">
-      <Button icon="pi pi-pencil" label="Mark" @click="enableMarker" :class="markerEnabled ? 'enabled' : ''" class="mark-btn" />
-
-    </div>
-
+  <!-- Top variant: page navigation only -->
+  <div v-if="variant === 'top'" class="pdf-controls top-controls">
     <div class="page-controls">
       <Button
-          icon="pi pi-angle-left"
-          @click="previousPage"
-          :disabled="currentPage <= 1"
+        icon="pi pi-angle-left"
+        text
+        rounded
+        size="small"
+        @click="previousPage"
+        :disabled="currentPage <= 1"
       />
-      <span>Page {{ currentPage }} of {{ pageCount }}</span>
+      <span class="page-indicator">Page {{ currentPage }} of {{ pageCount }}</span>
       <Button
-          icon="pi pi-angle-right"
-          @click="nextPage"
-          :disabled="currentPage >= pageCount"
+        icon="pi pi-angle-right"
+        text
+        rounded
+        size="small"
+        @click="nextPage"
+        :disabled="currentPage >= pageCount"
       />
-      </div>
+    </div>
+  </div>
 
-    <div class="right-controls">
-      <!-- Space for future controls -->
+  <!-- Bottom variant: full toolbar -->
+  <div v-else class="pdf-controls bottom-controls">
+    <div class="toolbar-group">
+      <Button
+        icon="pi pi-arrows-alt"
+        text
+        rounded
+        size="small"
+        aria-label="Pan mode"
+        @click="emit('toggle-pan')"
+      />
+
+      <Button
+        v-tooltip.top="'Comment mode (C)'"
+        icon="pi pi-comment"
+        text
+        rounded
+        size="small"
+        :class="{ 'marker-active-btn': markerEnabled }"
+        aria-label="Add marker"
+        @click="emit('toggle-marker')"
+      />
+
+      <Button
+        label="Comments"
+        icon="pi pi-chevron-down"
+        iconPos="right"
+        text
+        size="small"
+        @click="(e: Event) => commentsMenu.toggle(e)"
+      />
+      <Menu ref="commentsMenu" :model="commentsMenuItems" :popup="true" />
+
+      <template v-if="versioningEnabled">
+        <Button
+          label="Version"
+          icon="pi pi-chevron-down"
+          iconPos="right"
+          text
+          size="small"
+          @click="(e: Event) => versionMenu.toggle(e)"
+        />
+        <Menu ref="versionMenu" :model="versionMenuItems" :popup="true" />
+      </template>
+
+      <Button
+        icon="pi pi-info-circle"
+        text
+        rounded
+        size="small"
+        aria-label="Document info"
+        @click="emit('show-document-info')"
+      />
+
+      <Button
+        icon="pi pi-ellipsis-v"
+        text
+        rounded
+        size="small"
+        aria-label="More options"
+        @click="(e: Event) => moreMenu.toggle(e)"
+      />
+      <Menu ref="moreMenu" :model="moreMenuItems" :popup="true" />
     </div>
   </div>
 </template>
@@ -74,54 +167,43 @@ mainStore.$subscribe((mutations, state) => {
 <style scoped>
 .pdf-controls {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background: #f5f5f5;
-  border-top: 1px solid #ddd;
+  padding: 8px 12px;
+  background: var(--surface-card);
+  border-color: var(--surface-border);
 }
 
-.left-controls, .right-controls {
-  width: 150px;
+.top-controls {
+  justify-content: center;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.bottom-controls {
+  justify-content: center;
+  border-top: 1px solid var(--surface-border);
 }
 
 .page-controls {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 15px;
-  flex: 1;
+  gap: 8px;
 }
 
-button {
-  background-color: #3498db;
-  color: white;
+.page-indicator {
+  font-size: 13px;
+  color: var(--text-secondary);
+  min-width: 100px;
+  text-align: center;
 }
 
-button:hover {
-  background-color: #2980b9;
-}
-
-.mark-btn {
+.toolbar-group {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background-color: var(--mark-btn-color, #27ae60);
-
-  &.enabled {
-    background-color: #e74c3c;
-  }
+  gap: 4px;
 }
 
-.mark-btn:hover {
-  background-color: var(--mark-btn-hover-color, #219653);
-
-  &.enabled {
-    background-color: #c0392b;
-  }
-}
-
-.pen-icon {
-  font-size: 16px;
+.marker-active-btn {
+  color: var(--primary-color) !important;
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
 }
 </style>

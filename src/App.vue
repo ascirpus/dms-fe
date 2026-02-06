@@ -3,7 +3,7 @@
     <router-view />
   </div>
 
-  <div v-else class="app-layout">
+  <div v-else-if="!isAuthenticated || tenantReady" class="app-layout">
     <Header />
     <main class="main-content">
       <router-view />
@@ -22,16 +22,16 @@ import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Header from "@/components/base/Header.vue";
 import { useMainStore } from "@/stores/mainStore.ts";
+import { useAuth } from "@/composables/useAuth.ts";
 
 const route = useRoute();
 const store = useMainStore();
+const { isAuthenticated, tenantReady } = useAuth();
 
-// Auth pages that don't need header
 const authRoutes = ['login', 'password-recovery', 'complete-setup'];
 const isAuthPage = computed(() => authRoutes.includes(route.name));
 
 onMounted(() => {
-  // Check for saved theme preference or system preference
   if (!store.theme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     store.setTheme('dark');
   } else {
@@ -42,9 +42,10 @@ onMounted(() => {
 
 <style scoped>
 .app-layout {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background-color: var(--surface-ground);
 }
 
@@ -54,7 +55,9 @@ onMounted(() => {
 
 .main-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 </style>

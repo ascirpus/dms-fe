@@ -2,19 +2,13 @@ import type { Project } from "@/types/Project.ts";
 import type { Document } from "@/types/Document.ts";
 import { ApiService } from "@/services/ApiService.ts";
 import type { ApiResponse } from "@/types/response";
+import type { TenantUser } from "@/services/UsersService.ts";
 
 export interface ProjectListItem {
     project: Project;
     document_count: number;
 }
 
-// API response for documents (may have fewer fields than full Document type)
-interface ApiDocument {
-    id: string;
-    title: string;
-    content: string;
-    status: string;
-}
 
 export class ProjectsService extends ApiService<Project> {
 
@@ -28,17 +22,8 @@ export class ProjectsService extends ApiService<Project> {
     }
 
     async fetchProjectDocuments(projectId: string): Promise<Document[]> {
-        const response = await this.apiClient.get<ApiResponse<ApiDocument[]>>(`/api/projects/${projectId}/documents`);
-        return response.data.data.map(doc => ({
-            id: doc.id,
-            title: doc.title,
-            content: doc.content,
-            status: doc.status as any,
-            version: 1,
-            updatedDate: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        })) as Document[];
+        const response = await this.apiClient.get<ApiResponse<Document[]>>(`/api/projects/${projectId}/documents`);
+        return response.data.data;
     }
 
     async createProject(data: { name: string; description: string }): Promise<Project> {
@@ -50,30 +35,8 @@ export class ProjectsService extends ApiService<Project> {
         await this.apiClient.delete(`/api/projects/${projectId}`);
     }
 
-    async uploadDocument(
-        projectId: string,
-        file: File,
-        metadata: { title: string; document_type: string }
-    ): Promise<Document> {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('document', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-
-        const response = await this.apiClient.post<ApiResponse<ApiDocument>>(
-            `/api/projects/${projectId}/documents`,
-            formData
-        );
-
-        const doc = response.data.data;
-        return {
-            id: doc.id,
-            title: doc.title,
-            content: doc.content,
-            status: doc.status as any,
-            version: 1,
-            updatedDate: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        } as Document;
+    async fetchProjectMembers(projectId: string): Promise<TenantUser[]> {
+        const response = await this.apiClient.get<ApiResponse<TenantUser[]>>(`/api/projects/${projectId}/members`);
+        return response.data.data;
     }
 }

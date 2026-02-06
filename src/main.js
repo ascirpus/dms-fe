@@ -17,6 +17,7 @@ import './style.css';
 // Import service components
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
+import Tooltip from 'primevue/tooltip';
 import { vueKeycloak } from "@josempgon/vue-keycloak";
 
 const keycloakConfig = {
@@ -60,6 +61,7 @@ async function initializeApp() {
     app.use(VuePdf);
     app.use(ToastService);
     app.use(ConfirmationService);
+    app.directive('tooltip', Tooltip);
 
     app.mount('#app');
 }

@@ -25,6 +25,8 @@ import ProgressSpinner from 'primevue/progressspinner';
 import FileUpload from 'primevue/fileupload';
 
 import { useProjects, useProjectDocuments } from "@/composables/useProjects";
+import { useDocumentTypes } from "@/composables/useDocumentTypes";
+import { sanitizeIcon } from "@/utils/documentTypeIcons";
 
 const route = useRoute();
 const router = useRouter();
@@ -52,6 +54,7 @@ const project = ref<Project | null>(null);
 // Settings popover
 const settingsPopover = ref();
 const columnSettings = reactive({
+  documentType: true,
   documentName: true,
   modifiedDate: true,
   status: true,
@@ -91,20 +94,16 @@ const showUploadDialog = ref(false);
 const uploading = ref(false);
 const uploadForm = reactive({
   title: '',
-  documentType: 'quote' as string,
+  documentType: '' as string,
   file: null as File | null,
 });
 
-// Document type options (API expects lowercase values)
-const documentTypeOptions = [
-  { label: 'Project Information', value: 'project_information' },
-  { label: 'Damage Report', value: 'damage_report' },
-  { label: 'Inventory Report', value: 'inventory_report' },
-  { label: 'Quote', value: 'quote' },
-  { label: 'Confirmation', value: 'confirmation' },
-  { label: 'Hour Confirmation', value: 'hours_confirmation' },
-  { label: 'Invoice', value: 'invoice' },
-];
+// Document types from API
+const { documentTypes } = useDocumentTypes();
+const documentTypeOptions = computed(() =>
+  (documentTypes.value ?? []).map(dt => ({ label: dt.name, value: dt.id }))
+);
+
 
 // Wait for projects to load, then fetch project details
 watch(projectsLoading, (isLoading) => {
@@ -184,8 +183,6 @@ function saveDocument() {
       ...documents.value[index],
       title: editForm.title,
       status: editForm.status,
-      updatedAt: new Date(),
-      updatedDate: new Date(),
     };
   }
 
@@ -243,7 +240,7 @@ function goBack() {
 
 function openUploadDialog() {
   uploadForm.title = '';
-  uploadForm.documentType = 'quote';
+  uploadForm.documentType = '';
   uploadForm.file = null;
   showUploadDialog.value = true;
 }
@@ -333,6 +330,15 @@ async function handleUploadDocument() {
           <h1 class="project-title">{{ project?.name }}</h1>
           <p v-if="project?.description" class="project-description">{{ project.description }}</p>
         </div>
+        <div class="project-actions">
+          <Button
+            icon="pi pi-cog"
+            label="Settings"
+            outlined
+            size="small"
+            @click="router.push({ name: 'project-settings', params: { id: projectSlug } })"
+          />
+        </div>
       </div>
 
       <!-- Documents Table Container -->
@@ -376,6 +382,10 @@ async function handleUploadDocument() {
             <Popover ref="settingsPopover" class="settings-popover">
               <div class="settings-panel">
                 <div class="settings-header">Columns</div>
+                <div class="settings-item">
+                  <span class="settings-label">Document Type</span>
+                  <ToggleSwitch v-model="columnSettings.documentType" />
+                </div>
                 <div class="settings-item">
                   <span class="settings-label">Document Name</span>
                   <ToggleSwitch v-model="columnSettings.documentName" disabled />
@@ -433,6 +443,16 @@ async function handleUploadDocument() {
           </template>
 
           <Column
+            v-if="columnSettings.documentType"
+            header="Type"
+            style="width: 60px"
+          >
+            <template #body="{ data }">
+              <i :class="'pi ' + sanitizeIcon(data.documentType?.meta?.icon)" class="doc-type-icon"></i>
+            </template>
+          </Column>
+
+          <Column
             v-if="columnSettings.documentName"
             field="title"
             header="Document Name"
@@ -446,13 +466,13 @@ async function handleUploadDocument() {
 
           <Column
             v-if="columnSettings.modifiedDate"
-            field="updatedDate"
             header="Modified Date"
             sortable
+            sortField="currentVersion.uploadedAt"
             style="min-width: 140px"
           >
             <template #body="{ data }">
-              <span class="date-text">{{ formatDate(data.updatedDate) }}</span>
+              <span class="date-text">{{ data.currentVersion ? formatDate(data.currentVersion.uploadedAt) : '—' }}</span>
             </template>
           </Column>
 
@@ -470,13 +490,13 @@ async function handleUploadDocument() {
 
           <Column
             v-if="columnSettings.version"
-            field="version"
             header="Version"
             sortable
+            sortField="currentVersion.version"
             style="min-width: 100px"
           >
             <template #body="{ data }">
-              <span class="version-text">v{{ data.version }}</span>
+              <span class="version-text">{{ data.currentVersion ? `v${data.currentVersion.version}` : '—' }}</span>
             </template>
           </Column>
 
@@ -682,7 +702,14 @@ async function handleUploadDocument() {
 
 /* Project Header */
 .project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   padding: 0 0 8px 0;
+}
+
+.project-actions {
+  flex-shrink: 0;
 }
 
 .project-title {
@@ -759,6 +786,11 @@ async function handleUploadDocument() {
 
 .documents-table :deep(.p-datatable-tbody > tr:hover) {
   background-color: var(--surface-ground);
+}
+
+.doc-type-icon {
+  font-size: 18px;
+  color: var(--text-secondary);
 }
 
 .document-link {

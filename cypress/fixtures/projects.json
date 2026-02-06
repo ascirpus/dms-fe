@@ -1,0 +1,32 @@
+[
+  {
+    "project": {
+      "id": "proj-123",
+      "name": "Test Project 1",
+      "description": "First test project for Cypress tests",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z"
+    },
+    "document_count": 5
+  },
+  {
+    "project": {
+      "id": "proj-456",
+      "name": "Test Project 2",
+      "description": "Second test project with documents",
+      "createdAt": "2024-01-10T14:20:00Z",
+      "updatedAt": "2024-01-12T09:15:00Z"
+    },
+    "document_count": 12
+  },
+  {
+    "project": {
+      "id": "proj-789",
+      "name": "Sample Project",
+      "description": "A sample project for testing search and filter",
+      "createdAt": "2024-01-05T08:00:00Z",
+      "updatedAt": "2024-01-05T08:00:00Z"
+    },
+    "document_count": 3
+  }
+]

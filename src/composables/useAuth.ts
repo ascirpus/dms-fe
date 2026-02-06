@@ -2,23 +2,45 @@ import axios, { type AxiosError, type AxiosResponse, HttpStatusCode, type AxiosI
 import { useKeycloak } from "@josempgon/vue-keycloak";
 import { useAuthStore } from "@/stores/authStore";
 import type { User } from "@/types";
-import { computed } from "vue";
+import type { UserTenantsResponse } from "@/types/Tenant";
+import { computed, ref } from "vue";
 
 const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
 
 let apiClientInstance: AxiosInstance | null = null;
 let interceptorsRegistered = false;
+let refreshPromise: Promise<string | null> | null = null;
+let tenantInitPromise: Promise<string | null> | null = null;
 
-/**
- * Auth composable that handles both direct login (via authStore) and Keycloak SSO
- * Priority: authStore tokens > keycloak tokens
- */
+const tenantReady = ref(false);
+
+async function refreshToken(): Promise<string | null> {
+    const keycloak = useKeycloak();
+
+    if (keycloak.keycloak.value) {
+        try {
+            await keycloak.keycloak.value.updateToken(60);
+            return keycloak.keycloak.value.token ?? null;
+        } catch {
+            return null;
+        }
+    }
+
+    return null;
+}
+
+async function getRefreshedToken(): Promise<string | null> {
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = refreshToken().finally(() => {
+        refreshPromise = null;
+    });
+    return refreshPromise;
+}
+
 export function useAuth() {
     const authStore = useAuthStore();
     const kc = useKeycloak();
-    const kcInstance = kc.keycloak.value;
 
-    // Create axios instance only once
     if (!apiClientInstance) {
         apiClientInstance = axios.create({
             baseURL: API_URL,
@@ -26,34 +48,31 @@ export function useAuth() {
     }
     const apiClient = apiClientInstance;
 
-    const decodedToken = computed(() => authStore.decodedToken || kc.decodedToken.value);
-    const isAuthenticated = computed(() => authStore.isAuthenticated || kc.isAuthenticated.value);
+    const decodedToken = computed(() => kc.decodedToken.value);
+    const isAuthenticated = computed(() => kc.isAuthenticated.value);
 
-    // Register interceptors only once
+    const getCurrentTenantId = (): string | null => {
+        return authStore.tenantId;
+    };
+
     if (!interceptorsRegistered) {
         interceptorsRegistered = true;
 
-        // Request interceptor: refresh token if needed and add auth header
         apiClient.interceptors.request.use(async config => {
-            const store = useAuthStore();
-            const keycloak = useKeycloak();
-
-            if (store.accessToken) {
-                if (store.isTokenExpired && store.refreshToken) {
-                    await store.refreshAccessToken();
-                }
-            } else if (keycloak.keycloak.value) {
-                try {
-                    await keycloak.keycloak.value.updateToken(60);
-                } catch (err) {
-                    console.log("Failed to refresh keycloak token:", err);
-                }
-            }
-
-            const currentToken = store.accessToken || keycloak.token.value;
+            const currentToken = await getRefreshedToken();
             if (currentToken) {
                 config.headers.Authorization = `Bearer ${currentToken}`;
             }
+
+            const url = config.url ?? '';
+            const isTenantBootstrap = url === '/api/tenants';
+            if (!isTenantBootstrap) {
+                const tenantId = authStore.tenantId;
+                if (tenantId) {
+                    config.headers['X-Tenant-ID'] = tenantId;
+                }
+            }
+
             return config;
         });
 
@@ -61,27 +80,82 @@ export function useAuth() {
             (success: AxiosResponse): AxiosResponse => {
                 return success;
             },
-            (error: AxiosError) => {
-                console.log(error);
-                const store = useAuthStore();
-                const keycloak = useKeycloak();
+            async (error: AxiosError) => {
+                const originalRequest = error.config as typeof error.config & { _retry?: boolean };
 
-                // Only logout if we had a token and got 401 (token was rejected)
-                // Don't logout if we never had a token (prevents logout during HMR/init)
-                if (error.status == HttpStatusCode.Unauthorized) {
-                    const hadToken = store.accessToken || keycloak.token.value;
-                    if (hadToken) {
-                        console.error("[dms-fe] Unauthorized - logging out");
-                        store.logout();
+                if (error.status === HttpStatusCode.Unauthorized && originalRequest && !originalRequest._retry) {
+                    originalRequest._retry = true;
+
+                    const freshToken = await getRefreshedToken();
+                    if (freshToken) {
+                        originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+                        return apiClient(originalRequest);
                     }
+
+                    const store = useAuthStore();
+                    console.error("[dms-fe] Unauthorized - token refresh failed, logging out");
+                    store.logout();
+
+                    const keycloak = useKeycloak();
+                    keycloak.keycloak.value?.login({ redirectUri: window.location.origin });
                 }
+
                 return Promise.reject(error);
             }
         );
     }
 
+    async function initializeTenant(): Promise<string | null> {
+        if (authStore.tenantId) {
+            tenantReady.value = true;
+            return authStore.tenantId;
+        }
+
+        if (tenantInitPromise) return tenantInitPromise;
+
+        tenantInitPromise = (async () => {
+            try {
+                const response = await apiClient.get<{ status: string; data: UserTenantsResponse }>('/api/tenants');
+                const { tenants, lastAccessedTenantId } = response.data.data;
+
+                if (!tenants || tenants.length === 0) {
+                    console.warn('[dms-fe] User has no tenants');
+                    return null;
+                }
+
+                let selectedId: string;
+                if (lastAccessedTenantId && tenants.some(t => t.tenantId === lastAccessedTenantId)) {
+                    selectedId = lastAccessedTenantId;
+                } else {
+                    selectedId = tenants[0].tenantId;
+                }
+
+                authStore.setTenantId(selectedId);
+                tenantReady.value = true;
+
+                return selectedId;
+            } catch (e) {
+                console.error('[dms-fe] Failed to fetch user tenants:', e);
+                return null;
+            } finally {
+                tenantInitPromise = null;
+            }
+        })();
+
+        return tenantInitPromise;
+    }
+
+    async function selectTenant(tenantId: string): Promise<void> {
+        authStore.setTenantId(tenantId);
+        try {
+            await apiClient.put('/api/me/active-tenant', { tenantId });
+        } catch (e) {
+            console.warn('[dms-fe] Failed to notify backend of tenant selection:', e);
+        }
+    }
+
     function login() {
-        // Redirect to Keycloak login page
+        const kcInstance = kc.keycloak.value;
         if (kcInstance) {
             kcInstance.login({
                 redirectUri: window.location.origin
@@ -90,56 +164,46 @@ export function useAuth() {
     }
 
     function logout() {
-        // Clear authStore tokens
         authStore.logout();
+        tenantReady.value = false;
 
-        // Also logout from keycloak if we have a session there
-        if (kc.isAuthenticated.value && kcInstance) {
+        const kcInstance = kc.keycloak.value;
+        if (kcInstance) {
             kcInstance.logout({
                 redirectUri: window.location.origin
             });
         } else {
-            // Just redirect to home
             window.location.href = '/';
         }
     }
 
     function getCurrentUser(): User {
         if (!isAuthenticated.value) {
-            return {
-                name: '',
-                email: '',
-                picture: '',
-            };
-        }
-
-        if (authStore.user?.name) {
-            return authStore.user;
+            return { email: '' };
         }
 
         const token = decodedToken.value as Record<string, unknown> | null;
         if (!token) {
-            return { name: '', email: '', picture: '' };
+            return { email: '' };
         }
 
-        // Build name from various possible claims
-        const name = (token.name as string) ||
-            `${token.given_name || ''} ${token.family_name || ''}`.trim() ||
-            (token.preferred_username as string) ||
-            '';
+        const firstName = (token.given_name as string) || undefined;
+        const lastName = (token.family_name as string) || undefined;
 
-        const picture = token.picture as string || '';
+        const name = (token.name as string) ||
+            [firstName, lastName].filter(Boolean).join(' ') ||
+            (token.preferred_username as string) ||
+            undefined;
+
+        const picture = (token.picture as string) || undefined;
 
         return {
             name,
             email: (token.email as string),
             picture,
+            firstName,
+            lastName,
         };
-    }
-
-    function getInitials(): string {
-        const user = getCurrentUser();
-        return (user.name ?? '').split(' ').map(word => word[0] || '').join('').toUpperCase();
     }
 
     return {
@@ -148,8 +212,10 @@ export function useAuth() {
         logout,
         isAuthenticated,
         getCurrentUser,
-        getInitials,
+        getCurrentTenantId,
+        initializeTenant,
+        selectTenant,
+        tenantReady,
         decodedToken,
-        authStore,
     };
 }

@@ -254,7 +254,8 @@ Testing setup:
 6. Create composable with state management
 7. Update/create UI components
 8. Write comprehensive tests for all layers
-9. Verify the feature works end-to-end
+9. **Document the feature in `docs/features/`** — describe what the component does, how users interact with it, and what functionality it provides. Update `FEATURES_STATUS.md` accordingly.
+10. Verify the feature works end-to-end
 
 **Critical: ASK, don't assume**
 - When enum values are not documented, ask for the actual values

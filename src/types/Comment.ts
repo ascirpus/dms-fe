@@ -3,6 +3,8 @@ import type { User } from "@/types/User.ts";
 export interface Comment {
     id: string;
     documentId: string;
+    fileId: string;
+    fileVersionNumber: number;
     comment: string;
     marker: Marker | null;
     author: User;

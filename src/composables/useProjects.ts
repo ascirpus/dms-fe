@@ -2,8 +2,10 @@ import { computed, type Ref } from 'vue';
 import { useQuery, useQueryClient, useMutation } from 'vue-query';
 import { useAuth } from '@/composables/useAuth';
 import { ProjectsService, type ProjectListItem } from '@/services/ProjectsService';
+import { DocumentsService } from '@/services/DocumentsService';
 import type { Project } from '@/types/Project';
 import type { Document } from '@/types/Document';
+import type { TenantUser } from '@/services/UsersService';
 import { extractShortId, toUrlId } from '@/utils/slugify';
 
 export function useProjects() {
@@ -20,6 +22,9 @@ export function useProjects() {
   } = useQuery<ProjectListItem[]>({
     queryKey: ['projects'],
     queryFn: () => api.fetchProjects(),
+    retry: 1, // Only retry once on failure
+    refetchOnWindowFocus: false, // Prevent automatic refetch on window focus
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Fetch single project by ID (uses cache or fetches)
@@ -81,12 +86,21 @@ export function useProjects() {
     },
   });
 
+  async function fetchProjectMembers(projectId: string): Promise<TenantUser[]> {
+    return queryClient.fetchQuery({
+      queryKey: ['projects', projectId, 'members'],
+      queryFn: () => api.fetchProjectMembers(projectId),
+      staleTime: 30000,
+    });
+  }
+
   return {
     projects,
     loading,
     error,
     refetchProjects,
     fetchProjectById,
+    fetchProjectMembers,
     resolveProject,
     resolveProjectId,
     useResolvedProjectId,
@@ -100,6 +114,7 @@ export function useProjectDocuments(projectId: () => string | null) {
   const { apiClient } = useAuth();
   const queryClient = useQueryClient();
   const api = new ProjectsService(apiClient);
+  const documentsApi = new DocumentsService(apiClient);
 
   const currentProjectId = computed(() => projectId());
 
@@ -116,6 +131,9 @@ export function useProjectDocuments(projectId: () => string | null) {
       return api.fetchProjectDocuments(currentProjectId.value);
     },
     enabled: computed(() => !!currentProjectId.value),
+    retry: 1, // Only retry once on failure
+    refetchOnWindowFocus: false, // Prevent automatic refetch on window focus
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Resolve a URL slug to a document
@@ -150,9 +168,9 @@ export function useProjectDocuments(projectId: () => string | null) {
   const uploadDocumentMutation = useMutation({
     mutationFn: (data: { file: File; title: string; documentType: string }) => {
       if (!currentProjectId.value) throw new Error('No project selected');
-      return api.uploadDocument(currentProjectId.value, data.file, {
+      return documentsApi.uploadDocument(currentProjectId.value, data.file, {
         title: data.title,
-        document_type: data.documentType,
+        document_type_id: data.documentType,
       });
     },
     onSuccess: (newDoc) => {

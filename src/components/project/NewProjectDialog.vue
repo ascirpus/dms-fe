@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, maxLength, email } from '@vuelidate/validators';
 import { useAuth } from '@/composables/useAuth';
 import { ProjectsService } from '@/services/ProjectsService';
+import { UsersService } from '@/services/UsersService';
 import type { Project } from '@/types/Project';
+import type { TenantUser } from '@/services/UsersService';
 
 // PrimeVue Components
 import Dialog from 'primevue/dialog';
@@ -22,30 +24,74 @@ const emit = defineEmits<{
 }>();
 
 const auth = useAuth();
-const api = new ProjectsService(auth.apiClient);
+const projectsApi = new ProjectsService(auth.apiClient);
+const usersApi = new UsersService(auth.apiClient);
 
 // Form state
 const saving = ref(false);
+const loadingUsers = ref(false);
 const form = reactive({
   name: '',
-  selectedUser: null as { id: string; name: string; email: string } | null,
-  selectedUsers: [] as { id: string; name: string; email: string }[],
+  selectedUser: null as TenantUser | null,
+  selectedUsers: [] as TenantUser[],
   currentEmail: '',
   inviteEmails: [] as string[]
 });
 
-// Mock users for selection (replace with actual API call)
-const availableUsers = ref([
-  { id: '1', name: 'John Doe', email: 'john@company.com' },
-  { id: '2', name: 'Jane Smith', email: 'jane@company.com' },
-  { id: '3', name: 'Bob Wilson', email: 'bob@company.com' },
-  { id: '4', name: 'Alice Brown', email: 'alice@company.com' }
-]);
+// Fetch available users from API
+const availableUsers = ref<TenantUser[]>([]);
 
-// Filter out already selected users from dropdown
+onMounted(async () => {
+  if (props.visible) {
+    await fetchAvailableUsers();
+  }
+});
+
+async function fetchAvailableUsers() {
+  loadingUsers.value = true;
+  try {
+    availableUsers.value = await usersApi.fetchTenantUsers();
+  } catch (err) {
+    console.error('Failed to fetch tenant users:', err);
+    availableUsers.value = [];
+  } finally {
+    loadingUsers.value = false;
+  }
+}
+
+// Helper to get display name for a user (firstName lastName or email fallback)
+function getUserDisplayName(user: TenantUser): string {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  return fullName || user.email || user.userId;
+}
+
+// Get current user ID for comparison
+const currentUserId = computed(() => {
+  const currentUser = auth.getCurrentUser();
+  return currentUser?.sub;
+});
+
+// Check if a user is the current user
+const isCurrentUser = (userId: string) => {
+  return userId === currentUserId.value;
+};
+
+// Filter out already selected users, add display names and current user flag
 const filteredUsers = computed(() => {
-  const selectedIds = form.selectedUsers.map(u => u.id);
-  return availableUsers.value.filter(u => !selectedIds.includes(u.id));
+  const selectedIds = form.selectedUsers.map(u => u.userId);
+
+  return availableUsers.value
+    .filter(u => !selectedIds.includes(u.userId))
+    .map(u => ({
+      ...u,
+      displayName: getUserDisplayName(u),
+      isCurrent: isCurrentUser(u.userId)
+    }));
+});
+
+// Check if we have any users to show (excluding current user who can't be added)
+const hasUsersToInvite = computed(() => {
+  return filteredUsers.value.some(u => !u.isCurrent);
 });
 
 // Validation rules
@@ -67,10 +113,11 @@ const hasFormData = computed(() => {
          form.inviteEmails.length > 0;
 });
 
-// Reset form when dialog opens
+// Reset form and fetch users when dialog opens
 watch(() => props.visible, (newVal) => {
   if (newVal) {
     resetForm();
+    fetchAvailableUsers();
   }
 });
 
@@ -89,14 +136,22 @@ function closeDialog() {
 
 // User selection
 function onUserSelect() {
-  if (form.selectedUser && !form.selectedUsers.find(u => u.id === form.selectedUser!.id)) {
-    form.selectedUsers.push(form.selectedUser);
+  if (!form.selectedUser) return;
+
+  // Don't allow selecting current user
+  if (form.selectedUser.isCurrent) {
     form.selectedUser = null;
+    return;
   }
+
+  // Add user to selected list (strip the extra properties we added)
+  const { displayName, isCurrent, ...userData } = form.selectedUser;
+  form.selectedUsers.push(userData as TenantUser);
+  form.selectedUser = null;
 }
 
 function removeUser(userId: string) {
-  form.selectedUsers = form.selectedUsers.filter(u => u.id !== userId);
+  form.selectedUsers = form.selectedUsers.filter(u => u.userId !== userId);
 }
 
 // Email invites
@@ -120,14 +175,14 @@ async function submit() {
   saving.value = true;
 
   try {
-    const createdProject = await api.createProject({
+    const createdProject = await projectsApi.createProject({
       name: form.name,
       description: '' // Add description field if needed
     });
 
-    // TODO: Send user invites via API
-    // await api.inviteUsers(createdProject.id, form.selectedUsers.map(u => u.id));
-    // await api.inviteByEmail(createdProject.id, form.inviteEmails);
+    // TODO: Send user invites via API when backend endpoint is ready
+    // await projectsApi.inviteUsers(createdProject.id, form.selectedUsers.map(u => u.userId));
+    // await projectsApi.inviteByEmail(createdProject.id, form.inviteEmails);
 
     emit('created', createdProject);
     closeDialog();
@@ -182,28 +237,41 @@ async function submit() {
           </small>
         </div>
 
-        <!-- Users Select -->
-        <div class="form-field">
+        <!-- Users Select (only show if there are users to invite) -->
+        <div v-if="hasUsersToInvite" class="form-field">
           <label for="users">Users</label>
           <Select
             id="users"
             v-model="form.selectedUser"
             :options="filteredUsers"
-            optionLabel="name"
+            optionLabel="displayName"
             placeholder="Select One or Many"
             class="w-full"
+            :loading="loadingUsers"
             @change="onUserSelect"
-          />
+          >
+            <template #option="slotProps">
+              <div class="flex items-center gap-2">
+                <i v-if="slotProps.option.isCurrent" class="pi pi-heart-fill text-red-400"></i>
+                <i v-else class="pi pi-user text-gray-400"></i>
+                <span :class="{ 'opacity-50': slotProps.option.isCurrent }">
+                  {{ slotProps.option.displayName }}
+                </span>
+                <span v-if="slotProps.option.isCurrent" class="text-xs text-gray-500">(You)</span>
+              </div>
+            </template>
+          </Select>
         </div>
 
         <!-- Selected Users List -->
         <div v-if="form.selectedUsers.length > 0" class="selected-users">
           <div
             v-for="user in form.selectedUsers"
-            :key="user.id"
+            :key="user.userId"
             class="selected-user-item"
           >
-            <span class="user-name">{{ user.name }}</span>
+            <span class="user-name">{{ getUserDisplayName(user) }}</span>
+            <span class="user-role">{{ user.role }}</span>
             <Button
               icon="pi pi-trash"
               text
@@ -211,7 +279,7 @@ async function submit() {
               size="small"
               severity="secondary"
               aria-label="Remove user"
-              @click="removeUser(user.id)"
+              @click="removeUser(user.userId)"
               class="remove-button"
             />
           </div>
@@ -354,6 +422,17 @@ async function submit() {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: var(--ui-button-primary);
+  flex: 1;
+}
+
+.user-role {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: var(--surface-ground);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
 }
 
 .remove-button {

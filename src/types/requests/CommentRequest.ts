@@ -8,6 +8,7 @@ export interface MarkerRequest {
 
 export interface CommentRequest {
     fileId: string;
+    fileVersion: number;
     comment: string;
     marker?: MarkerRequest | null;
 }

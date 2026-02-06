@@ -1,231 +1,265 @@
 <script setup lang="ts">
 import { ref, computed, inject, type Ref } from 'vue';
-import type { Comment } from "@/types";
-import { useMainStore } from "@/stores/mainStore.ts";
-import { useComments } from "@/composables/useComments.ts";
-import { Button, InputText, FloatLabel, Avatar } from "primevue";
+import type { Comment, User } from '@/types';
+import { useComments } from '@/composables/useComments';
+import { getAvatarColor, getInitialsFromUser, getDisplayName } from '@/utils/avatar';
+import { Button } from 'primevue';
 
 interface Props {
+  projectId: string;
   documentId: string;
-  currentPage?: number;
+  fileId: string;
+  fileVersion: number;
+  currentUser?: User;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits(['jump-to-marker']);
 
-const appState = useMainStore();
-const { addComment, resolveComment } = useComments();
-const comments = inject<Ref<Comment[]>>('comments')!!.value;
+const { addComment } = useComments();
+const comments = inject<Ref<Comment[]>>('comments')!;
 
-const replyText = ref('');
-const replyingToId = ref<string | null>(null);
+const newCommentText = ref('');
 
-// Group comments by their parent to build a tree structure
-const commentTree = computed(() => {
-  // Get all top-level comments (no parent)
-  const rootComments = comments
-      .filter(comment => !comment.parentId && comment.documentId === props.documentId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  // For each root comment, find its children
-  return rootComments.map(rootComment => {
-    const replies = comments
-        .filter(comment => comment.parentId === rootComment.id)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
-    return {
-      ...rootComment,
-      replies
-    };
-  });
-});
-
-// Filter comments by current page if provided
-const visibleComments = computed(() => {
-  if (!props.currentPage) {
-    return commentTree.value;
-  }
-
-  return commentTree.value.filter(comment =>
-      comment.marker?.pageNumber === props.currentPage
-  );
+const sortedComments = computed(() => {
+  return [...comments.value]
+    .filter(c => c.documentId === props.documentId && c.fileId === props.fileId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 });
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleString();
-};
-
-const startReply = (commentId: string) => {
-  replyingToId.value = commentId;
-  replyText.value = '';
-};
-
-const cancelReply = () => {
-  replyingToId.value = null;
-  replyText.value = '';
-};
-
-const submitReply = async (parentComment: Comment) => {
-  if (!replyText.value.trim()) return;
-
-  try {
-
-    // Add reply comment (with parentId)
-    addComment(
-        props.documentId,
-        replyText.value,
-        null,
-        parentComment.id
-    );
-
-    // Clear reply form
-    cancelReply();
-  } catch (error) {
-    console.error('Error adding reply:', error);
-  }
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${day}.${month}.${year} ${hour12}:${minutes} ${ampm}`;
 };
 
 const jumpToMarker = (comment: Comment) => {
   if (comment.marker) {
-    emit('jump-to-marker', comment.marker.pageNumber);
+    emit('jump-to-marker', comment.marker.pageNumber, comment.id);
+  }
+};
+
+const submitComment = async () => {
+  if (!newCommentText.value.trim()) return;
+  try {
+    await addComment(
+      props.projectId,
+      props.documentId,
+      props.fileId,
+      props.fileVersion,
+      newCommentText.value,
+      null,
+    );
+    newCommentText.value = '';
+  } catch (error) {
+    console.error('Error adding comment:', error);
   }
 };
 </script>
 
 <template>
-  <div class="comment-list w-full mt-8">
-    <h2 class="text-xl font-semibold mb-4">Comments</h2>
-
-    <div v-if="visibleComments.length === 0" class="text-gray-500 italic">
-      No comments{{ props.currentPage ? ' on this page' : '' }}
+  <div class="comment-list">
+    <!-- Add comment input -->
+    <div class="add-comment">
+      <span
+        v-if="currentUser"
+        class="comment-avatar"
+        :style="{ backgroundColor: getAvatarColor(currentUser.email) }"
+      >
+        {{ getInitialsFromUser(currentUser) }}
+      </span>
+      <input
+        v-model="newCommentText"
+        class="comment-input"
+        placeholder="Add a comment..."
+        @keydown.enter="submitComment"
+      />
+      <Button
+        icon="pi pi-send"
+        text
+        rounded
+        size="small"
+        @click="submitComment"
+        :disabled="!newCommentText.trim()"
+      />
     </div>
 
-    <div v-else class="space-y-4">
-      <!-- Root comments with their replies -->
-      <div v-for="comment in visibleComments" :key="comment.id" class="comment-thread">
-        <!-- Parent comment -->
-        <div class="comment-card bg-white rounded-lg shadow p-4">
-          <div class="flex items-start gap-3">
-            <!-- Avatar (placeholder) -->
-            <Avatar
-                :image="comment.author.picture || undefined"
-                :label="comment.author.name.charAt(0)"
-                shape="circle"
-                class="flex-shrink-0"
-            />
+    <div v-if="sortedComments.length === 0" class="empty-state">
+      No comments yet
+    </div>
 
-            <div class="flex-grow">
-              <div class="flex justify-between items-start">
-                <div>
-                  <span class="font-medium">{{ comment.author.name }}</span>
-                  <span class="text-xs text-gray-500 ml-2">{{ formatDate(comment.createdAt) }}</span>
-
-                  <!-- Page info badge -->
-                  <span
-                      v-if="comment.marker && (!props.currentPage || props.currentPage !== comment.marker.pageNumber)"
-                      class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded cursor-pointer"
-                      @click="jumpToMarker(comment)"
-                  >
-                    Page {{ comment.marker.pageNumber }}
-                  </span>
-                </div>
-
-                <!-- Resolution badge -->
-                <span
-                    v-if="comment.isResolved"
-                    class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                >
-                  Resolved
-                </span>
-              </div>
-
-              <!-- Comment text -->
-              <p class="mt-2 text-gray-700">{{ comment.comment }}</p>
-
-              <!-- Action buttons -->
-              <div class="mt-3 flex gap-2">
-                <Button
-                    v-if="!comment.isResolved"
-                    @click="resolveComment(comment)"
-                    label="Resolve"
-                    severity="success"
-                    size="small"
-                    text
-                />
-                <Button
-                    @click="startReply(comment.id)"
-                    label="Reply"
-                    severity="info"
-                    size="small"
-                    text
-                />
-              </div>
-
-              <!-- Reply form -->
-              <div v-if="replyingToId === comment.id" class="mt-3">
-                <FloatLabel variant="on">
-                  <label for="reply-text">Reply to this comment</label>
-                  <InputText id="reply-text" v-model="replyText" class="w-full" />
-                </FloatLabel>
-                <div class="mt-2 flex gap-2">
-                  <Button @click="submitReply(comment)" label="Submit" size="small" />
-                  <Button @click="cancelReply" label="Cancel" severity="secondary" size="small" text />
-                </div>
-              </div>
-            </div>
+    <div v-else class="comments">
+      <div
+        v-for="comment in sortedComments"
+        :key="comment.id"
+        class="comment-item"
+        :class="{ 'has-marker': !!comment.marker, 'is-resolved': comment.isResolved }"
+        @click="jumpToMarker(comment)"
+      >
+        <span
+          class="comment-avatar"
+          :style="{ backgroundColor: getAvatarColor(comment.author.email) }"
+        >
+          {{ getInitialsFromUser(comment.author) }}
+        </span>
+        <div class="comment-body">
+          <div class="comment-meta">
+            <span class="comment-author">{{ getDisplayName(comment.author) }}</span>
+            <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
           </div>
-        </div>
-
-        <!-- Child comments (replies) -->
-        <div v-if="comment.replies && comment.replies.length > 0" class="ml-8 mt-2 space-y-2">
-          <div
-              v-for="reply in comment.replies"
-              :key="reply.id"
-              class="comment-card bg-gray-50 rounded-lg shadow-sm p-3 border-l-4 border-blue-300"
+          <p class="comment-text">{{ comment.comment }}</p>
+          <span
+            v-if="comment.marker"
+            class="page-badge"
           >
-            <div class="flex items-start gap-3">
-              <!-- Avatar (placeholder) -->
-              <Avatar
-                  :image="reply.author.picture || undefined"
-                  :label="reply.author.name.charAt(0)"
-                  shape="circle"
-                  class="flex-shrink-0 w-8 h-8"
-              />
-
-              <div class="flex-grow">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <span class="font-medium">{{ reply.author.name }}</span>
-                    <span class="text-xs text-gray-500 ml-2">{{ formatDate(reply.createdAt) }}</span>
-                  </div>
-
-                  <!-- Resolution badge -->
-                  <span
-                      v-if="reply.isResolved"
-                      class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                  >
-                    Resolved
-                  </span>
-                </div>
-
-                <!-- Reply text -->
-                <p class="mt-1 text-gray-700">{{ reply.comment }}</p>
-
-                <!-- Resolve button -->
-                <div v-if="!reply.isResolved" class="mt-2">
-                  <Button
-                      @click="resolveComment(reply)"
-                      label="Resolve"
-                      severity="success"
-                      size="small"
-                      text
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+            Page {{ comment.marker.pageNumber }}
+          </span>
         </div>
+        <span v-if="comment.isResolved" class="resolved-badge">
+          <i class="pi pi-check"></i>
+        </span>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.add-comment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.comment-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-color);
+  background: transparent;
+  padding: 6px 0;
+}
+
+.comment-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.comments {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--surface-border);
+  transition: background 0.15s;
+}
+
+.comment-item.has-marker {
+  cursor: pointer;
+}
+
+.comment-item.has-marker:hover {
+  background: var(--surface-hover, #f8fafc);
+}
+
+.comment-item.is-resolved {
+  opacity: 0.6;
+}
+
+.comment-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.comment-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.comment-date {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.comment-text {
+  font-size: 13px;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.page-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.resolved-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #27ae60;
+  color: white;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+</style>

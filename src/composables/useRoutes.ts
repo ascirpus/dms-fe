@@ -30,9 +30,9 @@ export function createRouter(app: App): Router {
                 beforeEnter: () => {
                     const auth = useAuth();
                     auth.login();
-                    return false; // Prevent navigation, Keycloak will redirect
+                    return false;
                 },
-                component: () => import("@/views/user/Login.vue"), // Fallback, won't render
+                component: { template: '' },
             },
             {
                 path: '/password-recovery',
@@ -71,11 +71,30 @@ export function createRouter(app: App): Router {
                         component: () => import("@/views/project/ProjectDetail.vue"),
                     },
                     {
+                        path: ':id/settings',
+                        name: 'project-settings',
+                        component: () => import("@/views/project/ProjectSettings.vue"),
+                    },
+                    {
                         path: ':id/documents/:documentId',
                         name: 'project-document',
                         component: () => import("@/views/project/DocumentViewer.vue"),
                     }
                 ]
+            },
+            {
+                path: '/search',
+                name: 'search',
+                beforeEnter: isAuthenticated(app),
+                component: () => import("@/views/search/SearchResults.vue"),
+                meta: { title: 'Search' }
+            },
+            {
+                path: '/settings',
+                name: 'settings',
+                beforeEnter: isAuthenticated(app),
+                component: () => import("@/views/settings/TenantSettings.vue"),
+                meta: { title: 'Settings' }
             },
             {
                 path: '/:pathMatch(.*)*',
@@ -90,10 +109,16 @@ export function createRouter(app: App): Router {
         ]
     });
 
-    router.beforeEach((to, from, next) => {
+    router.beforeEach(async (to, from, next) => {
         document.title = to.meta.title ? `${to.meta.title} - CedarStack` : 'CedarStack - Intelligent Document Hub';
-        next()
-    })
+
+        const auth = useAuth();
+        if (auth.isAuthenticated.value && !auth.tenantReady.value) {
+            await auth.initializeTenant();
+        }
+
+        next();
+    });
 
     return router;
 }

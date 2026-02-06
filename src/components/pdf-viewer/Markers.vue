@@ -1,364 +1,490 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, inject, type Ref, watch, useTemplateRef, nextTick } from 'vue';
-import type { Comment, MarkerPosition } from "@/types";
-import { useComments } from "@/composables/useComments.ts";
-import { useMainStore } from "@/stores/mainStore.ts";
-import { FloatLabel, InputText, Button } from "primevue";
+import { ref, computed, onMounted, onBeforeUnmount, inject, type Ref, nextTick, watch, type ComponentPublicInstance } from 'vue';
+import type { Comment, MarkerPosition, User } from '@/types';
+import type { TenantUser } from '@/services/UsersService';
+import { useComments } from '@/composables/useComments';
+import { useMainStore } from '@/stores/mainStore';
+import { getAvatarColor, getInitialsFromUser, getDisplayName } from '@/utils/avatar';
+import { Button } from 'primevue';
 
 interface Props {
   pageNumber: number;
   projectId: string;
   documentId: string;
   fileId: string;
+  fileVersion: number;
+  highlightedCommentId?: string | null;
+  markersExpanded?: boolean;
+  showAllComments?: boolean;
+  showMyComments?: boolean;
+  currentUser?: User;
+  projectMembers?: TenantUser[];
 }
 
-const props = defineProps<Props>()
-const pdfComponent = inject<Ref<HTMLElement>>('pdfComponentRef')!!
+const props = withDefaults(defineProps<Props>(), {
+  highlightedCommentId: null,
+  markersExpanded: true,
+  showAllComments: false,
+  showMyComments: false,
+  projectMembers: () => [],
+});
 
+const pdfComponent = inject<Ref<ComponentPublicInstance | null>>('pdfComponentRef')!;
 const { comments, addComment, resolveComment } = useComments();
-const emit = defineEmits(['marker-resolved', 'marker-created']);
+const emit = defineEmits(['marker-created', 'marker-resolved', 'reply-to-comment', 'share-comment']);
 
-const appState =  useMainStore();
+const appState = useMainStore();
+const overlayRef = ref<HTMLElement | null>(null);
 const selectedMarker = ref<Comment | null>(null);
-const placingMarker = ref(false);
 const newMarkerModal = ref(false);
 const newMarkerPosition = ref<MarkerPosition | null>(null);
 const newMarkerComment = ref('');
-const markersOverlay = ref(null);
 const modalPosition = ref({ top: '0px', left: '0px' });
 
-// Necessary for offset calculation
-const controlsHeight = 58;
-const markerHeight = 30;
-
-const visibleMarkers = computed(() => {
-  return comments.value.filter((comment: Comment) => comment.marker?.pageNumber === props.pageNumber);
+// @mention state
+const mentionActive = ref(false);
+const mentionQuery = ref('');
+const mentionStartIndex = ref(-1);
+const mentionResults = computed(() => {
+  if (!mentionActive.value || !mentionQuery.value) return props.projectMembers.slice(0, 5);
+  const q = mentionQuery.value.toLowerCase();
+  return props.projectMembers
+    .filter(m => {
+      const full = `${m.firstName ?? ''} ${m.lastName ?? ''} ${m.email}`.toLowerCase();
+      return full.includes(q);
+    })
+    .slice(0, 5);
 });
 
-const enableMarkerPlacement = () => {
-  placingMarker.value = true;
-  // Change cursor to indicate marking mode
-  document.body.style.cursor = 'crosshair';
+const animatingMarkerId = ref<string | null>(null);
+let animationTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(() => props.highlightedCommentId, (id) => {
+  if (animationTimer) clearTimeout(animationTimer);
+  if (id) {
+    animatingMarkerId.value = id;
+    selectedMarker.value = null;
+    animationTimer = setTimeout(() => { animatingMarkerId.value = null; }, 1500);
+  } else {
+    animatingMarkerId.value = null;
+  }
+}, { immediate: true });
+
+const markerSize = 32;
+
+const visibleMarkers = computed(() => {
+  let filtered = comments.value.filter(
+    (c: Comment) => c.fileId === props.fileId && c.marker?.pageNumber === props.pageNumber
+  );
+  if (props.showMyComments && props.currentUser) {
+    filtered = filtered.filter(c => c.author.email === props.currentUser!.email);
+  }
+  return filtered;
+});
+
+const expandedMarkers = computed(() => {
+  if (!props.markersExpanded) {
+    return visibleMarkers.value.filter(m =>
+      m.id === animatingMarkerId.value || m.id === selectedMarker.value?.id
+    );
+  }
+  return visibleMarkers.value.filter(m =>
+    !m.isResolved || m.id === animatingMarkerId.value || m.id === selectedMarker.value?.id
+  );
+});
+
+const getMarkerStyle = (comment: Comment) => {
+  const marker = comment.marker;
+  if (!marker || marker.pageNumber !== props.pageNumber) {
+    return { display: 'none' };
+  }
+
+  const { x, y } = marker.position;
+  return {
+    left: `${x - markerSize / 2}px`,
+    top: `${y - markerSize / 2}px`,
+    opacity: comment.isResolved && animatingMarkerId.value !== comment.id ? '0.5' : '1',
+  };
 };
 
-const cancelMarkerPlacement = () => {
-  placingMarker.value = false;
-  newMarkerPosition.value = null;
-  newMarkerComment.value = '';
-  newMarkerModal.value = false;
-  // Reset cursor
-  document.body.style.cursor = 'default';
+const getMarkerInitials = (comment: Comment): string => {
+  return getInitialsFromUser(comment.author);
 };
 
-const saveNewMarker = async () => {
-  if (!newMarkerPosition.value || !newMarkerComment.value.trim()) {
-    alert('Please add a comment and select a position.');
+const getMarkerColor = (comment: Comment): string => {
+  return getAvatarColor(comment.author.email);
+};
+
+const showMarkerDetails = (comment: Comment) => {
+  if (selectedMarker.value?.id === comment.id) {
+    selectedMarker.value = null;
     return;
   }
+  selectedMarker.value = comment;
+  newMarkerModal.value = false;
+};
 
-  try {
-    const newMarker = await addComment(
-        props.projectId,
-        props.documentId,
-        props.fileId,
-        newMarkerComment.value,
-        {
-          pageNumber: props.pageNumber,
-          position: newMarkerPosition.value
-        }
-    );
+const formatDate = (date: string) => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${day}.${month}.${year} ${hour12}:${minutes} ${ampm}`;
+};
 
-    emit('marker-created', newMarker);
-    cancelMarkerPlacement();
-  } catch (error) {
-    console.error('Error saving marker:', error);
-    alert('Failed to save comment. Please try again.');
+const calculateModalPosition = (x: number, y: number) => {
+  if (!overlayRef.value) return;
+  const overlayRect = overlayRef.value.getBoundingClientRect();
+  const modalWidth = 340;
+
+  const viewportX = overlayRect.left + x;
+  const viewportY = overlayRect.top + y;
+
+  let left = viewportX + markerSize / 2 + 8;
+  if (left + modalWidth > window.innerWidth) {
+    left = viewportX - modalWidth - 8;
   }
+  if (left < 0) left = 0;
+
+  modalPosition.value = {
+    left: `${left}px`,
+    top: `${viewportY}px`,
+  };
 };
 
 const resolveMarker = async (marker: Comment) => {
   try {
-    // In a real app, you would update this via API/store
-    // Example: await pdfMarkersStore.resolveMarker(marker.id);
-
-    // Update local state
-    marker.isResolved = true;
-
-    // Emit event for parent components
+    await resolveComment(props.projectId, marker);
     emit('marker-resolved', marker.id);
-
-    selectedMarker.value = null;
   } catch (error) {
     console.error('Error resolving marker:', error);
-    alert('Failed to resolve comment. Please try again.');
   }
 };
 
-const getMarkerStyle = (comment: Comment) => {
-  const marker = comment.marker;
+const saveNewMarker = async () => {
+  if (!newMarkerPosition.value || !newMarkerComment.value.trim()) return;
 
-  const pdfElement = pdfComponent.value?.$el;
-  if (!pdfElement) return;
-
-  if (!marker) {
-    return;
+  try {
+    const newMarker = await addComment(
+      props.projectId,
+      props.documentId,
+      props.fileId,
+      props.fileVersion,
+      newMarkerComment.value,
+      { pageNumber: props.pageNumber, position: newMarkerPosition.value },
+    );
+    emit('marker-created', newMarker);
+    cancelMarkerPlacement();
+  } catch (error) {
+    console.error('Error saving marker:', error);
   }
-
-  if (marker.pageNumber !== props.pageNumber) {
-    return { display: 'none' };
-  }
-
-  const { x, y } = marker.position
-
-  // Place the marker relative to the pdf document itself, seemingly ignoring the control component height
-  // and offset the height by the height of the marker itself so it looks like the chat bubble points to
-  // where the marker was placed, rather than below it
-  return {
-    left: `${x}px`,
-    top: `${ y + controlsHeight - markerHeight}px`,
-    opacity: comment.isResolved ? '0.5' : '1'
-  };
 };
 
-const showMarkerDetails = (comment: Comment) => {
-
-  // Close the marker by clicking the same marker twice
-  if (selectedMarker.value == comment) {
-    selectedMarker.value = null;
-    return;
-  }
-
-  selectedMarker.value = comment;
-
-  // Close any new marker modal that might be open
+const cancelMarkerPlacement = () => {
+  newMarkerPosition.value = null;
+  newMarkerComment.value = '';
   newMarkerModal.value = false;
-
-  // Position the modal near the marker
-  if (comment.marker) {
-
-    calculateModalPosition(comment.marker.position.x, comment.marker.position.y);
-  }
+  mentionActive.value = false;
 };
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString();
+const handleCommentInput = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const value = input.value;
+  const cursorPos = input.selectionStart ?? value.length;
+
+  // Check for @mention trigger
+  const textBeforeCursor = value.substring(0, cursorPos);
+  const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+  if (lastAtIndex >= 0) {
+    const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+    if (!textAfterAt.includes(' ') || textAfterAt.length <= 20) {
+      mentionActive.value = true;
+      mentionQuery.value = textAfterAt;
+      mentionStartIndex.value = lastAtIndex;
+      return;
+    }
+  }
+
+  mentionActive.value = false;
 };
 
-const calculateModalPosition = (x: number, y: number) => {
-  if (!pdfComponent.value?.$el) return;
-
-  const pdfRect = pdfComponent.value.$el.getBoundingClientRect();
-  const modalWidth = 390; // Max modal width from CSS
-  const modalHeight = 65; // Approximate modal height
-
-  // Calculate if modal would go out of bounds
-  let left = x;
-  let top = y;
-
-  // Check right boundary
-  if (left + modalWidth > pdfRect.width) {
-    left = x - modalWidth;
-  }
-
-  // If left would be negative, anchor to left edge
-  if (left < 0) {
-    left = 0;
-  }
-
-  // Check bottom boundary
-  if (top < modalHeight) {
-    top = 0;
-  }
-
-  const offsetX = pdfRect.left;
-  const offsetY = pdfRect.top;
-
-  modalPosition.value = {
-    left: `${offsetX+left}px`,
-    top: `${offsetY+top}px`
-  };
+const selectMention = (member: TenantUser) => {
+  const name = `${member.firstName ?? ''} ${member.lastName ?? ''}`.trim() || member.email;
+  const before = newMarkerComment.value.substring(0, mentionStartIndex.value);
+  const after = newMarkerComment.value.substring(
+    mentionStartIndex.value + 1 + mentionQuery.value.length,
+  );
+  newMarkerComment.value = `${before}@${name} ${after}`;
+  mentionActive.value = false;
 };
 
-const handleDocumentClick = (event) => {
-  // Close any open modals first
+const handleDocumentClick = (event: MouseEvent) => {
   selectedMarker.value = null;
-
-  // Only process clicks if in marker placement mode
   if (!appState.documentMarker) return;
+  if (!overlayRef.value) return;
 
-  // Check if the click was inside the PDF viewer
-  const pdfElement = pdfComponent.value?.$el;
-  if (!pdfElement) return;
+  const overlayRect = overlayRef.value.getBoundingClientRect();
+  const x = Math.round(event.clientX - overlayRect.left);
+  const y = Math.round(event.clientY - overlayRect.top);
 
-  const pdfRect = pdfElement.getBoundingClientRect();
+  newMarkerPosition.value = { x, y };
+  calculateModalPosition(x, y);
+  newMarkerModal.value = true;
 
-  // Check if click is inside the PDF area
-  if (
-      event.clientX >= pdfRect.left &&
-      event.clientX <= pdfRect.right &&
-      event.clientY >= pdfRect.top &&
-      event.clientY <= pdfRect.bottom
-  ) {
-    // Calculate coordinates relative to the PDF container
-    const x = Math.round(event.clientX - pdfRect.left);
-    const y = Math.round(event.clientY - pdfRect.top);
+  nextTick(() => {
+    document.getElementById('marker-comment-input')?.focus();
+  });
 
-    newMarkerPosition.value = { x, y };
-    calculateModalPosition(x, y);
-
-    newMarkerModal.value = true;
-
-    nextTick(() => {
-      document.getElementById('add-comment')?.focus()
-    })
-
-    // Stop event propagation
-    event.stopPropagation();
-    // appState.toggleDocumentMarker(false);
-  }
+  event.stopPropagation();
 };
 
-// Close modals when clicking outside
-const handleGlobalClick = (event) => {
-  // Skip if click is on a marker or modal
-  if (event.target.closest('.comment-marker') ||
-      event.target.closest('.modal-content')) {
+const handleGlobalClick = (event: MouseEvent) => {
+  if (
+    (event.target as HTMLElement).closest('.comment-marker') ||
+    (event.target as HTMLElement).closest('.marker-card-inline') ||
+    (event.target as HTMLElement).closest('.marker-modal-content')
+  ) {
     return;
   }
-
-  // Close modals
   selectedMarker.value = null;
   if (!appState.documentMarker) {
     newMarkerModal.value = false;
   }
 };
 
-// Lifecycle hooks
-onMounted(() => {
-  pdfComponent.value.$el.addEventListener('click', handleDocumentClick);
-  document.addEventListener('click', handleGlobalClick);
-});
+const onKeyDown = (event: KeyboardEvent) => {
+  const tag = (event.target as HTMLElement)?.tagName;
+  const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (event.target as HTMLElement)?.isContentEditable;
 
-onBeforeUnmount(() => {
-  // Clean up event listeners
-  pdfComponent.value?.$el.removeEventListener('click', handleDocumentClick);
-  document.removeEventListener('click', handleGlobalClick);
-
-  // Reset cursor just in case
-  document.body.style.cursor = 'default';
-});
-
-const onEnterPressed = (event: KeyboardEvent) => {
-  if (event.key != 'Enter') {
-    return;
+  if (event.key === 'Escape') {
+    if (newMarkerModal.value) cancelMarkerPlacement();
+    if (selectedMarker.value) selectedMarker.value = null;
+    appState.toggleDocumentMarker(false);
   }
-
-  // Enter is pressed while the new comment modal is open, imitate submit.
-  if (newMarkerModal.value) {
-    saveNewMarker()
+  if (event.key === 'Enter' && newMarkerModal.value && !mentionActive.value) {
+    saveNewMarker();
   }
-}
-
-const onEscapePressed = (event: KeyboardEvent) => {
-
-  if (event.key != 'Escape') {
-    return;
+  if (event.key === 'c' && !isEditable && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    appState.toggleDocumentMarker(!appState.documentMarker);
   }
+};
 
-  if (newMarkerModal.value) {
-    newMarkerModal.value = false;
+const getExpandedCardStyle = (comment: Comment): Record<string, string> => {
+  if (!comment.marker) return { display: 'none' };
+  const { x, y } = comment.marker.position;
+  const cardWidth = 320;
+
+  let left = x + markerSize / 2 + 8;
+  if (overlayRef.value) {
+    const overlayWidth = overlayRef.value.clientWidth;
+    if (left + cardWidth > overlayWidth) {
+      left = x - cardWidth - 8;
+    }
   }
+  if (left < 0) left = 0;
 
+  return {
+    position: 'absolute',
+    left: `${left}px`,
+    top: `${y - markerSize / 2}px`,
+  };
+};
+
+const handleScroll = () => {
   if (selectedMarker.value) {
     selectedMarker.value = null;
   }
 };
 
-onMounted(async() => {
-    document.addEventListener('keydown', onEscapePressed)
-    document.addEventListener('keydown', onEnterPressed)
+onMounted(() => {
+  pdfComponent.value?.$el?.addEventListener('click', handleDocumentClick);
+  document.addEventListener('click', handleGlobalClick);
+  document.addEventListener('keydown', onKeyDown);
+  overlayRef.value?.parentElement?.addEventListener('scroll', handleScroll);
+});
+
+onBeforeUnmount(() => {
+  pdfComponent.value?.$el?.removeEventListener('click', handleDocumentClick);
+  document.removeEventListener('click', handleGlobalClick);
+  document.removeEventListener('keydown', onKeyDown);
+  overlayRef.value?.parentElement?.removeEventListener('scroll', handleScroll);
 });
 </script>
 
 <template>
-  <div class="markers-overlay" ref="markersOverlay">
+  <div ref="overlayRef" class="markers-overlay">
+    <!-- Marker circles -->
     <div
-        v-for="marker in visibleMarkers"
-        :key="marker.id"
-        class="comment-marker"
-        :style="getMarkerStyle(marker)"
-        @click.stop="showMarkerDetails(marker)"
+      v-for="marker in visibleMarkers"
+      :key="marker.id"
+      class="comment-marker"
+      :class="{ 'marker-pop': animatingMarkerId === marker.id }"
+      :style="getMarkerStyle(marker)"
+      @click.stop="showMarkerDetails(marker)"
     >
-      <span class="marker-icon">💬</span>
+      <span
+        class="marker-avatar"
+        :style="{ backgroundColor: getMarkerColor(marker) }"
+      >
+        {{ getMarkerInitials(marker) }}
+      </span>
+    </div>
+
+    <!-- Comment cards (inside overlay so they scroll with markers) -->
+    <div
+      v-for="marker in expandedMarkers"
+      :key="'card-' + marker.id"
+      class="marker-card-inline"
+      :style="getExpandedCardStyle(marker)"
+    >
+      <div class="comment-card-header">
+        <span
+          class="card-avatar"
+          :style="{ backgroundColor: getMarkerColor(marker) }"
+        >
+          {{ getMarkerInitials(marker) }}
+        </span>
+        <div class="card-header-text">
+          <span class="card-author">{{ getDisplayName(marker.author) }}</span>
+          <span class="card-date">{{ formatDate(marker.createdAt) }}</span>
+        </div>
+        <div class="card-actions">
+          <Button
+            v-if="!marker.isResolved"
+            icon="pi pi-check"
+            text
+            rounded
+            size="small"
+            severity="success"
+            aria-label="Resolve"
+            @click="resolveMarker(marker)"
+          />
+          <!-- TODO: re-enable when reply/share features are ready
+          <Button
+            icon="pi pi-link"
+            text
+            rounded
+            size="small"
+            aria-label="Share link"
+            @click="emit('share-comment', marker)"
+          />
+          -->
+        </div>
+      </div>
+      <p class="card-comment">{{ marker.comment }}</p>
+      <!-- TODO: re-enable when reply feature is ready
+      <a
+        class="card-reply-link"
+        @click="emit('reply-to-comment', marker)"
+      >
+        Reply
+      </a>
+      -->
     </div>
   </div>
 
-  <!-- Add new marker button -->
-  <button @click="enableMarkerPlacement" class="add-marker-btn">
-    Add Comment
-  </button>
-
-  <!-- Marker details modal -->
-  <div v-if="selectedMarker" class="marker-modal marker-modal-positioned">
-    <div class="modal-content flex-col items-start" :style="modalPosition">
-      <p>{{ selectedMarker.comment }}</p>
-      <p><small>By: {{ selectedMarker.author.name }} on {{ formatDate(selectedMarker.createdAt) }}</small></p>
-      <div class="modal-actions">
-        <Button @click="resolveMarker(selectedMarker)" v-if="!selectedMarker.isResolved" label="Resolve" />
-        <Button @click="selectedMarker = null" label="Close" />
+  <!-- New marker input -->
+  <div v-if="newMarkerModal" class="marker-modal">
+    <div class="marker-modal-content new-marker-input" :style="modalPosition">
+      <span
+        v-if="currentUser"
+        class="card-avatar"
+        :style="{ backgroundColor: getAvatarColor(currentUser.email) }"
+      >
+        {{ getInitialsFromUser(currentUser) }}
+      </span>
+      <div class="input-wrapper">
+        <input
+          id="marker-comment-input"
+          v-model="newMarkerComment"
+          class="comment-input"
+          placeholder="Add a comment..."
+          @input="handleCommentInput"
+        />
+        <!-- @mention dropdown -->
+        <div v-if="mentionActive && mentionResults.length > 0" class="mention-dropdown">
+          <div
+            v-for="member in mentionResults"
+            :key="member.userId"
+            class="mention-item"
+            @mousedown.prevent="selectMention(member)"
+          >
+            <span
+              class="mention-avatar"
+              :style="{ backgroundColor: getAvatarColor(member.email) }"
+            >
+              {{ (member.firstName?.[0] ?? '') + (member.lastName?.[0] ?? '') }}
+            </span>
+            <span class="mention-name">
+              {{ member.firstName }} {{ member.lastName }}
+            </span>
+            <span class="mention-email">{{ member.email }}</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <div v-if="newMarkerModal" class="marker-modal marker-modal-positioned">
-    <div class="modal-content" :style="modalPosition">
-      <FloatLabel variant="on">
-        <label for="add-comment">Add comment</label>
-        <InputText ref="commentInput" id="add-comment" v-model="newMarkerComment" />
-      </FloatLabel>
-      <div class="modal-actions">
-        <Button icon="pi pi-check" severity="success" @click="saveNewMarker" />
-        <Button icon="pi pi-times" severity="danger" @click="cancelMarkerPlacement" />
-      </div>
+      <Button
+        icon="pi pi-send"
+        text
+        rounded
+        size="small"
+        @click="saveNewMarker"
+        :disabled="!newMarkerComment.trim()"
+      />
     </div>
   </div>
 </template>
 
 <style scoped>
+.markers-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .comment-marker {
   position: absolute;
-  width: 30px;
-  height: 30px;
-  background-color: rgba(255, 204, 0, 0.8);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
   pointer-events: auto;
+  cursor: pointer;
   z-index: 10;
-  transition: transform 0.2s;
+  transition: transform 0.15s;
 }
 
 .comment-marker:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
-.marker-icon {
-  font-size: 16px;
-}
-
-.add-marker-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 10px 15px;
-  background-color: #2c3e50;
+.marker-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  z-index: 20;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+
+.marker-card-inline {
+  position: absolute;
+  pointer-events: auto;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 12px;
+  width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 15;
 }
 
 .marker-modal {
@@ -368,34 +494,179 @@ onMounted(async() => {
   width: 100%;
   height: 100%;
   z-index: 100;
-}
-
-.marker-modal-positioned {
-  background-color: transparent;
   pointer-events: none;
 }
 
-.modal-content {
-  background-color: white;
-  padding: 16px;
-  display: flex;
-  border-radius: 4px;
-  width: 390px;
-  max-width: 90%;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+.marker-modal-content {
   position: absolute;
   pointer-events: auto;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 12px;
+  width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.modal-actions {
-  margin-left: 8px;
+.comment-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  user-select: none;
 }
 
-button:hover {
-  background-color: #2980b9;
+.card-header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.card-date {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.card-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.card-comment {
+  font-size: 13px;
+  color: var(--text-color);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.card-reply-link {
+  font-size: 12px;
+  color: var(--primary-color);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.card-reply-link:hover {
+  text-decoration: underline;
+}
+
+/* New marker input */
+.new-marker-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.comment-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-color);
+  background: transparent;
+  padding: 4px 0;
+}
+
+.comment-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.mention-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 260px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 4px;
+  z-index: 200;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.mention-item:hover {
+  background: var(--surface-hover, #f1f5f9);
+}
+
+.mention-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.mention-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.mention-email {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* Marker pop animation for jump-to-marker */
+.marker-pop {
+  animation: marker-pop 0.6s ease-out;
+  z-index: 20;
+}
+
+@keyframes marker-pop {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  40% {
+    transform: scale(1.8);
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
 }
 </style>
