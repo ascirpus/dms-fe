@@ -34,7 +34,8 @@ const mockApiClient = {
 vi.mock('@/composables/useAuth', () => ({
   useAuth: vi.fn(() => ({
     apiClient: mockApiClient,
-    getCurrentUser: () => ({ sub: 'user-1' }),
+    getCurrentUser: () => ({ email: 'admin@test.com' }),
+    decodedToken: { value: { sub: 'user-1' } },
   })),
 }));
 

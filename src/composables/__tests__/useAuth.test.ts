@@ -27,6 +27,10 @@ describe('useAuth', () => {
 
     vi.mocked(useAuthStore).mockReturnValue(mockAuthStore);
     vi.mocked(useKeycloak).mockReturnValue(mockKeycloak);
+
+    // Reset module-level currentUser between tests
+    const { currentUser } = useAuth();
+    currentUser.value = null;
   });
 
   describe('getCurrentTenantId', () => {
@@ -46,67 +50,105 @@ describe('useAuth', () => {
   });
 
   describe('getCurrentUser', () => {
-    it('should extract user info from JWT', () => {
-      mockKeycloak.decodedToken.value = {
-        sub: 'user-123',
-        name: 'John Doe',
-        email: 'john@example.com',
-        picture: 'https://example.com/avatar.jpg',
-      };
-      mockKeycloak.isAuthenticated.value = true;
-
+    it('should return null before fetchCurrentUser is called', () => {
       const { getCurrentUser } = useAuth();
       const user = getCurrentUser();
 
-      expect(user.name).toBe('John Doe');
-      expect(user.email).toBe('john@example.com');
-      expect(user.picture).toBe('https://example.com/avatar.jpg');
+      expect(user).toBeNull();
     });
 
-    it('should return empty user when not authenticated', () => {
-      mockKeycloak.decodedToken.value = null;
-      mockKeycloak.isAuthenticated.value = false;
+    it('should return user data after fetchCurrentUser', async () => {
+      const { fetchCurrentUser, getCurrentUser, apiClient } = useAuth();
 
-      const { getCurrentUser } = useAuth();
+      vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
+        data: {
+          status: 'SUCCESS',
+          data: {
+            email: 'john@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            phone: '+1234567890',
+            locale: 'en',
+            picture: 'https://example.com/avatar.jpg',
+          },
+        },
+      });
+
+      await fetchCurrentUser();
       const user = getCurrentUser();
 
-      expect(user.name).toBeUndefined();
-      expect(user.email).toBe('');
-      expect(user.picture).toBeUndefined();
+      expect(user).not.toBeNull();
+      expect(user!.email).toBe('john@example.com');
+      expect(user!.firstName).toBe('John');
+      expect(user!.lastName).toBe('Doe');
+      expect(user!.phone).toBe('+1234567890');
+      expect(user!.picture).toBe('https://example.com/avatar.jpg');
+    });
+
+    it('should return null when fetchCurrentUser fails', async () => {
+      const { fetchCurrentUser, getCurrentUser, apiClient } = useAuth();
+
+      vi.spyOn(apiClient, 'get').mockRejectedValueOnce(new Error('Network error'));
+
+      await fetchCurrentUser();
+      const user = getCurrentUser();
+
+      expect(user).toBeNull();
     });
   });
 
-  describe('getCurrentUser firstName/lastName', () => {
-    it('should extract firstName and lastName from token', () => {
-      mockKeycloak.decodedToken.value = {
-        sub: 'user-123',
-        given_name: 'John',
-        family_name: 'Doe',
-        name: 'John Doe',
-        email: 'john@example.com',
-      };
-      mockKeycloak.isAuthenticated.value = true;
+  describe('updateProfile', () => {
+    it('should update currentUser after successful PUT', async () => {
+      const { updateProfile, getCurrentUser, apiClient } = useAuth();
 
-      const { getCurrentUser } = useAuth();
+      vi.spyOn(apiClient, 'put').mockResolvedValueOnce({
+        data: {
+          status: 'SUCCESS',
+          data: {
+            email: 'john@example.com',
+            firstName: 'Jane',
+            lastName: 'Doe',
+            phone: '+9999999999',
+            locale: 'en',
+          },
+        },
+      });
+
+      const result = await updateProfile({ firstName: 'Jane', phone: '+9999999999' });
+
+      expect(result).not.toBeNull();
+      expect(result!.firstName).toBe('Jane');
+
       const user = getCurrentUser();
-
-      expect(user.firstName).toBe('John');
-      expect(user.lastName).toBe('Doe');
+      expect(user!.firstName).toBe('Jane');
+      expect(user!.phone).toBe('+9999999999');
     });
 
-    it('should handle missing firstName/lastName gracefully', () => {
-      mockKeycloak.decodedToken.value = {
-        sub: 'user-123',
-        email: 'user@example.com',
-      };
-      mockKeycloak.isAuthenticated.value = true;
+    it('should throw on API failure', async () => {
+      const { updateProfile, apiClient } = useAuth();
 
-      const { getCurrentUser } = useAuth();
-      const user = getCurrentUser();
+      vi.spyOn(apiClient, 'put').mockRejectedValueOnce(new Error('Server error'));
 
-      expect(user.firstName).toBeUndefined();
-      expect(user.lastName).toBeUndefined();
-      expect(user.email).toBe('user@example.com');
+      await expect(updateProfile({ firstName: 'Test' })).rejects.toThrow('Server error');
+    });
+  });
+
+  describe('logout', () => {
+    it('should clear currentUser on logout', async () => {
+      const { fetchCurrentUser, getCurrentUser, logout, apiClient } = useAuth();
+
+      vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
+        data: {
+          status: 'SUCCESS',
+          data: { email: 'john@example.com', locale: 'en', notificationOverrides: {} },
+        },
+      });
+
+      await fetchCurrentUser();
+      expect(getCurrentUser()).not.toBeNull();
+
+      logout();
+      expect(getCurrentUser()).toBeNull();
     });
   });
 });

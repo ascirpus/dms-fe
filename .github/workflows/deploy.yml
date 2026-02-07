@@ -1,0 +1,157 @@
+name: Build & Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: registry.digitalocean.com
+  IMAGE_NAME: dms-frontend
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'public/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vite.config.*'
+              - 'tsconfig.*'
+              - 'index.html'
+              - 'Dockerfile'
+              - 'nginx.conf'
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test -- --run
+
+  build-and-push:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: [changes, test]
+    if: >-
+      always() &&
+      !failure() &&
+      !cancelled() &&
+      needs.changes.outputs.src == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg VITE_DOCUMENT_STORE_URL=https://app.cedar-stack.com \
+            --build-arg VITE_AUTH_PROVIDER=https://auth.cedar-stack.com \
+            --build-arg VITE_AUTH_CLIENT_ID=dms-fe \
+            --build-arg VITE_AUTH_REALM=dms \
+            -t ${{ env.REGISTRY }}/${{ secrets.DOCR_REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ secrets.DOCR_REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ secrets.DOCR_REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ secrets.DOCR_REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [changes, test, build-and-push]
+    if: >-
+      always() &&
+      !failure() &&
+      !cancelled() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: deploy
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script_stop: true
+          script: |
+            docker login registry.digitalocean.com -u ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} -p ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+            cd /opt/dms
+            docker-compose pull frontend
+            docker-compose up -d frontend
+
+      - name: Notify Discord — Success
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          SKIPPED_BUILD=${{ needs.changes.outputs.src != 'true' }}
+          DESC="**DMS Frontend** deployed to production."
+          if [ "$SKIPPED_BUILD" = "true" ]; then
+            DESC="**DMS Frontend** re-deployed (infra-only, no new build)."
+          fi
+          curl -s -H "Content-Type: application/json" -d "{
+            \"embeds\": [{
+              \"title\": \"Frontend Deploy Succeeded\",
+              \"description\": \"$DESC\",
+              \"color\": 3066993,
+              \"fields\": [
+                {\"name\": \"Commit\", \"value\": \"\`${GITHUB_SHA::8}\`\", \"inline\": true},
+                {\"name\": \"Branch\", \"value\": \"\`${{ github.ref_name }}\`\", \"inline\": true},
+                {\"name\": \"Author\", \"value\": \"${{ github.actor }}\", \"inline\": true}
+              ],
+              \"url\": \"${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}\"
+            }]
+          }" "$DISCORD_WEBHOOK"
+
+      - name: Notify Discord — Failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -s -H "Content-Type: application/json" -d "{
+            \"embeds\": [{
+              \"title\": \"Frontend Deploy FAILED\",
+              \"description\": \"**DMS Frontend** deploy failed. [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+              \"color\": 15158332,
+              \"fields\": [
+                {\"name\": \"Commit\", \"value\": \"\`${GITHUB_SHA::8}\`\", \"inline\": true},
+                {\"name\": \"Author\", \"value\": \"${{ github.actor }}\", \"inline\": true}
+              ]
+            }]
+          }" "$DISCORD_WEBHOOK"

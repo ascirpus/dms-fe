@@ -4,11 +4,59 @@ import { ref } from 'vue';
 import Header from '../Header.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useNotifications } from '@/composables/useNotifications';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 vi.mock('@/composables/useAuth');
 vi.mock('@/composables/useNotifications');
 vi.mock('vue-router');
+vi.mock('@/composables/useSearch', () => ({
+  useSearch: vi.fn(() => ({
+    query: ref(''),
+    results: ref([]),
+    loading: ref(false),
+    search: vi.fn(),
+    clear: vi.fn(),
+  })),
+}));
+vi.mock('@/composables/useProjects', () => ({
+  useProjects: vi.fn(() => ({
+    resolveProject: vi.fn(),
+    projects: ref([]),
+    loading: ref(false),
+  })),
+}));
+
+const globalStubs = {
+  Avatar: {
+    template: '<div :class="[$attrs.class]" @click="$emit(\'click\', $event)"><slot>{{ label }}</slot></div>',
+    props: ['image', 'label', 'shape', 'size'],
+  },
+  Button: {
+    template: '<button :class="[$attrs.class]" :aria-label="$attrs[\'aria-label\']" @click="$emit(\'click\', $event)"><slot>{{ label }}</slot></button>',
+    props: ['label', 'icon', 'text', 'rounded', 'severity'],
+    inheritAttrs: false,
+  },
+  Badge: {
+    template: '<span :class="[$attrs.class]">{{ value }}</span>',
+    props: ['value', 'severity'],
+  },
+  Menu: {
+    template: '<div />',
+    props: ['model', 'popup'],
+    methods: { toggle: vi.fn() },
+  },
+  InputText: {
+    template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+    props: ['modelValue', 'placeholder', 'size'],
+  },
+  InputIcon: { template: '<span><slot /></span>' },
+  IconField: { template: '<div><slot /></div>' },
+  Logo: { template: '<div class="logo-stub" />' },
+  'router-link': {
+    template: '<a :class="[$attrs.class]" :href="to"><slot /></a>',
+    props: ['to'],
+  },
+};
 
 describe('Header.vue', () => {
   let mockRouter: any;
@@ -24,13 +72,19 @@ describe('Header.vue', () => {
     mockLogout = vi.fn();
 
     vi.mocked(useRouter).mockReturnValue(mockRouter);
+    vi.mocked(useRoute).mockReturnValue({
+      params: {},
+      query: {},
+      name: 'home',
+      path: '/',
+      matched: [],
+    } as any);
 
     vi.mocked(useAuth).mockReturnValue({
       isAuthenticated: ref(true),
       getCurrentUser: vi.fn(() => ({
         firstName: 'John',
         lastName: 'Doe',
-        name: 'John Doe',
         email: 'john@example.com',
         picture: 'https://example.com/avatar.jpg',
       })),
@@ -50,9 +104,13 @@ describe('Header.vue', () => {
     });
   });
 
+  function mountHeader() {
+    return mount(Header, { global: { stubs: globalStubs } });
+  }
+
   describe('Initial Render', () => {
     it('should render the header with logo', () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const header = wrapper.find('.app-header');
       expect(header.exists()).toBe(true);
@@ -62,7 +120,7 @@ describe('Header.vue', () => {
     });
 
     it('should render notification bell button', () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const bellButton = wrapper.find('[aria-label="Notifications"]');
       expect(bellButton.exists()).toBe(true);
@@ -82,7 +140,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const badge = wrapper.find('.notification-badge');
       expect(badge.exists()).toBe(false);
@@ -101,7 +159,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const badge = wrapper.find('.notification-badge');
       expect(badge.exists()).toBe(true);
@@ -121,7 +179,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const badge = wrapper.find('.notification-badge');
       expect(badge.text()).toBe('99+');
@@ -133,14 +191,12 @@ describe('Header.vue', () => {
       vi.mocked(useAuth).mockReturnValue({
         isAuthenticated: ref(true),
         getCurrentUser: vi.fn(() => ({
-          sub: 'user-123',
-          name: 'John Doe',
           email: 'john@example.com',
         })),
         logout: mockLogout,
       } as any);
 
-      mount(Header);
+      mountHeader();
       await flushPromises();
 
       expect(mockFetchUnreadCount).toHaveBeenCalled();
@@ -155,7 +211,7 @@ describe('Header.vue', () => {
         logout: mockLogout,
       } as any);
 
-      mount(Header);
+      mountHeader();
       await flushPromises();
 
       expect(mockFetchUnreadCount).not.toHaveBeenCalled();
@@ -165,15 +221,13 @@ describe('Header.vue', () => {
       vi.mocked(useAuth).mockReturnValue({
         isAuthenticated: ref(true),
         getCurrentUser: vi.fn(() => ({
-          sub: 'user-123',
-          name: 'John Doe',
           email: 'john@example.com',
           picture: 'https://example.com/avatar.jpg',
         })),
         logout: mockLogout,
       } as any);
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const avatars = wrapper.findAll('.user-avatar');
       expect(avatars.length).toBeGreaterThan(0);
@@ -183,14 +237,12 @@ describe('Header.vue', () => {
       vi.mocked(useAuth).mockReturnValue({
         isAuthenticated: ref(true),
         getCurrentUser: vi.fn(() => ({
-          sub: 'user-123',
-          name: 'John Doe',
           email: 'john@example.com',
         })),
         logout: mockLogout,
       } as any);
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const initialsAvatar = wrapper.find('.user-avatar-initials');
       expect(initialsAvatar.exists()).toBe(true);
@@ -203,12 +255,8 @@ describe('Header.vue', () => {
         logout: mockLogout,
       } as any);
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
       await flushPromises();
-
-      const avatar = wrapper.find('.user-avatar');
-      await avatar.trigger('click');
-      await wrapper.vm.$nextTick();
 
       expect(wrapper.vm.userMenuItems).toContainEqual(
         expect.objectContaining({ label: 'Sign In' })
@@ -218,7 +266,7 @@ describe('Header.vue', () => {
 
   describe('Interactions', () => {
     it('should navigate to notifications page when bell icon is clicked', async () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const bellButton = wrapper.find('[aria-label="Notifications"]');
       await bellButton.trigger('click');
@@ -227,7 +275,7 @@ describe('Header.vue', () => {
     });
 
     it('should navigate to profile when profile menu item is clicked', async () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       expect(wrapper.vm.userMenuItems).toContainEqual(
         expect.objectContaining({
@@ -243,7 +291,7 @@ describe('Header.vue', () => {
     });
 
     it('should call logout when sign out is clicked', async () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const signOutItem = wrapper.vm.userMenuItems.find(
         (item: any) => item.label === 'Sign Out'
@@ -256,7 +304,7 @@ describe('Header.vue', () => {
     });
 
     it('should navigate to admin when IAM button is clicked', async () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const iamButton = wrapper.find('.admin-link');
       await iamButton.trigger('click');
@@ -265,7 +313,7 @@ describe('Header.vue', () => {
     });
 
     it('should navigate to settings when settings menu item is clicked', async () => {
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
 
       const settingsItem = wrapper.vm.userMenuItems.find(
         (item: any) => item.label === 'Settings'
@@ -294,7 +342,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
       await wrapper.vm.$nextTick();
 
       let badge = wrapper.find('.notification-badge');
@@ -323,7 +371,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
       await wrapper.vm.$nextTick();
 
       let badge = wrapper.find('.notification-badge');
@@ -351,7 +399,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
       await wrapper.vm.$nextTick();
 
       let badge = wrapper.find('.notification-badge');
@@ -380,7 +428,7 @@ describe('Header.vue', () => {
         updatePreferences: vi.fn(),
       });
 
-      const wrapper = mount(Header);
+      const wrapper = mountHeader();
       await wrapper.vm.$nextTick();
 
       let badge = wrapper.find('.notification-badge');

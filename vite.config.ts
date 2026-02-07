@@ -1,12 +1,21 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
-import mkcert from 'vite-plugin-mkcert'
+
+const isDev = process.env.NODE_ENV !== 'production'
 
 export default defineConfig({
-  plugins: [vue(), vueDevTools(), tailwindcss(), mkcert()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    ...(isDev
+      ? [
+          (await import('vite-plugin-vue-devtools')).default(),
+          (await import('vite-plugin-mkcert')).default(),
+        ]
+      : []),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
@@ -15,11 +24,29 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Ensure Vite correctly processes and includes assets
-    assetsInlineLimit: 4096 // 4kb - files smaller than this will be inlined as base64
+    assetsInlineLimit: 4096,
+    sourcemap: false,
+    cssCodeSplit: true,
+    minify: 'esbuild',
+    target: 'es2020',
+    rollupOptions: {
+      output: {
+        chunkFileNames: 'assets/js/[hash].js',
+        entryFileNames: 'assets/js/[hash].js',
+        assetFileNames: 'assets/[ext]/[hash].[ext]',
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          'vendor-primevue': ['primevue'],
+          'vendor-pdf': ['vue-pdf-embed', 'vue3-pdfjs'],
+          'vendor-auth': ['keycloak-js', '@josempgon/vue-keycloak'],
+        },
+      },
+    },
+    esbuild: {
+      drop: ['console', 'debugger'],
+    },
   },
   server: {
-    host: 'dms.internal',
     host: 'dms.internal',
     open: 'https://dms.internal:5173',
     proxy: {
@@ -27,8 +54,7 @@ export default defineConfig({
         target: 'http://api.dms.internal:8080',
         changeOrigin: true,
         secure: false,
-        // rewrite: (path) => path.replace(/^\/api/, '') // The local API has a slightly different path
-      }
+      },
     }
   },
 })

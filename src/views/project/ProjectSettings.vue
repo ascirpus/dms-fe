@@ -157,8 +157,7 @@ const selectedUser = ref<(TenantUser & { displayName: string }) | null>(null);
 
 // Current user
 const currentUserId = computed(() => {
-  const user = auth.getCurrentUser();
-  return user?.sub;
+  return (auth.decodedToken.value as Record<string, unknown> | null)?.sub as string | undefined;
 });
 
 // Helper to get display name

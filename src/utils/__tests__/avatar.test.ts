@@ -12,7 +12,6 @@ describe('avatar utils', () => {
     it('should return different colors for different names', () => {
       const color1 = getAvatarColor('John Doe');
       const color2 = getAvatarColor('Jane Smith');
-      // Not guaranteed but very likely different
       expect(typeof color1).toBe('string');
       expect(typeof color2).toBe('string');
       expect(color1.startsWith('#')).toBe(true);
@@ -30,39 +29,21 @@ describe('avatar utils', () => {
       const result = getInitialsFromUser({
         firstName: 'John',
         lastName: 'Doe',
-        name: 'John Doe',
         email: 'john@example.com',
       });
       expect(result).toBe('JD');
     });
 
-    it('should fall back to name when firstName/lastName missing', () => {
+    it('should fall back to firstName initial when lastName missing', () => {
       const result = getInitialsFromUser({
-        name: 'Jane Smith',
+        firstName: 'Jane',
         email: 'jane@example.com',
       });
-      expect(result).toBe('JS');
+      expect(result).toBe('J');
     });
 
-    it('should handle single-word name', () => {
+    it('should fall back to email initial when no name fields', () => {
       const result = getInitialsFromUser({
-        name: 'Admin',
-        email: 'admin@example.com',
-      });
-      expect(result).toBe('A');
-    });
-
-    it('should handle multi-word name (use first and last)', () => {
-      const result = getInitialsFromUser({
-        name: 'John Michael Doe',
-        email: 'john@example.com',
-      });
-      expect(result).toBe('JD');
-    });
-
-    it('should fall back to email initial', () => {
-      const result = getInitialsFromUser({
-        name: '',
         email: 'test@example.com',
       });
       expect(result).toBe('T');
@@ -70,7 +51,6 @@ describe('avatar utils', () => {
 
     it('should return ? when no data available', () => {
       const result = getInitialsFromUser({
-        name: '',
         email: '',
       });
       expect(result).toBe('?');

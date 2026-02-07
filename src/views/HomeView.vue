@@ -10,9 +10,9 @@
             <span class="highlight">With Precision Control</span>
           </h1>
           <p class="hero-description">
-            CedarStack DMS is a powerful document management platform built for teams that need
-            complete control. Organize by project, collaborate with external parties, track approvals,
-            collect signatures, and maintain a full audit trail — all in one secure place.
+            Streamline your document workflows with secure collaboration, approval tracking,
+            and digital signatures — all in one place. Organize by project, control who sees what,
+            and keep your team aligned.
           </p>
           <div class="hero-actions">
             <Button
@@ -20,14 +20,14 @@
               icon="pi pi-arrow-right"
               iconPos="right"
               size="large"
-              @click="handleGetStarted"
+              @click="handleGetStarted('free')"
             />
             <Button
               label="See Features"
               icon="pi pi-chevron-down"
               text
               size="large"
-              @click="scrollToFeatures"
+              @click="scrollToFeatures('free')"
             />
           </div>
         </div>
@@ -104,10 +104,10 @@
           <div class="feature-icon">
             <i class="pi pi-pencil"></i>
           </div>
-          <h3>Digital Signatures</h3>
+          <h3>Document Sign-Off</h3>
           <p>
-            Require signatures from specific users or allow voluntary acknowledgments.
-            Track who signed, when, and meet compliance requirements.
+            Assign required signers or allow voluntary acknowledgments.
+            Set signature deadlines with reminders and track who signed and when.
           </p>
         </div>
 
@@ -117,19 +117,19 @@
           </div>
           <h3>Version Control</h3>
           <p>
-            Maintain complete document history. Compare versions, restore previous files,
-            and never lose important updates with automatic versioning.
+            Track document history with full version control. Every upload is versioned
+            so you never lose important changes.
           </p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="pi pi-bell"></i>
+            <i class="pi pi-search"></i>
           </div>
-          <h3>Smart Notifications</h3>
+          <h3>Full-Text Search</h3>
           <p>
-            Stay informed with real-time notifications. Get alerts for new documents,
-            pending approvals, signature requests, and deadline reminders.
+            Search across all document contents instantly. Powered by Apache Tika
+            for deep content extraction from PDFs and other file types.
           </p>
         </div>
 
@@ -148,21 +148,21 @@
           <div class="feature-icon">
             <i class="pi pi-building"></i>
           </div>
-          <h3>Organization Management</h3>
+          <h3>Multiple Workspaces</h3>
           <p>
-            Manage your entire organization from one dashboard. Invite team members,
-            assign roles (Owner, Admin, Member), and control access levels.
+            Run separate workspaces for different teams or clients. Each workspace
+            has its own projects, members, roles, and usage limits.
           </p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">
-            <i class="pi pi-shield"></i>
+            <i class="pi pi-bell"></i>
           </div>
-          <h3>Enterprise Security</h3>
+          <h3>Smart Notifications</h3>
           <p>
-            Keycloak-based authentication with SSO support. Role-based access control
-            with hierarchical permissions and complete audit trails.
+            Get alerts for new documents, pending approvals, signature requests,
+            and deadline reminders. Stay on top of what matters.
           </p>
         </div>
       </div>
@@ -222,36 +222,103 @@
         </div>
       </div>
 
-      <div class="permission-examples">
-        <h3>Real-World Example</h3>
-        <div class="example-scenario">
-          <div class="example-party">
-            <div class="party-avatar contractor">
-              <i class="pi pi-wrench"></i>
-            </div>
-            <div class="party-info">
-              <strong>Contractor</strong>
-              <span>Can view all documents, comment on quotes, and submit hour confirmations</span>
-            </div>
+    </section>
+
+    <!-- Document Types Section -->
+    <section class="doctypes-section">
+      <div class="section-header">
+        <h2>Flexible Document Types</h2>
+        <p>Each document type carries its own visibility and permission rules</p>
+      </div>
+
+      <div class="doctypes-intro">
+        <div class="intro-card">
+          <div class="intro-icon">
+            <i class="pi pi-cog"></i>
           </div>
-          <div class="example-party">
-            <div class="party-avatar client">
-              <i class="pi pi-building"></i>
-            </div>
-            <div class="party-info">
-              <strong>Client</strong>
-              <span>Can view reports, comment on all documents, and approve quotes</span>
-            </div>
+          <div class="intro-content">
+            <h3>Customizable Workflows</h3>
+            <p>
+              Control which parties can view, comment on, or approve specific types of documents
+              — so a contractor sees only what's relevant to them, while sensitive documents stay restricted.
+            </p>
           </div>
-          <div class="example-party">
-            <div class="party-avatar insurer">
-              <i class="pi pi-shield"></i>
-            </div>
-            <div class="party-info">
-              <strong>Insurance Company</strong>
-              <span>Can view damage reports and decide on insurance-related confirmations</span>
-            </div>
-          </div>
+        </div>
+      </div>
+
+      <div class="doctypes-visibility">
+        <table class="visibility-matrix">
+          <thead>
+            <tr>
+              <th></th>
+              <th><i class="pi pi-wrench"></i> Contractor</th>
+              <th><i class="pi pi-building"></i> Client</th>
+              <th><i class="pi pi-shield"></i> Insurer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="doc-label">Damage Report</td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td class="doc-label">Repair Quote</td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td class="doc-label">Invoice</td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-check-circle"></i></td>
+            </tr>
+            <tr>
+              <td class="doc-label">Contract</td>
+              <td><i class="pi pi-eye"></i></td>
+              <td><i class="pi pi-check-circle"></i></td>
+              <td><i class="pi pi-minus"></i></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="visibility-legend">
+          <span><i class="pi pi-eye"></i> Can view</span>
+          <span><i class="pi pi-check-circle"></i> Can approve</span>
+          <span><i class="pi pi-minus"></i> No access</span>
+        </div>
+      </div>
+
+      <div class="doctypes-example-label">
+        <span>Every account includes these defaults &mdash; all tiers can create custom types:</span>
+      </div>
+
+      <div class="doctypes-grid">
+        <div class="doctype-card">
+          <i class="pi pi-file"></i>
+          <h4>Invoice</h4>
+          <span class="doctype-badge info">View</span>
+        </div>
+        <div class="doctype-card">
+          <i class="pi pi-shopping-cart"></i>
+          <h4>Purchase Order</h4>
+          <span class="doctype-badge info">View</span>
+        </div>
+        <div class="doctype-card">
+          <i class="pi pi-file-check"></i>
+          <h4>Contract</h4>
+          <span class="doctype-badge info">View</span>
+        </div>
+        <div class="doctype-card">
+          <i class="pi pi-receipt"></i>
+          <h4>Receipt</h4>
+          <span class="doctype-badge info">View</span>
+        </div>
+        <div class="doctype-card">
+          <i class="pi pi-dollar"></i>
+          <h4>Quote</h4>
+          <span class="doctype-badge approval">Requires Approval</span>
         </div>
       </div>
     </section>
@@ -263,43 +330,134 @@
         <p>Start free and upgrade as your needs grow</p>
       </div>
 
+      <!-- Pricing Calculator (hidden for now) -->
+      <div v-if="false" class="pricing-calculator">
+        <h3><i class="pi pi-calculator"></i> Find Your Plan</h3>
+        <div class="calculator-inputs">
+          <div class="calc-input-group">
+            <div class="calc-input-label">
+              <span>Projects</span>
+              <strong>{{ calcProjects }}</strong>
+            </div>
+            <Slider v-model="calcProjects" :min="1" :max="100" />
+          </div>
+          <div class="calc-input-group">
+            <div class="calc-input-label">
+              <span>Documents per project</span>
+              <strong>{{ calcDocs }}</strong>
+            </div>
+            <Slider v-model="calcDocs" :min="1" :max="500" />
+          </div>
+        </div>
+        <div class="calculator-result">
+          <div class="result-storage">
+            <i class="pi pi-database"></i>
+            <span>Estimated storage: <strong>{{ estimatedStorageLabel }}</strong></span>
+            <span class="storage-note">(~{{ AVG_PDF_SIZE_MB }} MB &times; {{ AVG_VERSIONS_PER_DOC }} versions per doc)</span>
+          </div>
+          <div class="result-recommendation">
+            <div class="result-tier">
+              <span>Recommended plan:</span>
+              <strong>{{ recommendedTier.name }}</strong>
+            </div>
+            <div v-if="recommendedTier.monthlyPrice !== null" class="result-price">
+              <template v-if="isYearly">
+                <strong>&euro;{{ recommendedTier.yearlyMonthlyPrice }}/mo</strong>
+                <span class="result-savings">Save &euro;{{ recommendedTier.monthlyPrice * 12 - recommendedTier.yearlyTotal }}/year</span>
+              </template>
+              <template v-else>
+                <strong>&euro;{{ recommendedTier.monthlyPrice }}/mo</strong>
+                <span class="result-yearly-hint">or &euro;{{ recommendedTier.yearlyMonthlyPrice }}/mo billed yearly</span>
+              </template>
+            </div>
+            <div v-else class="result-price">
+              <strong>Custom pricing</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="billing-toggle">
+        <span :class="{ active: !isYearly }">Monthly</span>
+        <button class="toggle-switch" :class="{ toggled: isYearly }" @click="isYearly = !isYearly">
+          <span class="toggle-knob"></span>
+        </button>
+        <span :class="{ active: isYearly }">Yearly</span>
+        <span class="billing-save-badge" :style="{ visibility: isYearly ? 'visible' : 'hidden' }">2 months free</span>
+      </div>
+
       <div class="plans-grid">
         <div class="plan-card">
           <div class="plan-header">
             <h3>Free</h3>
             <div class="plan-price">
-              <span class="price">$0</span>
+              <span class="price">&euro;0</span>
               <span class="period">/month</span>
             </div>
+            <div class="plan-price-annual">&nbsp;</div>
           </div>
           <ul class="plan-features">
-            <li><i class="pi pi-check"></i> Up to 3 projects</li>
-            <li><i class="pi pi-check"></i> 100 documents per project</li>
-            <li><i class="pi pi-check"></i> 1 GB storage</li>
-            <li><i class="pi pi-check"></i> Basic permissions</li>
+            <li><i class="pi pi-check"></i> 5 projects, 2 parties each</li>
+            <li><i class="pi pi-check"></i> 10 documents per project</li>
+            <li><i class="pi pi-cloud"></i> 250 MB storage</li>
+            <li><i class="pi pi-check"></i> Comments &amp; annotations</li>
+            <li><i class="pi pi-check"></i> Approvals &amp; deadlines</li>
             <li><i class="pi pi-check"></i> Email notifications</li>
+            <li><i class="pi pi-check"></i> Custom document types (up to 3)</li>
           </ul>
           <Button label="Get Started" outlined class="plan-button" @click="handleGetStarted" />
         </div>
 
         <div class="plan-card featured">
-          <div class="plan-badge">Most Popular</div>
+          <div class="plan-badge">Recommended</div>
           <div class="plan-header">
-            <h3>Pro</h3>
+            <h3>Team</h3>
             <div class="plan-price">
-              <span class="price">$29</span>
+              <span v-if="isYearly" class="price-original">&euro;49</span>
+              <span class="price">&euro;{{ isYearly ? 41 : 49 }}</span>
               <span class="period">/month</span>
+            </div>
+            <div class="plan-price-annual">
+              <template v-if="isYearly">billed &euro;490/year</template>
+              <template v-else>&nbsp;</template>
             </div>
           </div>
           <ul class="plan-features">
-            <li><i class="pi pi-check"></i> Unlimited projects</li>
+            <li><i class="pi pi-check"></i> Unlimited projects &amp; parties</li>
             <li><i class="pi pi-check"></i> Unlimited documents</li>
-            <li><i class="pi pi-check"></i> 50 GB storage</li>
+            <li><i class="pi pi-cloud"></i> 10 GB storage</li>
             <li><i class="pi pi-check"></i> Document versioning</li>
-            <li><i class="pi pi-check"></i> Digital signatures</li>
-            <li><i class="pi pi-check"></i> Priority support</li>
+            <li><i class="pi pi-check"></i> Document sign-off</li>
+            <li><i class="pi pi-check"></i> Unlimited custom document types</li>
           </ul>
-          <Button label="Start Free Trial" class="plan-button" @click="handleGetStarted" />
+          <Button label="Start 14-Day Free Trial" class="plan-button" @click="handleGetStarted('team')" />
+        </div>
+
+        <div class="plan-card">
+          <div class="plan-header">
+            <h3>Business</h3>
+            <div class="plan-price">
+              <span v-if="isYearly" class="price-original">&euro;149</span>
+              <span class="price">&euro;{{ isYearly ? 124 : 149 }}</span>
+              <span class="period">/month</span>
+            </div>
+            <div class="plan-price-annual">
+              <template v-if="isYearly">billed &euro;1,490/year</template>
+              <template v-else>&nbsp;</template>
+            </div>
+          </div>
+          <ul class="plan-features">
+            <li><i class="pi pi-check"></i> Everything in Team</li>
+            <li><i class="pi pi-cloud"></i> 100 GB cloud storage</li>
+            <li class="storage-divider">or</li>
+            <li><i class="pi pi-server"></i> Self-hosted file storage</li>
+            <li><i class="pi pi-check"></i> Multiple workspaces</li>
+            <li><i class="pi pi-check"></i> Approval stages</li>
+            <li><i class="pi pi-code"></i> API access &amp; webhooks</li>
+            <li><i class="pi pi-check"></i> Advanced reporting</li>
+            <li><i class="pi pi-list"></i> Audit logs</li>
+          </ul>
+          <Button label="Start 14-Day Free Trial" class="plan-button" @click="handleGetStarted('business')" />
         </div>
 
         <div class="plan-card">
@@ -308,82 +466,16 @@
             <div class="plan-price">
               <span class="price">Custom</span>
             </div>
+            <div class="plan-price-annual">&nbsp;</div>
           </div>
           <ul class="plan-features">
-            <li><i class="pi pi-check"></i> Everything in Pro</li>
-            <li><i class="pi pi-check"></i> Unlimited storage</li>
-            <li><i class="pi pi-check"></i> SSO integration</li>
-            <li><i class="pi pi-check"></i> API access</li>
-            <li><i class="pi pi-check"></i> Advanced reporting</li>
+            <li><i class="pi pi-check"></i> Everything in Business</li>
+            <li><i class="pi pi-cloud"></i> Unlimited storage</li>
+            <li><i class="pi pi-lock"></i> SSO / SAML</li>
+            <li><i class="pi pi-check"></i> Custom SLAs</li>
             <li><i class="pi pi-check"></i> Dedicated support</li>
           </ul>
-          <Button label="Contact Sales" outlined class="plan-button" />
-        </div>
-      </div>
-    </section>
-
-    <!-- Document Types Section -->
-    <section class="doctypes-section">
-      <div class="section-header">
-        <h2>Flexible Document Types</h2>
-        <p>Define your own document categories with unique workflows and permissions</p>
-      </div>
-
-      <div class="doctypes-intro">
-        <div class="intro-card">
-          <div class="intro-icon">
-            <i class="pi pi-cog"></i>
-          </div>
-          <div class="intro-content">
-            <h3>Customizable Workflows</h3>
-            <p>
-              Create document types tailored to your business. Configure which types require
-              approval, how many approvals are needed, whether signatures are required,
-              and set default permissions for each party type.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="doctypes-example-label">
-        <span>Example document types for construction & insurance projects:</span>
-      </div>
-
-      <div class="doctypes-grid">
-        <div class="doctype-card">
-          <i class="pi pi-info-circle"></i>
-          <h4>Project Information</h4>
-          <span class="doctype-badge info">Viewable by All</span>
-        </div>
-        <div class="doctype-card">
-          <i class="pi pi-exclamation-triangle"></i>
-          <h4>Damage Reports</h4>
-          <span class="doctype-badge info">Restricted View</span>
-        </div>
-        <div class="doctype-card">
-          <i class="pi pi-list"></i>
-          <h4>Inventory Reports</h4>
-          <span class="doctype-badge info">Standard Access</span>
-        </div>
-        <div class="doctype-card">
-          <i class="pi pi-dollar"></i>
-          <h4>Quotes</h4>
-          <span class="doctype-badge approval">Requires Approval</span>
-        </div>
-        <div class="doctype-card">
-          <i class="pi pi-check"></i>
-          <h4>Contracts</h4>
-          <span class="doctype-badge signature">Requires Signature</span>
-        </div>
-        <div class="doctype-card">
-          <i class="pi pi-clock"></i>
-          <h4>Hours Confirmation</h4>
-          <span class="doctype-badge approval">Requires Approval</span>
-        </div>
-        <div class="doctype-card">
-          <i class="pi pi-file"></i>
-          <h4>Invoices</h4>
-          <span class="doctype-badge info">Standard Access</span>
+          <Button label="Contact Sales" outlined class="plan-button" as="a" href="mailto:sales@cedar-stack.com" />
         </div>
       </div>
     </section>
@@ -399,10 +491,10 @@
             icon="pi pi-arrow-right"
             iconPos="right"
             size="large"
-            @click="handleGetStarted"
+            @click="handleGetStarted('free')"
           />
         </div>
-        <p class="cta-note">No credit card required. Free plan includes 3 projects.</p>
+        <p class="cta-note">No credit card required. 14-day Team trial, then free forever on the Free plan.</p>
       </div>
     </section>
 
@@ -414,9 +506,7 @@
           <p>Intelligent Document Hub</p>
         </div>
         <div class="footer-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Contact</a>
+          <a href="mailto:support@cedarstack.io">Contact</a>
         </div>
       </div>
     </footer>
@@ -424,22 +514,47 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import Button from 'primevue/button';
+import Slider from 'primevue/slider';
 import Logo from '@/components/base/Logo.vue';
+import posthog from "posthog-js";
 
-const router = useRouter();
 const auth = useAuth();
+const isYearly = ref(true);
 
-onMounted(() => {
-  if (auth.isAuthenticated.value) {
-    router.replace({ name: 'projects' });
-  }
+const AVG_PDF_SIZE_MB = 2.5;
+const AVG_VERSIONS_PER_DOC = 3;
+const calcProjects = ref(5);
+const calcDocs = ref(20);
+
+const estimatedStorageMB = computed(() =>
+  calcProjects.value * calcDocs.value * AVG_VERSIONS_PER_DOC * AVG_PDF_SIZE_MB
+);
+
+const estimatedStorageLabel = computed(() => {
+  const mb = estimatedStorageMB.value;
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
 });
 
-function handleGetStarted() {
+const recommendedTier = computed(() => {
+  const storageGB = estimatedStorageMB.value / 1024;
+
+  if (calcProjects.value <= 5 && calcDocs.value <= 10 && estimatedStorageMB.value <= 250) {
+    return { name: 'Free', monthlyPrice: 0, yearlyMonthlyPrice: 0, yearlyTotal: 0 };
+  }
+  if (storageGB <= 10) {
+    return { name: 'Team', monthlyPrice: 49, yearlyMonthlyPrice: 41, yearlyTotal: 490 };
+  }
+  if (storageGB <= 100) {
+    return { name: 'Business', monthlyPrice: 149, yearlyMonthlyPrice: 124, yearlyTotal: 1490 };
+  }
+  return { name: 'Enterprise', monthlyPrice: null, yearlyMonthlyPrice: null, yearlyTotal: null };
+});
+
+function handleGetStarted(plan?: string) {
+  posthog.capture('landing_get_started_click', { plan: plan || 'unspecified' });
   auth.login();
 }
 
@@ -666,11 +781,186 @@ function scrollToFeatures() {
   background-color: var(--surface-ground);
 }
 
+/* Pricing Calculator */
+.pricing-calculator {
+  max-width: 700px;
+  margin: 0 auto 48px;
+  padding: 32px;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+}
+
+.pricing-calculator h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pricing-calculator h3 i {
+  color: var(--primary-color);
+}
+
+.calculator-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.calc-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calc-input-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.calc-input-label strong {
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.calculator-result {
+  padding: 20px;
+  background-color: var(--surface-ground);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.result-storage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.result-storage i {
+  color: var(--primary-color);
+}
+
+.storage-note {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.result-recommendation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.result-tier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+.result-tier strong {
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+.result-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.result-savings {
+  padding: 2px 10px;
+  background-color: #dcfce7;
+  color: #166534;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.result-yearly-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Billing Toggle */
+.billing-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.billing-toggle span.active {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background-color: var(--surface-border);
+  border: none;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 0;
+}
+
+.toggle-switch.toggled {
+  background-color: var(--primary-color);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch.toggled .toggle-knob {
+  transform: translateX(22px);
+}
+
+.billing-save-badge {
+  padding: 4px 12px;
+  background-color: #dcfce7;
+  color: #166534;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .plans-grid {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
@@ -719,6 +1009,7 @@ function scrollToFeatures() {
   align-items: baseline;
   justify-content: center;
   gap: 4px;
+  min-height: 44px;
 }
 
 .plan-price .price {
@@ -730,6 +1021,22 @@ function scrollToFeatures() {
 .plan-price .period {
   font-size: 16px;
   color: var(--text-secondary);
+}
+
+.plan-price .price-original {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  margin-right: 4px;
+}
+
+.plan-price-annual {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 4px;
+  min-height: 20px;
 }
 
 .plan-features {
@@ -751,6 +1058,16 @@ function scrollToFeatures() {
 .plan-features li i {
   color: var(--primary-color);
   font-size: 14px;
+}
+
+li.storage-divider {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  justify-content: center;
+  padding: 0;
 }
 
 .plan-button {
@@ -900,17 +1217,6 @@ function scrollToFeatures() {
   color: white;
 }
 
-.party-avatar.contractor {
-  background-color: #f59e0b;
-}
-
-.party-avatar.client {
-  background-color: #3b82f6;
-}
-
-.party-avatar.insurer {
-  background-color: #8b5cf6;
-}
 
 .party-info {
   display: flex;
@@ -927,6 +1233,88 @@ function scrollToFeatures() {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+/* Document Types - Visibility Matrix */
+.doctypes-visibility {
+  max-width: 600px;
+  margin: 0 auto 40px;
+}
+
+.visibility-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.visibility-matrix th {
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-color);
+  border-bottom: 2px solid var(--surface-border);
+}
+
+.visibility-matrix th i {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.visibility-matrix td {
+  padding: 12px 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.visibility-matrix td.doc-label {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.visibility-matrix td .pi-eye {
+  color: var(--primary-color);
+}
+
+.visibility-matrix td .pi-check-circle {
+  color: #27ae60;
+}
+
+.visibility-matrix td .pi-minus {
+  color: var(--surface-border);
+}
+
+.visibility-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.visibility-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.visibility-legend .pi-eye {
+  color: var(--primary-color);
+  font-size: 12px;
+}
+
+.visibility-legend .pi-check-circle {
+  color: #27ae60;
+  font-size: 12px;
+}
+
+.visibility-legend .pi-minus {
+  color: var(--surface-border);
+  font-size: 12px;
 }
 
 /* Document Types Section */
@@ -1163,8 +1551,13 @@ html.dark .intro-card {
   }
 
   .plans-grid {
-    grid-template-columns: 1fr;
-    max-width: 400px;
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 700px;
+  }
+
+  .result-recommendation {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .permissions-content {
@@ -1192,6 +1585,11 @@ html.dark .intro-card {
 
   .features-grid {
     grid-template-columns: 1fr;
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
   }
 
   .section-header h2 {

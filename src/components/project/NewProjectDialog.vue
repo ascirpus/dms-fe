@@ -67,8 +67,7 @@ function getUserDisplayName(user: TenantUser): string {
 
 // Get current user ID for comparison
 const currentUserId = computed(() => {
-  const currentUser = auth.getCurrentUser();
-  return currentUser?.sub;
+  return (auth.decodedToken.value as Record<string, unknown> | null)?.sub as string | undefined;
 });
 
 // Check if a user is the current user

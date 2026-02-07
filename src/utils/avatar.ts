@@ -19,14 +19,13 @@ export function getAvatarColor(identifier: string): string {
     return AVATAR_COLORS[hashString(identifier) % AVATAR_COLORS.length];
 }
 
-type UserLike = Pick<User, 'firstName' | 'lastName' | 'name' | 'email'>;
+type UserLike = Pick<User, 'firstName' | 'lastName' | 'email'>;
 
 export function getDisplayName(user: UserLike): string {
     if (user.firstName && user.lastName) {
         return `${user.firstName} ${user.lastName}`;
     }
     if (user.firstName) return user.firstName;
-    if (user.name) return user.name;
     return user.email || '';
 }
 
@@ -35,14 +34,8 @@ export function getInitialsFromUser(user: UserLike): string {
         return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
     }
 
-    if (user.name) {
-        const parts = user.name.trim().split(/\s+/);
-        if (parts.length >= 2) {
-            return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-        }
-        if (parts[0]) {
-            return parts[0][0].toUpperCase();
-        }
+    if (user.firstName) {
+        return user.firstName[0].toUpperCase();
     }
 
     if (user.email) {

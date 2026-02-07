@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAuth } from "@/composables/useAuth";
 import { getDisplayName } from '@/utils/avatar';
 
@@ -18,8 +18,6 @@ const auth = useAuth();
 // Dev mode check
 const isDev = import.meta.env.DEV;
 
-// User profile data
-const user = auth.getCurrentUser();
 const decodedToken = auth.decodedToken;
 
 // Profile form data (editable)
@@ -27,10 +25,10 @@ const profileData = ref({
   firstName: '',
   lastName: '',
   email: '',
-  phoneNumber: '',
-  profileCreated: '',
-  lastActivity: '',
+  phone: '',
 });
+
+const saving = ref(false);
 
 // Notifications
 const receiveEmailNotifications = ref(false);
@@ -40,7 +38,7 @@ const showEditDialog = ref(false);
 const editForm = ref({
   firstName: '',
   lastName: '',
-  phoneNumber: '',
+  phone: '',
 });
 
 // Access table data (mock data for now)
@@ -72,39 +70,39 @@ const fullName = computed(() => {
   if (profileData.value.firstName || profileData.value.lastName) {
     return `${profileData.value.firstName} ${profileData.value.lastName}`.trim();
   }
+  const user = auth.getCurrentUser();
   return getDisplayName(user ?? { email: '' });
 });
 
-// Initialize profile data from user/token
-onMounted(() => {
-  const nameParts = getDisplayName(user ?? { email: '' }).split(' ');
-  profileData.value = {
-    firstName: decodedToken.value?.given_name || nameParts[0] || '',
-    lastName: decodedToken.value?.family_name || nameParts.slice(1).join(' ') || '',
-    email: user?.email || decodedToken.value?.email || '',
-    phoneNumber: decodedToken.value?.phone_number || '',
-    profileCreated: formatDate(decodedToken.value?.created_at) || 'DD.MM.YY, HH:MM',
-    lastActivity: formatDate(decodedToken.value?.last_login) || 'DD.MM.YY, HH:MM',
-  };
-});
-
-function formatDate(dateStr: string | undefined): string {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return '';
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear()).slice(-2);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}.${month}.${year}, ${hours}:${minutes}`;
+function populateFromUser() {
+  const user = auth.getCurrentUser();
+  if (user) {
+    profileData.value = {
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+    };
+  }
 }
+
+// Populate profile data from currentUser ref
+watch(auth.currentUser, () => {
+  populateFromUser();
+}, { immediate: true });
+
+onMounted(async () => {
+  if (!auth.currentUser.value) {
+    await auth.fetchCurrentUser();
+  }
+  populateFromUser();
+});
 
 function openEditDialog() {
   editForm.value = {
     firstName: profileData.value.firstName,
     lastName: profileData.value.lastName,
-    phoneNumber: profileData.value.phoneNumber,
+    phone: profileData.value.phone,
   };
   showEditDialog.value = true;
 }
@@ -113,12 +111,26 @@ function closeEditDialog() {
   showEditDialog.value = false;
 }
 
-function saveProfile() {
+async function saveProfile() {
+  saving.value = true;
+
+  // Optimistic update
   profileData.value.firstName = editForm.value.firstName;
   profileData.value.lastName = editForm.value.lastName;
-  profileData.value.phoneNumber = editForm.value.phoneNumber;
+  profileData.value.phone = editForm.value.phone;
   showEditDialog.value = false;
-  // TODO: Save to backend
+
+  try {
+    await auth.updateProfile({
+      firstName: editForm.value.firstName,
+      lastName: editForm.value.lastName,
+      phone: editForm.value.phone,
+    });
+  } catch {
+    populateFromUser();
+  } finally {
+    saving.value = false;
+  }
 }
 
 function onPageChange(event: { first: number; rows: number }) {
@@ -155,7 +167,7 @@ function onPageChange(event: { first: number; rows: number }) {
           </div>
           <div class="field-group">
             <label class="field-label">Phone Number</label>
-            <p class="field-value">{{ profileData.phoneNumber || 'Placeholder' }}</p>
+            <p class="field-value">{{ profileData.phone || 'Placeholder' }}</p>
           </div>
         </div>
 
@@ -167,17 +179,6 @@ function onPageChange(event: { first: number; rows: number }) {
           <div class="field-group">
             <label class="field-label">Last Name</label>
             <p class="field-value">{{ profileData.lastName || 'Placeholder' }}</p>
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">Profile Created</label>
-            <p class="field-value">{{ profileData.profileCreated }}</p>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Last Activity</label>
-            <p class="field-value">{{ profileData.lastActivity }}</p>
           </div>
         </div>
       </div>
@@ -284,11 +285,11 @@ function onPageChange(event: { first: number; rows: number }) {
         <div class="form-field">
           <FloatLabel variant="on">
             <InputText
-              id="phoneNumber"
-              v-model="editForm.phoneNumber"
+              id="phone"
+              v-model="editForm.phone"
               class="w-full"
             />
-            <label for="phoneNumber">Phone Number</label>
+            <label for="phone">Phone Number</label>
           </FloatLabel>
         </div>
       </div>

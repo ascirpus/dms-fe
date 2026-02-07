@@ -23,7 +23,7 @@ const { resolveProject } = useProjects();
 
 const user = computed(() => auth.getCurrentUser());
 const pictureUrl = computed(() => user.value?.picture || '');
-const initials = computed(() => getInitialsFromUser(user.value));
+const initials = computed(() => user.value ? getInitialsFromUser(user.value) : '?');
 const isAuthenticated = computed(() => auth.isAuthenticated.value);
 
 // Project-scoped search

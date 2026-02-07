@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 import NewProjectDialog from '../NewProjectDialog.vue';
 import { useAuth } from '@/composables/useAuth';
 import { ProjectsService } from '@/services/ProjectsService';
@@ -76,7 +76,8 @@ describe('NewProjectDialog.vue', () => {
 
     vi.mocked(useAuth).mockReturnValue({
       apiClient: mockApiClient,
-      getCurrentUser: vi.fn().mockReturnValue({ sub: 'current-user-id' }),
+      getCurrentUser: vi.fn().mockReturnValue({ email: 'current@example.com' }),
+      decodedToken: ref({ sub: 'current-user-id' }),
     } as any);
   });
 

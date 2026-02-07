@@ -19,6 +19,7 @@ import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 import { vueKeycloak } from "@josempgon/vue-keycloak";
+import { initPostHog } from "./composables/usePostHog.js";
 
 const keycloakConfig = {
     config: {
@@ -63,6 +64,7 @@ async function initializeApp() {
     app.use(ConfirmationService);
     app.directive('tooltip', Tooltip);
 
+    initPostHog();
     app.mount('#app');
 }
 

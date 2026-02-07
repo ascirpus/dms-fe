@@ -8,7 +8,7 @@ interface RootState {
     sidebarVisible: Ref<boolean>,
     documentMarker: boolean,
 
-    user: User,
+    user: User | null,
 
     setTheme: (theme: Theme) => void,
     setSidebarState: (state: boolean) => void,

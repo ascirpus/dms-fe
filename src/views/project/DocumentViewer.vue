@@ -89,7 +89,7 @@ const showAllComments = ref(false);
 const showMyComments = ref(false);
 const markersExpanded = ref(true);
 
-const currentUser = computed(() => auth.getCurrentUser());
+const currentUser = computed(() => auth.getCurrentUser() ?? undefined);
 
 const versionCommentCount = computed(() =>
   comments.value.filter(c => c.fileId === activeFileId.value).length

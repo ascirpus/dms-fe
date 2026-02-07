@@ -13,6 +13,7 @@ let refreshPromise: Promise<string | null> | null = null;
 let tenantInitPromise: Promise<string | null> | null = null;
 
 const tenantReady = ref(false);
+const currentUser = ref<User | null>(null);
 
 async function refreshToken(): Promise<string | null> {
     const keycloak = useKeycloak();
@@ -65,7 +66,7 @@ export function useAuth() {
             }
 
             const url = config.url ?? '';
-            const isTenantBootstrap = url === '/api/tenants';
+            const isTenantBootstrap = url === '/api/tenants' || url === '/api/me';
             if (!isTenantBootstrap) {
                 const tenantId = authStore.tenantId;
                 if (tenantId) {
@@ -96,13 +97,34 @@ export function useAuth() {
                     console.error("[dms-fe] Unauthorized - token refresh failed, logging out");
                     store.logout();
 
-                    const keycloak = useKeycloak();
-                    keycloak.keycloak.value?.login({ redirectUri: window.location.origin });
+                    window.location.href = '/login';
                 }
 
                 return Promise.reject(error);
             }
         );
+    }
+
+    async function fetchCurrentUser(): Promise<User | null> {
+        try {
+            const response = await apiClient.get<{ status: string; data: User }>('/api/me');
+            currentUser.value = response.data.data;
+            return currentUser.value;
+        } catch (e) {
+            console.error('[dms-fe] Failed to fetch current user:', e);
+            return null;
+        }
+    }
+
+    async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; locale?: string }): Promise<User | null> {
+        try {
+            const response = await apiClient.put<{ status: string; data: User }>('/api/me', data);
+            currentUser.value = response.data.data;
+            return currentUser.value;
+        } catch (e) {
+            console.error('[dms-fe] Failed to update profile:', e);
+            throw e;
+        }
     }
 
     async function initializeTenant(): Promise<string | null> {
@@ -158,7 +180,7 @@ export function useAuth() {
         const kcInstance = kc.keycloak.value;
         if (kcInstance) {
             kcInstance.login({
-                redirectUri: window.location.origin
+                redirectUri: window.location.origin + '/app/projects'
             });
         }
     }
@@ -166,6 +188,7 @@ export function useAuth() {
     function logout() {
         authStore.logout();
         tenantReady.value = false;
+        currentUser.value = null;
 
         const kcInstance = kc.keycloak.value;
         if (kcInstance) {
@@ -177,33 +200,8 @@ export function useAuth() {
         }
     }
 
-    function getCurrentUser(): User {
-        if (!isAuthenticated.value) {
-            return { email: '' };
-        }
-
-        const token = decodedToken.value as Record<string, unknown> | null;
-        if (!token) {
-            return { email: '' };
-        }
-
-        const firstName = (token.given_name as string) || undefined;
-        const lastName = (token.family_name as string) || undefined;
-
-        const name = (token.name as string) ||
-            [firstName, lastName].filter(Boolean).join(' ') ||
-            (token.preferred_username as string) ||
-            undefined;
-
-        const picture = (token.picture as string) || undefined;
-
-        return {
-            name,
-            email: (token.email as string),
-            picture,
-            firstName,
-            lastName,
-        };
+    function getCurrentUser(): User | null {
+        return currentUser.value;
     }
 
     return {
@@ -217,5 +215,8 @@ export function useAuth() {
         selectTenant,
         tenantReady,
         decodedToken,
+        currentUser,
+        fetchCurrentUser,
+        updateProfile,
     };
 }

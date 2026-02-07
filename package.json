@@ -26,6 +26,7 @@
     "pdfjs": "^2.5.3",
     "pinia": "^3.0.2",
     "pinia-plugin-persistedstate": "^4.2.0",
+    "posthog-js": "^1.342.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.3",
     "tailwindcss": "^4.1.5",
