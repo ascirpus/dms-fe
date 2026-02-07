@@ -18,7 +18,7 @@ export const useAuthStore = defineStore('auth', {
             this.tenantId = tenantId;
         },
 
-        logout() {
+        cleanStorage() {
             this.permissions = [];
             this.tenantId = null;
             this.error = '';

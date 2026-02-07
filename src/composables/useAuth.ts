@@ -95,7 +95,7 @@ export function useAuth() {
 
                     const store = useAuthStore();
                     console.error("[dms-fe] Unauthorized - token refresh failed, logging out");
-                    store.logout();
+                    store.cleanStorage();
 
                     window.location.href = '/login';
                 }
@@ -177,6 +177,7 @@ export function useAuth() {
     }
 
     function login() {
+        authStore.cleanStorage();
         const kcInstance = kc.keycloak.value;
         if (kcInstance) {
             kcInstance.login({
@@ -186,7 +187,7 @@ export function useAuth() {
     }
 
     function logout() {
-        authStore.logout();
+        authStore.cleanStorage();
         tenantReady.value = false;
         currentUser.value = null;
 

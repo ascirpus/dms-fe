@@ -239,6 +239,7 @@ Testing setup:
 - Don't make assumptions about backend data structures - check API docs or backend source at `/evo/Work/dms`
 
 **State Management:**
+- We always assume optimistic API requests and provide immediate feedback to the user. After a create/update/delete, the UI must reflect the change instantly (update the query cache in `onSuccess` or `onMutate`) rather than waiting for a refetch.
 - Composables using `vue-query` should follow the existing pattern in `useComments` and `useDocuments`
 - Use `queryClient.fetchQuery` for data fetching, not `useQuery` hooks
 - Store data in `ref()` and update it after fetching

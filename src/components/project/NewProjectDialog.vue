@@ -3,7 +3,7 @@ import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, maxLength, email } from '@vuelidate/validators';
 import { useAuth } from '@/composables/useAuth';
-import { ProjectsService } from '@/services/ProjectsService';
+import { useProjects } from '@/composables/useProjects';
 import { UsersService } from '@/services/UsersService';
 import type { Project } from '@/types/Project';
 import type { TenantUser } from '@/services/UsersService';
@@ -24,7 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const auth = useAuth();
-const projectsApi = new ProjectsService(auth.apiClient);
+const { createProject } = useProjects();
 const usersApi = new UsersService(auth.apiClient);
 
 // Form state
@@ -174,9 +174,9 @@ async function submit() {
   saving.value = true;
 
   try {
-    const createdProject = await projectsApi.createProject({
+    const createdProject = await createProject({
       name: form.name,
-      description: '' // Add description field if needed
+      description: '',
     });
 
     // TODO: Send user invites via API when backend endpoint is ready
