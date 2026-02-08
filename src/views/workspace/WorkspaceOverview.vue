@@ -195,33 +195,33 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="workspace-overview">
-    <div class="workspace-content">
+  <div class="flex flex-col h-full">
+    <div class="max-w-[980px] mx-auto w-full flex flex-col px-3 md:px-0">
       <!-- Loading -->
-      <div v-if="loading" class="loading-container">
+      <div v-if="loading" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
         <ProgressSpinner style="width: 50px; height: 50px" />
         <span>Loading workspace...</span>
       </div>
 
       <template v-else-if="currentWorkspace">
         <!-- Heading -->
-        <div class="workspace-heading">
-          <h1 class="workspace-name">{{ currentWorkspace.name }}</h1>
-          <span class="tier-badge">{{ tierName }}</span>
+        <div class="flex items-center gap-3 p-4">
+          <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ currentWorkspace.name }}</h1>
+          <span class="inline-flex items-center px-3 py-1 rounded-2xl bg-[var(--primary-color)] text-white text-xs font-semibold uppercase tracking-[0.05em]">{{ tierName }}</span>
         </div>
 
         <!-- Usage & Limits -->
-        <div class="section-header">
-          <h2 class="section-title">Usage &amp; Limits</h2>
+        <div class="flex items-center justify-between p-4 gap-2">
+          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Usage &amp; Limits</h2>
         </div>
 
-        <div class="usage-grid">
-          <div v-for="metric in usageMetrics" :key="metric.label" class="usage-card">
-            <div class="usage-card-header">
-              <i :class="'pi ' + metric.icon" class="usage-icon"></i>
-              <span class="usage-label">{{ metric.label }}</span>
+        <div class="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 px-4 pb-4">
+          <div v-for="metric in usageMetrics" :key="metric.label" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <i :class="'pi ' + metric.icon" class="text-base text-[var(--text-secondary)]"></i>
+              <span class="font-semibold text-sm text-[var(--text-color)]">{{ metric.label }}</span>
             </div>
-            <div class="usage-value">
+            <div class="text-xl font-semibold text-[var(--text-color)]">
               {{ formatUsageValue(metric.current, metric.max, metric.formatter) }}
             </div>
             <ProgressBar
@@ -231,62 +231,62 @@ onMounted(async () => {
               :severity="getProgressSeverity(metric.current, metric.max)"
               class="usage-bar"
             />
-            <div v-else class="usage-unlimited">Unlimited</div>
+            <div v-else class="text-[13px] text-[var(--text-secondary)]">Unlimited</div>
           </div>
         </div>
 
         <!-- Features -->
-        <div class="section-header">
-          <h2 class="section-title">Features</h2>
+        <div class="flex items-center justify-between p-4 gap-2">
+          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Features</h2>
         </div>
 
-        <div class="features-list">
-          <div v-for="feature in features" :key="feature.feature" class="feature-item">
+        <div class="flex flex-col gap-2 px-4 pb-4">
+          <div v-for="feature in features" :key="feature.feature" class="flex items-center gap-2.5 py-2.5 px-3.5 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-lg">
             <i
-              :class="feature.enabled ? 'pi pi-check-circle feature-enabled' : 'pi pi-times-circle feature-disabled'"
+              :class="feature.enabled ? 'pi pi-check-circle text-[#27ae60] text-base' : 'pi pi-times-circle text-[var(--text-secondary)] text-base'"
             ></i>
-            <span class="feature-name">{{ formatFeatureName(feature.feature) }}</span>
+            <span class="text-sm font-medium text-[var(--text-color)]">{{ formatFeatureName(feature.feature) }}</span>
           </div>
-          <div v-if="features.length === 0" class="empty-features">
+          <div v-if="features.length === 0" class="text-[var(--text-secondary)] text-sm py-2.5 px-3.5">
             No features configured for this tier.
           </div>
         </div>
 
         <!-- Cleanup Suggestions -->
         <template v-if="anyUsageAbove80 && cleanupItems.length > 0">
-          <div class="section-header">
-            <h2 class="section-title">Cleanup Suggestions</h2>
+          <div class="flex items-center justify-between p-4 gap-2">
+            <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Cleanup Suggestions</h2>
           </div>
-          <p class="section-subtitle">
+          <p class="text-[var(--text-secondary)] text-sm mx-4 mb-2 mt-0">
             These items haven't been updated recently. Review them to free up space.
           </p>
 
-          <div class="cleanup-list">
+          <div class="flex flex-col gap-1 px-4 pb-4">
             <div
               v-for="(item, index) in cleanupItems"
               :key="index"
-              class="cleanup-item"
+              class="flex items-center gap-3 py-3 px-3.5 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-lg cursor-pointer transition-colors duration-150 hover:bg-[var(--surface-ground)]"
               @click="navigateToItem(item)"
             >
-              <i :class="item.type === 'project' ? 'pi pi-folder' : 'pi pi-file'" class="cleanup-icon"></i>
-              <div class="cleanup-info">
-                <span class="cleanup-name">{{ item.name }}</span>
-                <span v-if="item.projectName" class="cleanup-context">in {{ item.projectName }}</span>
+              <i :class="item.type === 'project' ? 'pi pi-folder' : 'pi pi-file'" class="text-base text-[var(--text-secondary)]"></i>
+              <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+                <span class="text-sm font-medium text-[var(--text-color)] whitespace-nowrap overflow-hidden text-ellipsis">{{ item.name }}</span>
+                <span v-if="item.projectName" class="text-xs text-[var(--text-secondary)]">in {{ item.projectName }}</span>
               </div>
-              <span class="cleanup-date">{{ formatRelativeDate(item.lastActivity) }}</span>
-              <span v-if="item.fileSize" class="cleanup-size">{{ formatFileSize(item.fileSize) }}</span>
+              <span class="text-xs text-[var(--text-secondary)] whitespace-nowrap">{{ formatRelativeDate(item.lastActivity) }}</span>
+              <span v-if="item.fileSize" class="text-xs text-[var(--text-secondary)] whitespace-nowrap">{{ formatFileSize(item.fileSize) }}</span>
             </div>
           </div>
         </template>
 
         <!-- Upgrade CTA -->
-        <div class="section-header">
-          <h2 class="section-title">Upgrade</h2>
+        <div class="flex items-center justify-between p-4 gap-2">
+          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Upgrade</h2>
         </div>
 
-        <div class="upgrade-card">
-          <h3 class="upgrade-heading">Need more from your workspace?</h3>
-          <p class="upgrade-description">
+        <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
+          <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">Need more from your workspace?</h3>
+          <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
             Unlock higher limits, advanced features, and priority support by upgrading your plan.
           </p>
           <Button
@@ -301,270 +301,8 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.workspace-overview {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0;
-}
-
-.workspace-content {
-  max-width: 980px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 64px;
-  color: var(--text-secondary);
-}
-
-/* Heading */
-.workspace-heading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-}
-
-.workspace-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.tier-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 16px;
-  background-color: var(--primary-color);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  gap: 8px;
-}
-
-.section-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.section-subtitle {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin: 0 16px 8px;
-}
-
-/* Usage Grid */
-.usage-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-  padding: 0 16px 16px;
-}
-
-.usage-card {
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 10px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.usage-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.usage-icon {
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-.usage-label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.usage-value {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
 .usage-bar {
   height: 8px;
   border-radius: 4px;
-}
-
-.usage-unlimited {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-/* Features */
-.features-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 16px 16px;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-}
-
-.feature-enabled {
-  color: #27ae60;
-  font-size: 16px;
-}
-
-.feature-disabled {
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.feature-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.empty-features {
-  color: var(--text-secondary);
-  font-size: 14px;
-  padding: 10px 14px;
-}
-
-/* Cleanup */
-.cleanup-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 16px 16px;
-}
-
-.cleanup-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.cleanup-item:hover {
-  background-color: var(--surface-ground);
-}
-
-.cleanup-icon {
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-.cleanup-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.cleanup-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cleanup-context {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.cleanup-date {
-  font-size: 12px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.cleanup-size {
-  font-size: 12px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-/* Upgrade */
-.upgrade-card {
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 10px;
-  padding: 24px;
-  margin: 0 16px 16px;
-}
-
-.upgrade-heading {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px;
-}
-
-.upgrade-description {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0 0 16px;
-  line-height: 1.5;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .workspace-content {
-    padding: 0 12px;
-  }
-
-  .usage-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

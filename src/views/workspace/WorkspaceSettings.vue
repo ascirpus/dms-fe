@@ -176,16 +176,16 @@ async function handleDelete(dt: DocumentTypeDTO) {
 </script>
 
 <template>
-  <div class="workspace-settings">
-    <div class="settings-content">
+  <div class="flex flex-col h-full">
+    <div class="max-w-[980px] mx-auto w-full flex flex-col max-md:px-3">
       <!-- Heading -->
-      <div class="settings-heading">
-        <h1 class="page-title">{{ currentWorkspaceName || 'Workspace' }} Settings</h1>
+      <div class="p-4">
+        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ currentWorkspaceName || 'Workspace' }} Settings</h1>
       </div>
 
       <!-- Document Types Section -->
-      <div class="section-header">
-        <h2 class="section-title">Document Types</h2>
+      <div class="flex items-center justify-between p-4 gap-2">
+        <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Document Types</h2>
         <Button
           icon="pi pi-plus"
           label="Add Document Type"
@@ -195,21 +195,21 @@ async function handleDelete(dt: DocumentTypeDTO) {
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="loading-container">
+      <div v-if="loading" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
         <ProgressSpinner style="width: 50px; height: 50px" />
         <span>Loading document types...</span>
       </div>
 
       <!-- Error -->
-      <div v-else-if="error" class="error-container">
-        <i class="pi pi-exclamation-triangle"></i>
-        <h3>Error loading document types</h3>
-        <p>{{ error instanceof Error ? error.message : 'An unexpected error occurred' }}</p>
+      <div v-else-if="error" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
+        <i class="pi pi-exclamation-triangle text-5xl !text-[var(--color-danger,#e74c3c)]"></i>
+        <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">Error loading document types</h3>
+        <p class="m-0">{{ error instanceof Error ? error.message : 'An unexpected error occurred' }}</p>
         <Button icon="pi pi-refresh" label="Try Again" @click="refetch" />
       </div>
 
       <!-- Table -->
-      <div v-else class="table-container">
+      <div v-else class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] overflow-hidden mx-4 mb-4">
         <DataTable
           :value="documentTypes ?? []"
           dataKey="id"
@@ -217,10 +217,10 @@ async function handleDelete(dt: DocumentTypeDTO) {
           class="dt-table"
         >
           <template #empty>
-            <div class="empty-state">
-              <i class="pi pi-file"></i>
-              <h3>No document types</h3>
-              <p>Create a document type to get started.</p>
+            <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
+              <i class="pi pi-file text-5xl mb-4 text-[var(--text-muted)]"></i>
+              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No document types</h3>
+              <p class="m-0 mb-6">Create a document type to get started.</p>
               <Button
                 icon="pi pi-plus"
                 label="Add Document Type"
@@ -231,8 +231,8 @@ async function handleDelete(dt: DocumentTypeDTO) {
 
           <Column field="name" header="Name" sortable style="min-width: 200px">
             <template #body="{ data }">
-              <span class="dt-name">
-                <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="dt-icon"></i>
+              <span class="inline-flex items-center gap-2 font-medium text-[var(--primary-color)]">
+                <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="text-base text-[var(--text-secondary)]"></i>
                 {{ data.name }}
               </span>
             </template>
@@ -259,15 +259,15 @@ async function handleDelete(dt: DocumentTypeDTO) {
 
           <Column field="defaultPermissions" style="min-width: 160px">
             <template #header>
-              <span class="column-header-with-info">
+              <span class="inline-flex items-center gap-1.5">
                 Required Permission
                 <i
-                  class="pi pi-info-circle info-icon"
+                  class="pi pi-info-circle text-xs text-[var(--text-secondary)] cursor-pointer hover:text-[var(--primary-color)]"
                   @click.stop="permissionInfoPopover.toggle($event)"
                 ></i>
               </span>
               <Popover ref="permissionInfoPopover">
-                <div class="info-popover-content">
+                <div class="max-w-[260px] text-[13px] leading-normal text-[var(--text-color)]">
                   The minimum party permission level required to access documents of this type.
                 </div>
               </Popover>
@@ -279,7 +279,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
 
           <Column header="" style="width: 100px" :exportable="false">
             <template #body="{ data }">
-              <div class="row-actions">
+              <div class="flex justify-end gap-1">
                 <Button
                   icon="pi pi-pencil"
                   text
@@ -311,14 +311,14 @@ async function handleDelete(dt: DocumentTypeDTO) {
       modal
       :style="{ width: '480px' }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
-          <label>Icon</label>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-sm text-[var(--text-color)]">Icon</label>
           <IconPicker v-model="dialogForm.icon" />
         </div>
 
-        <div class="form-field">
-          <label for="dtName">Name</label>
+        <div class="flex flex-col gap-2">
+          <label for="dtName" class="font-semibold text-sm text-[var(--text-color)]">Name</label>
           <InputText
             id="dtName"
             v-model="dialogForm.name"
@@ -327,13 +327,13 @@ async function handleDelete(dt: DocumentTypeDTO) {
           />
         </div>
 
-        <div class="form-field-row">
-          <label>Requires Approval</label>
+        <div class="flex items-center justify-between gap-2">
+          <label class="font-semibold text-sm text-[var(--text-color)]">Requires Approval</label>
           <ToggleSwitch v-model="dialogForm.requiresApproval" />
         </div>
 
-        <div v-if="dialogForm.requiresApproval" class="form-field">
-          <label for="dtThreshold">Approval Threshold</label>
+        <div v-if="dialogForm.requiresApproval" class="flex flex-col gap-2">
+          <label for="dtThreshold" class="font-semibold text-sm text-[var(--text-color)]">Approval Threshold</label>
           <InputNumber
             id="dtThreshold"
             v-model="dialogForm.defaultApprovalThreshold"
@@ -343,13 +343,13 @@ async function handleDelete(dt: DocumentTypeDTO) {
           />
         </div>
 
-        <div class="form-field-row">
-          <label>Requires Signature</label>
+        <div class="flex items-center justify-between gap-2">
+          <label class="font-semibold text-sm text-[var(--text-color)]">Requires Signature</label>
           <ToggleSwitch v-model="dialogForm.requiresSignature" />
         </div>
 
-        <div class="form-field">
-          <label for="dtPermissions">Required Permission</label>
+        <div class="flex flex-col gap-2">
+          <label for="dtPermissions" class="font-semibold text-sm text-[var(--text-color)]">Required Permission</label>
           <Select
             id="dtPermissions"
             v-model="dialogForm.defaultPermissions"
@@ -358,12 +358,12 @@ async function handleDelete(dt: DocumentTypeDTO) {
             optionValue="value"
             class="w-full"
           />
-          <small class="field-help">Minimum party permission level required to access documents of this type.</small>
+          <small class="text-[var(--text-secondary)] text-xs leading-[1.4]">Minimum party permission level required to access documents of this type.</small>
         </div>
       </div>
 
       <template #footer>
-        <div class="dialog-footer">
+        <div class="flex justify-end gap-4">
           <Button
             label="Cancel"
             text
@@ -383,90 +383,6 @@ async function handleDelete(dt: DocumentTypeDTO) {
 </template>
 
 <style scoped>
-.workspace-settings {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0;
-}
-
-.settings-content {
-  max-width: 980px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Heading */
-.settings-heading {
-  padding: 16px;
-}
-
-.page-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  gap: 8px;
-}
-
-.section-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-/* Loading / Error */
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 64px;
-  color: var(--text-secondary);
-}
-
-.error-container i {
-  font-size: 48px;
-  color: var(--color-danger, #e74c3c);
-}
-
-.error-container h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.error-container p {
-  margin: 0;
-}
-
-/* Table */
-.table-container {
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 0 16px 16px;
-}
-
 .dt-table {
   border: none;
 }
@@ -486,126 +402,5 @@ async function handleDelete(dt: DocumentTypeDTO) {
 
 :deep(.p-datatable-tbody > tr:hover) {
   background: var(--surface-hover);
-}
-
-.dt-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: var(--primary-color);
-}
-
-.dt-icon {
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-.row-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.empty-state i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: var(--text-muted);
-}
-
-.empty-state h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.empty-state p {
-  margin: 0 0 24px 0;
-}
-
-/* Dialog */
-.dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-field label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.form-field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.form-field-row label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-}
-
-/* Column header with info icon */
-.column-header-with-info {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.info-icon {
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.info-icon:hover {
-  color: var(--primary-color);
-}
-
-.info-popover-content {
-  max-width: 260px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-color);
-}
-
-.field-help {
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .settings-content {
-    padding: 0 12px;
-  }
 }
 </style>

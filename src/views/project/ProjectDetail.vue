@@ -297,24 +297,24 @@ async function handleUploadDocument() {
 </script>
 
 <template>
-  <div class="project-detail-view">
+  <div class="flex flex-col gap-4 h-full">
     <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
+    <div v-if="loading" class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
       <ProgressSpinner />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="error-container">
-      <i class="pi pi-exclamation-triangle"></i>
-      <h3>Error loading project</h3>
-      <p>{{ error }}</p>
+    <div v-else-if="error" class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
+      <i class="pi pi-exclamation-triangle text-[48px] mb-4 text-[var(--color-danger)]"></i>
+      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">Error loading project</h3>
+      <p class="m-0 mb-6">{{ error }}</p>
       <Button icon="pi pi-refresh" label="Try Again" @click="fetchProject" />
     </div>
 
     <!-- Project Content -->
     <template v-else>
       <!-- Breadcrumb / Back link -->
-      <div class="project-breadcrumb">
+      <div class="p-0">
         <Button
           icon="pi pi-arrow-left"
           label="Back to Projects"
@@ -325,12 +325,12 @@ async function handleUploadDocument() {
       </div>
 
       <!-- Project Header -->
-      <div class="project-header">
-        <div class="project-info">
-          <h1 class="project-title">{{ project?.name }}</h1>
-          <p v-if="project?.description" class="project-description">{{ project.description }}</p>
+      <div class="flex justify-between items-start pb-2">
+        <div>
+          <h1 class="font-['Inter',sans-serif] font-semibold text-2xl md:text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ project?.name }}</h1>
+          <p v-if="project?.description" class="font-['Inter',sans-serif] text-sm text-[var(--text-secondary)] mt-2 mb-0">{{ project.description }}</p>
         </div>
-        <div class="project-actions">
+        <div class="shrink-0">
           <Button
             icon="pi pi-cog"
             label="Settings"
@@ -342,10 +342,10 @@ async function handleUploadDocument() {
       </div>
 
       <!-- Documents Table Container -->
-      <div class="data-table-container">
+      <div class="bg-[var(--ui-input-fill-default)] border border-[var(--ui-input-fill-disabled)] rounded-[10px] overflow-hidden flex flex-col flex-1">
         <!-- Toolbar -->
-        <div class="table-toolbar">
-          <div class="table-toolbar-left">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between px-4 py-3 border-b border-[var(--ui-button-outlined-stroke)] gap-4">
+          <div class="flex items-center gap-3">
             <Button
               icon="pi pi-filter-slash"
               label="Clear"
@@ -360,11 +360,11 @@ async function handleUploadDocument() {
               optionValue="value"
               placeholder="Status"
               size="small"
-              class="status-filter"
+              class="min-w-[120px]"
             />
           </div>
 
-          <div class="table-toolbar-right">
+          <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
             <Button
               icon="pi pi-upload"
               label="Upload Document"
@@ -379,27 +379,27 @@ async function handleUploadDocument() {
               aria-label="Settings"
               @click="toggleSettings"
             />
-            <Popover ref="settingsPopover" class="settings-popover">
-              <div class="settings-panel">
-                <div class="settings-header">Columns</div>
-                <div class="settings-item">
-                  <span class="settings-label">Document Type</span>
+            <Popover ref="settingsPopover">
+              <div class="min-w-[200px] bg-white rounded-xl">
+                <div class="py-3 px-4 font-semibold text-sm text-[var(--ui-input-label)]">Columns</div>
+                <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
+                  <span class="flex-1">Document Type</span>
                   <ToggleSwitch v-model="columnSettings.documentType" />
                 </div>
-                <div class="settings-item">
-                  <span class="settings-label">Document Name</span>
+                <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
+                  <span class="flex-1">Document Name</span>
                   <ToggleSwitch v-model="columnSettings.documentName" disabled />
                 </div>
-                <div class="settings-item">
-                  <span class="settings-label">Modified Date</span>
+                <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
+                  <span class="flex-1">Modified Date</span>
                   <ToggleSwitch v-model="columnSettings.modifiedDate" />
                 </div>
-                <div class="settings-item">
-                  <span class="settings-label">Status</span>
+                <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
+                  <span class="flex-1">Status</span>
                   <ToggleSwitch v-model="columnSettings.status" />
                 </div>
-                <div class="settings-item">
-                  <span class="settings-label">Version</span>
+                <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
+                  <span class="flex-1">Version</span>
                   <ToggleSwitch v-model="columnSettings.version" />
                 </div>
               </div>
@@ -427,17 +427,17 @@ async function handleUploadDocument() {
           dataKey="id"
           stripedRows
           @row-click="(e) => navigateToDocument(e.data)"
-          class="documents-table"
+          class="documents-table flex-1"
           :pt="{
             table: { class: 'w-full' },
             bodyRow: { class: 'cursor-pointer hover:bg-gray-50' }
           }"
         >
           <template #empty>
-            <div class="empty-state">
-              <i class="pi pi-file"></i>
-              <h3>No documents found</h3>
-              <p>Upload a document to get started.</p>
+            <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
+              <i class="pi pi-file text-[48px] mb-4 text-[var(--text-muted)]"></i>
+              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No documents found</h3>
+              <p class="m-0 mb-6">Upload a document to get started.</p>
               <Button icon="pi pi-upload" label="Upload Document" @click="openUploadDialog" />
             </div>
           </template>
@@ -448,7 +448,7 @@ async function handleUploadDocument() {
             style="width: 60px"
           >
             <template #body="{ data }">
-              <i :class="'pi ' + sanitizeIcon(data.documentType?.meta?.icon)" class="doc-type-icon"></i>
+              <i :class="'pi ' + sanitizeIcon(data.documentType?.meta?.icon)" class="text-lg text-[var(--text-secondary)]"></i>
             </template>
           </Column>
 
@@ -460,7 +460,7 @@ async function handleUploadDocument() {
             style="min-width: 250px"
           >
             <template #body="{ data }">
-              <span class="document-link">{{ data.title }}</span>
+              <span class="text-[var(--primary-color)] font-medium">{{ data.title }}</span>
             </template>
           </Column>
 
@@ -472,7 +472,7 @@ async function handleUploadDocument() {
             style="min-width: 140px"
           >
             <template #body="{ data }">
-              <span class="date-text">{{ data.currentVersion ? formatDate(data.currentVersion.uploadedAt) : '—' }}</span>
+              <span class="text-[var(--text-secondary)]">{{ data.currentVersion ? formatDate(data.currentVersion.uploadedAt) : '—' }}</span>
             </template>
           </Column>
 
@@ -496,13 +496,13 @@ async function handleUploadDocument() {
             style="min-width: 100px"
           >
             <template #body="{ data }">
-              <span class="version-text">{{ data.currentVersion ? `v${data.currentVersion.version}` : '—' }}</span>
+              <span class="text-[var(--text-secondary)] font-medium">{{ data.currentVersion ? `v${data.currentVersion.version}` : '—' }}</span>
             </template>
           </Column>
 
           <Column header="" style="width: 100px" :exportable="false">
             <template #body="{ data }">
-              <div class="action-buttons">
+              <div class="flex items-center gap-1 opacity-60 hover:opacity-100">
                 <Button
                   icon="pi pi-pencil"
                   text
@@ -526,7 +526,7 @@ async function handleUploadDocument() {
         </DataTable>
 
         <!-- Pagination -->
-        <div class="table-pagination">
+        <div class="table-pagination flex justify-center py-2 px-4 border-t border-[var(--ui-button-outlined-stroke)]">
           <Paginator
             :first="first"
             :rows="rows"
@@ -546,8 +546,8 @@ async function handleUploadDocument() {
       modal
       :style="{ width: '450px' }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
+      <div class="flex flex-col gap-4 py-2">
+        <div class="form-field w-full">
           <FloatLabel variant="on">
             <InputText
               id="docTitle"
@@ -558,7 +558,7 @@ async function handleUploadDocument() {
           </FloatLabel>
         </div>
 
-        <div class="form-field">
+        <div class="form-field w-full">
           <FloatLabel variant="on">
             <Select
               id="docStatus"
@@ -574,7 +574,7 @@ async function handleUploadDocument() {
       </div>
 
       <template #footer>
-        <div class="dialog-footer">
+        <div class="flex justify-end gap-4">
           <Button
             label="Cancel"
             text
@@ -596,8 +596,8 @@ async function handleUploadDocument() {
       modal
       :style="{ width: '500px' }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
+      <div class="flex flex-col gap-4 py-2">
+        <div class="form-field w-full">
           <FileUpload
             mode="basic"
             accept=".pdf"
@@ -606,12 +606,12 @@ async function handleUploadDocument() {
             class="w-full"
             @select="onFileSelect"
           />
-          <small v-if="uploadForm.file" class="file-selected">
+          <small v-if="uploadForm.file" class="block mt-2 text-[var(--text-secondary)]">
             Selected: {{ uploadForm.file.name }}
           </small>
         </div>
 
-        <div class="form-field">
+        <div class="form-field w-full">
           <FloatLabel variant="on">
             <InputText
               id="uploadTitle"
@@ -622,7 +622,7 @@ async function handleUploadDocument() {
           </FloatLabel>
         </div>
 
-        <div class="form-field">
+        <div class="form-field w-full">
           <FloatLabel variant="on">
             <Select
               id="uploadType"
@@ -638,7 +638,7 @@ async function handleUploadDocument() {
       </div>
 
       <template #footer>
-        <div class="dialog-footer">
+        <div class="flex justify-end gap-4">
           <Button
             label="Cancel"
             text
@@ -660,114 +660,6 @@ async function handleUploadDocument() {
 </template>
 
 <style scoped>
-.project-detail-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-}
-
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.error-container i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: var(--color-danger);
-}
-
-.error-container h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.error-container p {
-  margin: 0 0 24px 0;
-}
-
-/* Breadcrumb */
-.project-breadcrumb {
-  padding: 0;
-}
-
-/* Project Header */
-.project-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 0 0 8px 0;
-}
-
-.project-actions {
-  flex-shrink: 0;
-}
-
-.project-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.project-description {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 8px 0 0 0;
-}
-
-/* Table Container */
-.data-table-container {
-  background-color: var(--ui-input-fill-default);
-  border: 1px solid var(--ui-input-fill-disabled);
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.table-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--ui-button-outlined-stroke);
-  gap: 16px;
-}
-
-.table-toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.table-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.status-filter {
-  min-width: 120px;
-}
-
-.documents-table {
-  flex: 1;
-}
-
 .documents-table :deep(.p-datatable-thead > tr > th) {
   background-color: var(--surface-ground);
   color: var(--ui-input-label);
@@ -788,146 +680,14 @@ async function handleUploadDocument() {
   background-color: var(--surface-ground);
 }
 
-.doc-type-icon {
-  font-size: 18px;
-  color: var(--text-secondary);
-}
-
-.document-link {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.date-text {
-  color: var(--text-secondary);
-}
-
-.version-text {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0.6;
-}
-
-.action-buttons:hover {
-  opacity: 1;
-}
-
-.table-pagination {
-  display: flex;
-  justify-content: center;
-  padding: 8px 16px;
-  border-top: 1px solid var(--ui-button-outlined-stroke);
-}
-
 .table-pagination :deep(.p-paginator) {
   background: transparent;
   border: none;
   padding: 0;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.empty-state i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: var(--text-muted);
-}
-
-.empty-state h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.empty-state p {
-  margin: 0 0 24px 0;
-}
-
-/* Settings Panel */
-.settings-panel {
-  min-width: 200px;
-  background: white;
-  border-radius: 12px;
-}
-
-.settings-header {
-  padding: 12px 16px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--ui-input-label);
-}
-
-.settings-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: var(--ui-button-primary);
-}
-
-.settings-item .settings-label {
-  flex: 1;
-}
-
-/* Edit Dialog */
-.dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 8px 0;
-}
-
-.form-field {
-  width: 100%;
-}
-
 .form-field :deep(.p-inputtext),
 .form-field :deep(.p-select) {
   width: 100%;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-}
-
-.file-selected {
-  display: block;
-  margin-top: 8px;
-  color: var(--text-secondary);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .table-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .table-toolbar-right {
-    flex-wrap: wrap;
-  }
-
-  .project-title {
-    font-size: 24px;
-  }
 }
 </style>

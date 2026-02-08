@@ -108,20 +108,20 @@ function onPageChange(event: { first: number; rows: number }) {
 </script>
 
 <template>
-  <div class="projects-view">
+  <div class="flex flex-col gap-4 h-full">
     <!-- Error State -->
-    <div v-if="error" class="error-container">
-      <i class="pi pi-exclamation-triangle"></i>
-      <h3>Error loading projects</h3>
-      <p>{{ error instanceof Error ? error.message : 'An unexpected error occurred' }}</p>
+    <div v-if="error" class="flex flex-col items-center justify-center p-12 text-center bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px]">
+      <i class="pi pi-exclamation-triangle text-5xl mb-4 text-[var(--color-danger,#e74c3c)]"></i>
+      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">Error loading projects</h3>
+      <p class="m-0 mb-6 text-[var(--text-secondary)]">{{ error instanceof Error ? error.message : 'An unexpected error occurred' }}</p>
       <Button icon="pi pi-refresh" label="Try Again" @click="refetchProjects" />
     </div>
 
     <!-- Table Container -->
-    <div v-else class="data-table-container">
+    <div v-else class="bg-[var(--ui-input-fill-default)] border border-[var(--ui-input-fill-disabled)] rounded-[10px] overflow-hidden flex flex-col flex-1">
       <!-- Toolbar -->
-      <div class="table-toolbar">
-        <div class="table-toolbar-left">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--ui-button-outlined-stroke)] gap-4 max-md:flex-col max-md:items-stretch">
+        <div class="flex items-center gap-3">
           <Button
             icon="pi pi-plus"
             label="New Project"
@@ -131,7 +131,7 @@ function onPageChange(event: { first: number; rows: number }) {
           />
         </div>
 
-        <div class="table-toolbar-right">
+        <div class="flex items-center gap-3 max-md:flex-wrap">
           <IconField>
             <InputIcon class="pi pi-filter" />
             <InputText
@@ -155,17 +155,17 @@ function onPageChange(event: { first: number; rows: number }) {
         dataKey="project.id"
         stripedRows
         @row-click="(e) => navigateToProject(e.data)"
-        class="projects-table"
+        class="projects-table flex-1"
         :pt="{
           table: { class: 'w-full' },
           bodyRow: { class: 'cursor-pointer hover:bg-gray-50' }
         }"
       >
         <template #empty>
-          <div class="empty-state">
-            <i class="pi pi-folder-open"></i>
-            <h3>No projects found</h3>
-            <p>Get started by creating a new project.</p>
+          <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
+            <i class="pi pi-folder-open text-5xl mb-4 text-[var(--text-muted)]"></i>
+            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No projects found</h3>
+            <p class="m-0 mb-6">Get started by creating a new project.</p>
             <Button
               icon="pi pi-plus"
               label="Create Project"
@@ -175,21 +175,21 @@ function onPageChange(event: { first: number; rows: number }) {
         </template>
 
         <template #loading>
-          <div class="loading-state">
-            <i class="pi pi-spin pi-spinner"></i>
+          <div class="flex items-center justify-center gap-3 p-12 text-[var(--text-secondary)]">
+            <i class="pi pi-spin pi-spinner text-2xl"></i>
             <span>Loading projects...</span>
           </div>
         </template>
 
         <Column field="project.name" header="Project" sortable style="min-width: 200px">
           <template #body="{ data }">
-            <span class="project-link">{{ data.project.name }}</span>
+            <span class="text-[var(--primary-color)] font-medium">{{ data.project.name }}</span>
           </template>
         </Column>
 
         <Column field="project.description" header="Description" sortable style="min-width: 300px">
           <template #body="{ data }">
-            <span class="description-preview">{{ truncateDescription(data.project.description) }}</span>
+            <span class="text-[var(--text-secondary)] text-[13px]">{{ truncateDescription(data.project.description) }}</span>
           </template>
         </Column>
 
@@ -203,13 +203,13 @@ function onPageChange(event: { first: number; rows: number }) {
 
         <Column field="document_count" header="Documents" sortable style="min-width: 120px">
           <template #body="{ data }">
-            <span class="document-count">{{ data.document_count }}</span>
+            <span class="font-medium">{{ data.document_count }}</span>
           </template>
         </Column>
 
         <Column header="" style="width: 100px" :exportable="false">
           <template #body="{ data }">
-            <div class="action-buttons">
+            <div class="flex items-center gap-1 opacity-60 hover:opacity-100">
               <Button
                 icon="pi pi-pencil"
                 text
@@ -233,7 +233,7 @@ function onPageChange(event: { first: number; rows: number }) {
       </DataTable>
 
       <!-- Pagination -->
-      <div class="table-pagination">
+      <div class="flex justify-center px-4 py-2 border-t border-[var(--ui-button-outlined-stroke)]">
         <Paginator
           :first="first"
           :rows="rows"
@@ -254,78 +254,6 @@ function onPageChange(event: { first: number; rows: number }) {
 </template>
 
 <style scoped>
-.projects-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-}
-
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  text-align: center;
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 10px;
-}
-
-.error-container i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: var(--color-danger, #e74c3c);
-}
-
-.error-container h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.error-container p {
-  margin: 0 0 24px 0;
-  color: var(--text-secondary);
-}
-
-.data-table-container {
-  background-color: var(--ui-input-fill-default);
-  border: 1px solid var(--ui-input-fill-disabled);
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.table-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--ui-button-outlined-stroke);
-  gap: 16px;
-}
-
-.table-toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.table-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.projects-table {
-  flex: 1;
-}
-
 .projects-table :deep(.p-datatable-thead > tr > th) {
   background-color: var(--surface-ground);
   color: var(--ui-input-label);
@@ -346,93 +274,9 @@ function onPageChange(event: { first: number; rows: number }) {
   background-color: var(--surface-ground);
 }
 
-.project-link {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.description-preview {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.document-count {
-  font-weight: 500;
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0.6;
-}
-
-.action-buttons:hover {
-  opacity: 1;
-}
-
-.table-pagination {
-  display: flex;
-  justify-content: center;
-  padding: 8px 16px;
-  border-top: 1px solid var(--ui-button-outlined-stroke);
-}
-
-.table-pagination :deep(.p-paginator) {
+.projects-table :deep(.p-paginator) {
   background: transparent;
   border: none;
   padding: 0;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.empty-state i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: var(--text-muted);
-}
-
-.empty-state h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.empty-state p {
-  margin: 0 0 24px 0;
-}
-
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 48px;
-  color: var(--text-secondary);
-}
-
-.loading-state i {
-  font-size: 24px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .table-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .table-toolbar-right {
-    flex-wrap: wrap;
-  }
 }
 </style>

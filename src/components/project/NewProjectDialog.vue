@@ -206,25 +206,25 @@ async function submit() {
       content: { class: 'dialog-content-wrapper' }
     }"
   >
-    <div class="dialog-container">
+    <div class="flex flex-col gap-6">
       <!-- Header -->
-      <div class="dialog-header">
-        <h2 class="dialog-title">New Project</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold text-[21px] leading-5 text-[var(--ui-input-label)] m-0">New Project</h2>
         <Button
           icon="pi pi-times"
           text
           rounded
           aria-label="Close"
           @click="closeDialog"
-          class="close-button"
+          class="text-[var(--text-secondary)]"
         />
       </div>
 
       <!-- Content -->
-      <div class="dialog-content">
+      <div class="flex flex-col gap-4">
         <!-- Project Title -->
-        <div class="form-field">
-          <label for="projectTitle">Project Title</label>
+        <div class="form-field flex flex-col gap-1.5">
+          <label for="projectTitle" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Project Title</label>
           <InputText
             id="projectTitle"
             v-model="form.name"
@@ -237,8 +237,8 @@ async function submit() {
         </div>
 
         <!-- Users Select (only show if there are users to invite) -->
-        <div v-if="hasUsersToInvite" class="form-field">
-          <label for="users">Users</label>
+        <div v-if="hasUsersToInvite" class="form-field flex flex-col gap-1.5">
+          <label for="users" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Users</label>
           <Select
             id="users"
             v-model="form.selectedUser"
@@ -263,14 +263,14 @@ async function submit() {
         </div>
 
         <!-- Selected Users List -->
-        <div v-if="form.selectedUsers.length > 0" class="selected-users">
+        <div v-if="form.selectedUsers.length > 0" class="flex flex-col">
           <div
             v-for="user in form.selectedUsers"
             :key="user.userId"
-            class="selected-user-item"
+            class="flex items-center justify-between py-2"
           >
-            <span class="user-name">{{ getUserDisplayName(user) }}</span>
-            <span class="user-role">{{ user.role }}</span>
+            <span class="text-sm text-[var(--ui-button-primary)] flex-1">{{ getUserDisplayName(user) }}</span>
+            <span class="text-xs text-[var(--text-secondary)] bg-[var(--surface-ground)] px-2 py-0.5 rounded ml-2">{{ user.role }}</span>
             <Button
               icon="pi pi-trash"
               text
@@ -279,14 +279,14 @@ async function submit() {
               severity="secondary"
               aria-label="Remove user"
               @click="removeUser(user.userId)"
-              class="remove-button"
+              class="text-[var(--text-secondary)] hover:text-[var(--color-danger)]"
             />
           </div>
         </div>
 
         <!-- Invite by Email -->
-        <div class="form-field">
-          <label for="inviteEmail">Invite by Email</label>
+        <div class="form-field flex flex-col gap-1.5">
+          <label for="inviteEmail" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Invite by Email</label>
           <InputText
             id="inviteEmail"
             v-model="form.currentEmail"
@@ -296,11 +296,11 @@ async function submit() {
         </div>
 
         <!-- Email Invites List (shown when emails are added) -->
-        <div v-if="form.inviteEmails.length > 0" class="invite-emails">
+        <div v-if="form.inviteEmails.length > 0" class="flex flex-col">
           <div
             v-for="emailAddr in form.inviteEmails"
             :key="emailAddr"
-            class="email-item"
+            class="flex items-center justify-between py-2 text-sm text-[var(--ui-button-primary)]"
           >
             <span>{{ emailAddr }}</span>
             <Button
@@ -311,7 +311,7 @@ async function submit() {
               severity="secondary"
               aria-label="Remove email"
               @click="removeEmail(emailAddr)"
-              class="remove-button"
+              class="text-[var(--text-secondary)] hover:text-[var(--color-danger)]"
             />
           </div>
         </div>
@@ -322,21 +322,24 @@ async function submit() {
           label="Specify Another Email"
           text
           size="small"
-          class="add-email-button"
+          class="self-start text-[var(--ui-button-secondary)] bg-[var(--ui-button-subtle)] px-2.5 py-1.5 text-sm"
           @click="addEmail"
         />
       </div>
 
       <!-- Footer -->
-      <div class="dialog-footer">
+      <div class="flex justify-end gap-4">
         <Button
           label="Cancel"
-          class="cancel-button"
+          class="bg-[var(--ui-button-subtle)] text-[var(--ui-button-secondary)] border-none h-[39px] px-2.5 py-1.5 font-medium text-base hover:bg-[#e8ecf1]"
           @click="closeDialog"
         />
         <Button
           label="Submit"
-          :class="['submit-button', { 'submit-button-active': hasFormData }]"
+          :class="[
+            'bg-[var(--ui-button-tertiary)] text-white border-none h-[39px] px-2.5 py-1.5 font-medium text-base hover:enabled:bg-[var(--ui-button-primary)]',
+            { '!bg-[var(--ui-button-primary)]': hasFormData }
+          ]"
           :loading="saving"
           :disabled="v$.$invalid"
           @click="submit"
@@ -347,51 +350,6 @@ async function submit() {
 </template>
 
 <style scoped>
-.dialog-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.dialog-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 21px;
-  line-height: 20px;
-  color: var(--ui-input-label);
-  margin: 0;
-}
-
-.close-button {
-  color: var(--text-secondary);
-}
-
-.dialog-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-field label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--ui-input-label);
-}
-
 .form-field :deep(.p-inputtext),
 .form-field :deep(.p-select) {
   width: 100%;
@@ -404,107 +362,6 @@ async function submit() {
   color: var(--ui-button-primary);
 }
 
-/* Selected Users */
-.selected-users {
-  display: flex;
-  flex-direction: column;
-}
-
-.selected-user-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0;
-}
-
-.user-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: var(--ui-button-primary);
-  flex: 1;
-}
-
-.user-role {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--text-secondary);
-  background-color: var(--surface-ground);
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-left: 8px;
-}
-
-.remove-button {
-  color: var(--text-secondary);
-}
-
-.remove-button:hover {
-  color: var(--color-danger);
-}
-
-/* Email Invites */
-.invite-emails {
-  display: flex;
-  flex-direction: column;
-}
-
-.email-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
-  color: var(--ui-button-primary);
-}
-
-.add-email-button {
-  align-self: flex-start;
-  color: var(--ui-button-secondary);
-  background-color: var(--ui-button-subtle);
-  padding: 6px 10px;
-  font-size: 14px;
-}
-
-/* Footer */
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-}
-
-.cancel-button {
-  background-color: var(--ui-button-subtle);
-  color: var(--ui-button-secondary);
-  border: none;
-  height: 39px;
-  padding: 6px 10px;
-  font-weight: 500;
-  font-size: 16px;
-}
-
-.cancel-button:hover {
-  background-color: #e8ecf1;
-}
-
-.submit-button {
-  background-color: var(--ui-button-tertiary);
-  color: white;
-  border: none;
-  height: 39px;
-  padding: 6px 10px;
-  font-weight: 500;
-  font-size: 16px;
-}
-
-.submit-button-active {
-  background-color: var(--ui-button-primary);
-}
-
-.submit-button:hover:not(:disabled) {
-  background-color: var(--ui-button-primary);
-}
-
-/* Dialog wrapper styles */
 :deep(.new-project-dialog) {
   border: 1px solid var(--ui-button-subtle);
   border-radius: 12px;

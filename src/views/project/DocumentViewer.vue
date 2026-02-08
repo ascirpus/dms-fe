@@ -330,30 +330,30 @@ async function uploadNewVersion() {
 </script>
 
 <template>
-  <div class="document-view">
+  <div class="flex flex-col flex-1 min-h-0 bg-[var(--surface-ground)]">
     <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
+    <div v-if="loading" class="flex flex-col items-center justify-center flex-1 gap-4">
       <ProgressSpinner />
-      <p class="loading-text">Loading document...</p>
+      <p class="text-[var(--text-secondary)]">Loading document...</p>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="error-container">
-      <i class="pi pi-exclamation-triangle"></i>
-      <h3>Error loading document</h3>
-      <p>{{ error }}</p>
+    <div v-else-if="error" class="flex flex-col items-center justify-center flex-1 gap-4">
+      <i class="pi pi-exclamation-triangle text-[48px] text-red-500"></i>
+      <h3 class="m-0 text-[var(--text-color)]">Error loading document</h3>
+      <p class="text-[var(--text-secondary)] m-0">{{ error }}</p>
       <Button icon="pi pi-refresh" label="Try Again" @click="fetchData" />
     </div>
 
     <!-- Document Content -->
     <template v-else-if="document">
       <!-- Document Header -->
-      <div class="document-header">
-        <div class="header-left">
-          <span class="project-name">{{ project?.name }}</span>
-          <h1 class="document-title">{{ document.title }}</h1>
+      <div class="flex items-start justify-between p-6 bg-[var(--surface-card)] shrink-0 max-md:flex-col max-md:gap-4">
+        <div class="flex flex-col gap-2">
+          <span class="text-sm text-[var(--primary-color)] font-medium">{{ project?.name }}</span>
+          <h1 class="text-[28px] font-semibold text-[var(--text-color)] m-0">{{ document.title }}</h1>
         </div>
-        <div class="header-right">
+        <div class="flex items-center gap-3 max-md:self-start">
           <Button
             v-if="versioningEnabled"
             icon="pi pi-plus"
@@ -370,9 +370,9 @@ async function uploadNewVersion() {
       </div>
 
       <!-- Main Content Area -->
-      <div class="document-content">
+      <div class="flex flex-1 overflow-hidden p-4 gap-4 max-md:flex-col">
         <!-- PDF Viewer Area -->
-        <div class="pdf-viewer-container">
+        <div class="pdf-viewer-container flex-1 flex flex-col bg-[var(--surface-card)] rounded-[10px] overflow-hidden">
           <PDFWrapper
             v-if="pdfBlobUrl"
             ref="pdfWrapperRef"
@@ -404,20 +404,20 @@ async function uploadNewVersion() {
         </div>
 
         <!-- Right Sidebar -->
-        <div v-if="sidebarOpen" class="sidebar">
-          <div class="sidebar-header">
-            <div class="sidebar-tabs">
+        <div v-if="sidebarOpen" class="w-80 bg-[var(--surface-card)] rounded-[10px] flex flex-col overflow-hidden shrink-0 max-md:w-full max-md:max-h-[300px]">
+          <div class="flex items-center justify-between px-2 py-1 border-b border-[var(--surface-border)] shrink-0">
+            <div class="flex">
               <button
-                class="sidebar-tab"
-                :class="{ active: activeTab === 'comments' }"
+                class="px-4 py-3 bg-transparent border-0 border-b-2 border-b-transparent text-sm font-medium text-[var(--text-secondary)] cursor-pointer transition-all duration-200 hover:text-[var(--text-color)]"
+                :class="{ '!text-[var(--primary-color)] !border-b-[var(--primary-color)]': activeTab === 'comments' }"
                 @click="activeTab = 'comments'"
               >
                 {{ versionCommentCount }} Comments
               </button>
               <button
                 v-if="versioningEnabled"
-                class="sidebar-tab"
-                :class="{ active: activeTab === 'versions' }"
+                class="px-4 py-3 bg-transparent border-0 border-b-2 border-b-transparent text-sm font-medium text-[var(--text-secondary)] cursor-pointer transition-all duration-200 hover:text-[var(--text-color)]"
+                :class="{ '!text-[var(--primary-color)] !border-b-[var(--primary-color)]': activeTab === 'versions' }"
                 @click="activeTab = 'versions'"
               >
                 Version History
@@ -434,7 +434,7 @@ async function uploadNewVersion() {
           </div>
 
           <!-- Comments Tab -->
-          <div v-if="activeTab === 'comments'" class="sidebar-content">
+          <div v-if="activeTab === 'comments'" class="flex-1 overflow-y-auto">
             <CommentTable
               :project-id="projectId"
               :document-id="documentId"
@@ -446,28 +446,28 @@ async function uploadNewVersion() {
           </div>
 
           <!-- Version History Tab -->
-          <div v-if="activeTab === 'versions'" class="sidebar-content">
-            <div class="versions-list">
+          <div v-if="activeTab === 'versions'" class="flex-1 overflow-y-auto">
+            <div class="flex flex-col">
               <div
                 v-for="version in document.versions"
                 :key="version.fileId"
-                class="version-item"
-                :class="{ 'version-active': version.fileId === activeFileId }"
+                class="flex items-center gap-3 p-3 border-b border-[var(--surface-border)] cursor-pointer transition-[background] duration-150 hover:bg-[var(--surface-hover,#f8fafc)]"
+                :class="{ 'bg-[color-mix(in_srgb,var(--primary-color)_8%,transparent)]': version.fileId === activeFileId }"
                 @click="switchVersion(version.fileId)"
               >
                 <span
-                  class="version-avatar"
+                  class="flex items-center justify-center w-8 h-8 min-w-8 rounded-full text-white text-[11px] font-semibold select-none"
                   :style="{ backgroundColor: getAvatarColor(`v${version.version}`) }"
                 >
                   v{{ version.version }}
                 </span>
-                <div class="version-content">
-                  <div class="version-user">Version {{ version.version }}</div>
-                  <div class="version-meta">
-                    <span class="version-date">{{ formatDate(version.uploadedAt) }}</span>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-[var(--text-color)]">Version {{ version.version }}</div>
+                  <div class="flex gap-2 items-center mt-0.5">
+                    <span class="text-xs text-[var(--text-secondary)]">{{ formatDate(version.uploadedAt) }}</span>
                   </div>
                 </div>
-                <i v-if="version.fileId === document.currentVersion?.id" class="pi pi-check version-current-badge"></i>
+                <i v-if="version.fileId === document.currentVersion?.id" class="pi pi-check text-[#27ae60] text-sm"></i>
               </div>
             </div>
           </div>
@@ -477,7 +477,7 @@ async function uploadNewVersion() {
         <Button
           v-if="!sidebarOpen"
           icon="pi pi-comments"
-          class="sidebar-toggle"
+          class="fixed right-6 top-1/2 -translate-y-1/2 z-10"
           @click="openSidebar"
           aria-label="Open sidebar"
         />
@@ -491,9 +491,9 @@ async function uploadNewVersion() {
       modal
       :style="{ width: '640px' }"
     >
-      <div class="info-dialog-content">
-        <div class="info-row">
-          <div class="info-field">
+      <div class="flex flex-col gap-6">
+        <div class="flex gap-6">
+          <div class="flex-1">
             <FloatLabel variant="on">
               <InputText
                 id="docVersion"
@@ -504,7 +504,7 @@ async function uploadNewVersion() {
               <label for="docVersion">Version</label>
             </FloatLabel>
           </div>
-          <div class="info-field">
+          <div class="flex-1">
             <FloatLabel variant="on">
               <InputText
                 id="docAddedBy"
@@ -516,8 +516,8 @@ async function uploadNewVersion() {
             </FloatLabel>
           </div>
         </div>
-        <div class="info-row">
-          <div class="info-field">
+        <div class="flex gap-6">
+          <div class="flex-1">
             <FloatLabel variant="on">
               <InputText
                 id="docDateUploaded"
@@ -528,7 +528,7 @@ async function uploadNewVersion() {
               <label for="docDateUploaded">Date Uploaded</label>
             </FloatLabel>
           </div>
-          <div class="info-field">
+          <div class="flex-1">
             <FloatLabel variant="on">
               <InputText
                 id="docStatus"
@@ -540,8 +540,8 @@ async function uploadNewVersion() {
             </FloatLabel>
           </div>
         </div>
-        <div class="info-row">
-          <div class="info-field full-width">
+        <div class="flex gap-6">
+          <div class="flex-1 basis-full">
             <FloatLabel variant="on">
               <InputText
                 id="docDescription"
@@ -566,7 +566,7 @@ async function uploadNewVersion() {
       modal
       :style="{ width: '500px' }"
     >
-      <div class="upload-form">
+      <div class="py-4 flex flex-col gap-3">
         <FileUpload
           mode="basic"
           accept=".pdf"
@@ -575,7 +575,7 @@ async function uploadNewVersion() {
           :auto="false"
           @select="onFileSelect"
         />
-        <p v-if="uploadFile" class="upload-filename">
+        <p v-if="uploadFile" class="flex items-center gap-2 text-[var(--text-color)] text-sm m-0">
           <i class="pi pi-file-pdf"></i>
           {{ uploadFile.name }}
         </p>
@@ -599,7 +599,7 @@ async function uploadNewVersion() {
       modal
       :style="{ width: '450px' }"
     >
-      <div class="invite-form">
+      <div class="py-4">
         <FloatLabel variant="on">
           <InputText id="inviteEmail" class="w-full" />
           <label for="inviteEmail">Email Address</label>
@@ -614,98 +614,6 @@ async function uploadNewVersion() {
 </template>
 
 <style scoped>
-.document-view {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  background-color: var(--surface-ground);
-}
-
-/* Loading & Error */
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: 16px;
-}
-
-.loading-text {
-  color: var(--text-secondary);
-}
-
-.error-container i {
-  font-size: 48px;
-  color: var(--red-500);
-}
-
-.error-container h3 {
-  margin: 0;
-  color: var(--text-color);
-}
-
-.error-container p {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Document Header */
-.document-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 24px;
-  background-color: var(--surface-card);
-  flex-shrink: 0;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.project-name {
-  font-size: 14px;
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.document-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Document Content */
-.document-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  padding: 16px;
-  gap: 16px;
-}
-
-/* PDF Viewer */
-.pdf-viewer-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--surface-card);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
 .pdf-viewer-container :deep(.pdf-container) {
   height: 100%;
   border: none;
@@ -718,196 +626,5 @@ async function uploadNewVersion() {
 
 .pdf-viewer-container :deep(.bottom-controls) {
   border-radius: 0 0 10px 10px;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 320px;
-  background-color: var(--surface-card);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--surface-border);
-  flex-shrink: 0;
-}
-
-.sidebar-tabs {
-  display: flex;
-}
-
-.sidebar-tab {
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sidebar-tab:hover {
-  color: var(--text-color);
-}
-
-.sidebar-tab.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-.sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* Version List */
-.versions-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.version-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-bottom: 1px solid var(--surface-border);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.version-item:hover {
-  background-color: var(--surface-hover, #f8fafc);
-}
-
-.version-item.version-active {
-  background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
-}
-
-.version-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 50%;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  user-select: none;
-}
-
-.version-content {
-  flex: 1;
-}
-
-.version-user {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.version-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 2px;
-}
-
-.version-number {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--primary-color);
-}
-
-.version-date {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.version-current-badge {
-  color: #27ae60;
-  font-size: 14px;
-}
-
-/* Sidebar Toggle */
-.sidebar-toggle {
-  position: fixed;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-}
-
-/* Dialogs */
-.info-dialog-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.info-row {
-  display: flex;
-  gap: 24px;
-}
-
-.info-field {
-  flex: 1;
-}
-
-.info-field.full-width {
-  flex-basis: 100%;
-}
-
-.upload-form {
-  padding: 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.upload-filename {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-color);
-  font-size: 14px;
-  margin: 0;
-}
-
-.invite-form {
-  padding: 16px 0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .document-content {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    max-height: 300px;
-  }
-
-  .document-header {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .header-right {
-    align-self: flex-start;
-  }
 }
 </style>

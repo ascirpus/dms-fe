@@ -1,6 +1,6 @@
 <!-- components/DocumentReviewView.vue -->
 <template>
-  <div class="document-review-container">
+  <div class="animate-[fadeIn_0.5s]">
     <div class="flex justify-content-between align-items-center mb-4 pb-2 border-bottom-1">
       <Button label="Back to Dashboard"
               icon="pi pi-arrow-left"
@@ -39,14 +39,14 @@
           </template>
 
           <!-- PDF Rendering Area -->
-          <div class="pdf-container flex align-items-center justify-content-center">
+          <div class="bg-[var(--surface-ground)] rounded-lg min-h-[550px] flex align-items-center justify-content-center">
             <div v-if="loading" class="flex flex-column align-items-center">
               <ProgressSpinner />
               <p class="mt-3 text-slate-500">Loading document...</p>
             </div>
             <div v-else class="pdf-content">
               <!-- This is where you would integrate PDF.js -->
-              <div class="pdf-placeholder flex flex-column align-items-center justify-content-center">
+              <div class="w-full h-full min-h-[500px] flex flex-column align-items-center justify-content-center">
                 <i class="pi pi-file-pdf text-8xl text-slate-300"></i>
                 <p class="mt-3 text-slate-500">PDF Viewer would be integrated here</p>
                 <p class="text-sm text-slate-400">(Requires PDF.js integration)</p>
@@ -74,7 +74,7 @@
           </template>
 
           <!-- Comments list -->
-          <div class="comments-container overflow-y-auto" style="max-height: 400px">
+          <div class="max-h-[400px] overflow-y-auto">
             <div v-if="comments.length === 0" class="text-center p-4">
               <i class="pi pi-comments text-5xl text-slate-300"></i>
               <p class="mt-2 text-slate-500">No comments yet.</p>
@@ -300,28 +300,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-.document-review-container {
-  animation: fadeIn 0.5s;
-}
-
-.pdf-container {
-  background-color: var(--surface-ground);
-  border-radius: 8px;
-  min-height: 550px;
-}
-
-.pdf-placeholder {
-  width: 100%;
-  height: 100%;
-  min-height: 500px;
-}
-
-.comments-container {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
+<style>
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

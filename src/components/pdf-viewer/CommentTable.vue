@@ -64,19 +64,19 @@ const submitComment = async () => {
 </script>
 
 <template>
-  <div class="comment-list">
+  <div class="flex flex-col h-full">
     <!-- Add comment input -->
-    <div class="add-comment">
+    <div class="flex items-center gap-2 p-3 border-b border-[var(--surface-border)]">
       <span
         v-if="currentUser"
-        class="comment-avatar"
+        class="flex items-center justify-center w-7 h-7 min-w-7 rounded-full text-white text-[10px] font-semibold select-none"
         :style="{ backgroundColor: getAvatarColor(currentUser.email) }"
       >
         {{ getInitialsFromUser(currentUser) }}
       </span>
       <input
         v-model="newCommentText"
-        class="comment-input"
+        class="flex-1 border-none outline-none text-[13px] text-[var(--text-color)] bg-transparent py-1.5 placeholder:text-[var(--text-secondary)]"
         placeholder="Add a comment..."
         @keydown.enter="submitComment"
       />
@@ -90,176 +90,44 @@ const submitComment = async () => {
       />
     </div>
 
-    <div v-if="sortedComments.length === 0" class="empty-state">
+    <div v-if="sortedComments.length === 0" class="flex items-center justify-center p-8 text-[var(--text-secondary)] text-[13px] italic">
       No comments yet
     </div>
 
-    <div v-else class="comments">
+    <div v-else class="flex-1 overflow-y-auto">
       <div
         v-for="comment in sortedComments"
         :key="comment.id"
-        class="comment-item"
-        :class="{ 'has-marker': !!comment.marker, 'is-resolved': comment.isResolved }"
+        class="flex items-start gap-2.5 p-3 border-b border-[var(--surface-border)] transition-[background] duration-150"
+        :class="{
+          'cursor-pointer hover:bg-[var(--surface-hover,#f8fafc)]': !!comment.marker,
+          'opacity-60': comment.isResolved
+        }"
         @click="jumpToMarker(comment)"
       >
         <span
-          class="comment-avatar"
+          class="flex items-center justify-center w-7 h-7 min-w-7 rounded-full text-white text-[10px] font-semibold select-none"
           :style="{ backgroundColor: getAvatarColor(comment.author.email) }"
         >
           {{ getInitialsFromUser(comment.author) }}
         </span>
-        <div class="comment-body">
-          <div class="comment-meta">
-            <span class="comment-author">{{ getDisplayName(comment.author) }}</span>
-            <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline gap-2 mb-0.5">
+            <span class="text-[13px] font-semibold text-[var(--text-color)]">{{ getDisplayName(comment.author) }}</span>
+            <span class="text-[11px] text-[var(--text-secondary)]">{{ formatDate(comment.createdAt) }}</span>
           </div>
-          <p class="comment-text">{{ comment.comment }}</p>
+          <p class="text-[13px] text-[var(--text-color)] m-0 leading-[1.4] break-words">{{ comment.comment }}</p>
           <span
             v-if="comment.marker"
-            class="page-badge"
+            class="inline-block mt-1 text-[11px] text-[var(--primary-color)] bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] px-1.5 py-px rounded"
           >
             Page {{ comment.marker.pageNumber }}
           </span>
         </div>
-        <span v-if="comment.isResolved" class="resolved-badge">
+        <span v-if="comment.isResolved" class="flex items-center justify-center w-5 h-5 rounded-full bg-[#27ae60] text-white text-[10px] shrink-0 mt-0.5">
           <i class="pi pi-check"></i>
         </span>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.comment-list {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.add-comment {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.comment-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 13px;
-  color: var(--text-color);
-  background: transparent;
-  padding: 6px 0;
-}
-
-.comment-input::placeholder {
-  color: var(--text-secondary);
-}
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-style: italic;
-}
-
-.comments {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.comment-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border-bottom: 1px solid var(--surface-border);
-  transition: background 0.15s;
-}
-
-.comment-item.has-marker {
-  cursor: pointer;
-}
-
-.comment-item.has-marker:hover {
-  background: var(--surface-hover, #f8fafc);
-}
-
-.comment-item.is-resolved {
-  opacity: 0.6;
-}
-
-.comment-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-radius: 50%;
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  user-select: none;
-}
-
-.comment-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.comment-meta {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.comment-author {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.comment-date {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.comment-text {
-  font-size: 13px;
-  color: var(--text-color);
-  margin: 0;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.page-badge {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.resolved-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #27ae60;
-  color: white;
-  font-size: 10px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-</style>

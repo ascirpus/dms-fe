@@ -57,170 +57,58 @@ onMounted(() => {
 </script>
 
 <template>
-  <button class="workspace-trigger" @click="toggle">
-    <span class="workspace-name">{{ currentWorkspaceName || 'Workspace' }}</span>
-    <i class="pi pi-chevron-down chevron-icon"></i>
+  <button
+    class="group flex items-center gap-1.5 py-1 px-2.5 border border-transparent rounded-md bg-transparent cursor-pointer transition-colors text-[var(--text-secondary)] hover:bg-[var(--surface-ground)] hover:border-[var(--surface-border)] hover:text-[var(--text-color)]"
+    @click="toggle"
+  >
+    <span class="font-['Inter',sans-serif] font-medium text-[13px] leading-5 whitespace-nowrap max-w-[180px] overflow-hidden text-ellipsis">{{ currentWorkspaceName || 'Workspace' }}</span>
+    <i class="pi pi-chevron-down text-[9px] text-[var(--text-secondary)] transition-colors group-hover:text-[var(--text-color)]"></i>
   </button>
 
   <Popover ref="popover" class="workspace-popover">
-    <div class="workspace-menu">
+    <div class="min-w-[220px]">
       <!-- Current workspace -->
-      <div class="workspace-item workspace-item-current">
-        <i class="pi pi-check check-icon"></i>
-        <span class="workspace-item-name">{{ currentWorkspaceName }}</span>
+      <div class="flex items-center gap-2.5 py-2.5 px-3.5 text-sm text-[var(--text-color)] cursor-default bg-[var(--surface-ground)] rounded-md">
+        <i class="pi pi-check text-xs text-[var(--primary-color)]"></i>
+        <span class="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ currentWorkspaceName }}</span>
       </div>
 
       <!-- Other workspaces -->
       <div
         v-for="ws in otherWorkspaces"
         :key="ws.tenantId"
-        class="workspace-item workspace-item-switchable"
+        class="flex items-center gap-2.5 py-2.5 px-3.5 text-sm text-[var(--text-color)] cursor-pointer rounded-md pl-9 transition-colors hover:bg-[var(--surface-ground)]"
         @click="onSwitchWorkspace(ws.tenantId)"
       >
-        <span class="workspace-item-name">{{ ws.name }}</span>
+        <span class="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ ws.name }}</span>
       </div>
 
       <!-- Add workspace -->
-      <div class="workspace-item workspace-item-add" @click="onAddWorkspace">
-        <i class="pi pi-plus add-icon"></i>
+      <div
+        class="flex items-center gap-2.5 py-2.5 px-3.5 text-sm text-[var(--text-secondary)] cursor-pointer rounded-md transition-colors hover:bg-[var(--surface-ground)] hover:text-[var(--text-color)]"
+        @click="onAddWorkspace"
+      >
+        <i class="pi pi-plus text-xs w-4 text-center"></i>
         <span>New Workspace</span>
       </div>
 
-      <div class="workspace-divider"></div>
+      <div class="h-px bg-[var(--surface-border)] my-1.5"></div>
 
       <!-- Navigation links -->
-      <div class="workspace-item workspace-item-link" @click="navigateTo('workspace-settings')">
-        <i class="pi pi-cog"></i>
+      <div
+        class="flex items-center gap-2.5 py-2.5 px-3.5 text-sm text-[var(--text-secondary)] cursor-pointer rounded-md transition-colors hover:bg-[var(--surface-ground)] hover:text-[var(--text-color)]"
+        @click="navigateTo('workspace-settings')"
+      >
+        <i class="pi pi-cog text-sm"></i>
         <span>Workspace Settings</span>
       </div>
-      <div class="workspace-item workspace-item-link" @click="navigateTo('workspace-overview')">
-        <i class="pi pi-chart-bar"></i>
+      <div
+        class="flex items-center gap-2.5 py-2.5 px-3.5 text-sm text-[var(--text-secondary)] cursor-pointer rounded-md transition-colors hover:bg-[var(--surface-ground)] hover:text-[var(--text-color)]"
+        @click="navigateTo('workspace-overview')"
+      >
+        <i class="pi pi-chart-bar text-sm"></i>
         <span>Usage &amp; Limits</span>
       </div>
     </div>
   </Popover>
 </template>
-
-<style scoped>
-.workspace-trigger {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
-  color: var(--text-secondary);
-}
-
-.workspace-trigger:hover {
-  background-color: var(--surface-ground);
-  border-color: var(--surface-border);
-  color: var(--text-color);
-}
-
-.workspace-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 20px;
-  white-space: nowrap;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chevron-icon {
-  font-size: 9px;
-  color: var(--text-secondary);
-  transition: color 0.15s;
-}
-
-.workspace-trigger:hover .chevron-icon {
-  color: var(--text-color);
-}
-
-.workspace-menu {
-  min-width: 220px;
-}
-
-.workspace-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
-  color: var(--text-color);
-  cursor: default;
-}
-
-.workspace-item-current {
-  background-color: var(--surface-ground);
-  border-radius: 6px;
-}
-
-.check-icon {
-  font-size: 12px;
-  color: var(--primary-color);
-}
-
-.workspace-item-switchable {
-  cursor: pointer;
-  border-radius: 6px;
-  padding-left: 36px;
-  transition: background-color 0.15s;
-}
-
-.workspace-item-switchable:hover {
-  background-color: var(--surface-ground);
-}
-
-.workspace-item-name {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.workspace-item-add {
-  cursor: pointer;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.workspace-item-add:hover {
-  background-color: var(--surface-ground);
-  color: var(--text-color);
-}
-
-.add-icon {
-  font-size: 12px;
-  width: 16px;
-  text-align: center;
-}
-
-.workspace-divider {
-  height: 1px;
-  background-color: var(--surface-border);
-  margin: 6px 0;
-}
-
-.workspace-item-link {
-  cursor: pointer;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.workspace-item-link:hover {
-  background-color: var(--surface-ground);
-  color: var(--text-color);
-}
-
-.workspace-item-link i {
-  font-size: 14px;
-}
-</style>

@@ -1,11 +1,11 @@
 <template>
-  <div class="public-layout">
-    <header class="public-header">
-      <div class="header-container">
-        <router-link to="/" class="header-logo">
+  <div class="min-h-screen bg-[var(--surface-ground)]">
+    <header class="sticky top-0 z-[100] bg-[var(--surface-card)] border-b border-solid border-[var(--surface-border)]">
+      <div class="max-w-[1200px] mx-auto flex items-center justify-between py-3 px-6">
+        <router-link to="/" class="flex items-center no-underline">
           <Logo size="sm" />
         </router-link>
-        <div class="header-actions">
+        <div>
           <Button
             v-if="isAuthenticated"
             label="Go to Projects"
@@ -38,33 +38,3 @@ function login() {
   auth.login();
 }
 </script>
-
-<style scoped>
-.public-layout {
-  min-height: 100vh;
-  background-color: var(--surface-ground);
-}
-
-.public-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background-color: var(--surface-card);
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-}
-
-.header-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-</style>

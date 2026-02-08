@@ -1,71 +1,37 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const props = defineProps<{
   size?: 'sm' | 'md' | 'lg'
   showTagline?: boolean
 }>();
+
+const resolvedSize = computed(() => props.size ?? 'md');
+
+const iconWidthClass = computed(() => {
+  switch (resolvedSize.value) {
+    case 'sm': return 'w-8';
+    case 'md': return 'w-[42px]';
+    case 'lg': return 'w-[53px]';
+  }
+});
+
+const textWidthClass = computed(() => {
+  switch (resolvedSize.value) {
+    case 'sm': return 'w-[60px]';
+    case 'md': return 'w-20';
+    case 'lg': return 'w-[102px]';
+  }
+});
 </script>
 
 <template>
-  <div class="app-logo" :class="[size ?? 'md']">
-    <img src="/images/logo.svg" alt="CedarStack Logo" class="logo-icon" />
-    <img src="/images/logo-text.svg" alt="CedarStack" class="logo-text" />
-    <div v-if="showTagline" class="logo-tagline">
+  <div class="flex items-end gap-2">
+    <img src="/images/logo.svg" alt="CedarStack Logo" class="block h-auto" :class="iconWidthClass" />
+    <img src="/images/logo-text.svg" alt="CedarStack" class="block h-auto" :class="textWidthClass" />
+    <div v-if="showTagline" class="font-['Inter',sans-serif] font-medium text-sm leading-[1.4] text-slate-800 flex flex-col ml-2">
       <span>Intelligent</span>
       <span>Document Hub</span>
     </div>
   </div>
 </template>
-
-<style scoped>
-.app-logo {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.logo-icon {
-  display: block;
-  height: auto;
-}
-
-.logo-text {
-  display: block;
-  height: auto;
-}
-
-.logo-tagline {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #1e293b;
-  display: flex;
-  flex-direction: column;
-  margin-left: 8px;
-}
-
-/* Size variants */
-.sm .logo-icon {
-  width: 32px;
-}
-
-.sm .logo-text {
-  width: 60px;
-}
-
-.md .logo-icon {
-  width: 42px;
-}
-
-.md .logo-text {
-  width: 80px;
-}
-
-.lg .logo-icon {
-  width: 53px;
-}
-
-.lg .logo-text {
-  width: 102px;
-}
-</style>

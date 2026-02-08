@@ -683,47 +683,47 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="project-settings-page">
+  <div class="min-h-screen bg-[var(--surface-ground)]">
     <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
+    <div v-if="loading" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
       <ProgressSpinner style="width: 50px; height: 50px" />
       <span>Loading project settings...</span>
     </div>
 
     <template v-else>
       <!-- Tabs -->
-      <div class="tabs-container">
+      <div class="bg-[var(--surface-card)] border-b border-[var(--surface-border)] px-4">
         <TabMenu v-model:activeIndex="activeTab" :model="tabItems" />
       </div>
 
       <!-- Details Tab -->
-      <div v-if="activeTab === 0" class="tab-content">
-        <div class="details-section">
-          <div class="section-header">
-            <h2>Project Details</h2>
+      <div v-if="activeTab === 0" class="p-0">
+        <div class="max-w-[600px] p-6">
+          <div>
+            <h2 class="text-lg font-semibold text-[var(--text-color)] mb-6">Project Details</h2>
           </div>
 
-          <div class="details-form">
-            <div class="form-row">
-              <label for="projectName">Project Name</label>
+          <div class="flex flex-col gap-5">
+            <div class="flex flex-col gap-2">
+              <label for="projectName" class="font-semibold text-sm text-[var(--text-color)]">Project Name</label>
               <InputText
                 id="projectName"
                 v-model="projectForm.name"
-                class="form-input"
+                class="w-full"
                 placeholder="Enter project name"
               />
             </div>
-            <div class="form-row">
-              <label for="projectDescription">Description</label>
+            <div class="flex flex-col gap-2">
+              <label for="projectDescription" class="font-semibold text-sm text-[var(--text-color)]">Description</label>
               <Textarea
                 id="projectDescription"
                 v-model="projectForm.description"
-                class="form-input"
+                class="w-full"
                 rows="4"
                 placeholder="Enter project description"
               />
             </div>
-            <div class="form-actions">
+            <div class="flex justify-start mt-2">
               <Button
                 label="Save Changes"
                 icon="pi pi-check"
@@ -736,10 +736,10 @@ onMounted(() => {
       </div>
 
       <!-- Parties Tab -->
-      <div v-if="activeTab === 1" class="tab-content">
+      <div v-if="activeTab === 1" class="p-0">
         <!-- Toolbar -->
-        <div class="table-toolbar">
-          <div class="toolbar-left">
+        <div class="flex justify-between items-center py-3 px-4 bg-[var(--surface-card)] border-b border-[var(--surface-border)]">
+          <div class="flex items-center gap-3">
             <Button
               icon="pi pi-filter-slash"
               label="Clear"
@@ -755,12 +755,12 @@ onMounted(() => {
               optionLabel="party.name"
               placeholder="All Parties"
               size="small"
-              class="party-filter"
+              class="min-w-[180px]"
               showClear
             />
           </div>
 
-          <div class="toolbar-right">
+          <div class="flex items-center gap-3">
             <Button
               label="New Party"
               icon="pi pi-plus"
@@ -788,7 +788,7 @@ onMounted(() => {
         </div>
 
         <!-- Members Table -->
-        <div class="table-container">
+        <div class="bg-[var(--surface-card)]">
           <DataTable
             :value="displayedMembers"
             :filters="filters"
@@ -799,12 +799,12 @@ onMounted(() => {
             @page="onPageChange"
             :rowsPerPageOptions="[10, 25, 50]"
             dataKey="id"
-            class="members-data-table"
+            class="border-none"
             :loading="loading"
             stripedRows
           >
             <template #empty>
-              <div class="empty-table">
+              <div class="p-12 text-center text-[var(--text-secondary)]">
                 <p v-if="selectedParty">No members in this party yet.</p>
                 <p v-else>No members found. Create a party and add members.</p>
               </div>
@@ -812,11 +812,14 @@ onMounted(() => {
 
             <Column field="firstName" header="Full Name" sortable style="min-width: 200px">
               <template #body="{ data }">
-                <div class="name-cell">
-                  <span class="member-name" :class="{ 'is-current': data.id === currentUserId }">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="font-medium"
+                    :class="data.id === currentUserId ? 'text-[var(--text-color)]' : 'text-[var(--primary-color)]'"
+                  >
                     {{ getUserDisplayName(data) }}
                   </span>
-                  <span v-if="data.id === currentUserId" class="you-badge">(You)</span>
+                  <span v-if="data.id === currentUserId" class="text-xs text-[var(--text-secondary)]">(You)</span>
                 </div>
               </template>
             </Column>
@@ -825,13 +828,13 @@ onMounted(() => {
 
             <Column field="partyName" header="Party" sortable style="min-width: 150px">
               <template #body="{ data }">
-                <span class="party-badge">{{ data.partyName }}</span>
+                <span class="text-[13px] text-[var(--text-secondary)]">{{ data.partyName }}</span>
               </template>
             </Column>
 
             <Column header="" style="width: 100px" alignFrozen="right">
               <template #body="{ data }">
-                <div class="row-actions">
+                <div class="flex justify-end gap-1">
                   <Button
                     v-if="data.id !== currentUserId"
                     icon="pi pi-trash"
@@ -849,26 +852,26 @@ onMounted(() => {
         </div>
 
         <!-- Party Management Section -->
-        <div v-if="parties.length > 0" class="parties-management">
-          <h3>Manage Parties</h3>
-          <div class="parties-grid">
-            <div v-for="pw in parties" :key="pw.party.id" class="party-card">
-              <div class="party-card-content">
-                <div class="party-card-header">
-                  <span class="party-card-name">{{ pw.party.name }}</span>
-                  <span class="party-card-count">{{ pw.members.length }} members</span>
+        <div v-if="parties.length > 0" class="py-6 px-4 border-t border-[var(--surface-border)] bg-[var(--surface-card)]">
+          <h3 class="text-base font-semibold text-[var(--text-color)] mb-4">Manage Parties</h3>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3">
+            <div v-for="pw in parties" :key="pw.party.id" class="flex justify-between items-start py-3 px-4 bg-[var(--surface-ground)] border border-[var(--surface-border)] rounded-md">
+              <div class="flex flex-col gap-1.5 min-w-0 flex-1">
+                <div class="flex flex-col gap-0.5">
+                  <span class="font-semibold text-[var(--text-color)]">{{ pw.party.name }}</span>
+                  <span class="text-[13px] text-[var(--text-secondary)]">{{ pw.members.length }} members</span>
                 </div>
-                <div v-if="hasPartyMeta(pw.party.meta)" class="party-card-meta">
-                  <span v-if="pw.party.meta.vatNumber"><i class="pi pi-building" /> {{ pw.party.meta.vatNumber }}</span>
-                  <span v-if="pw.party.meta.contactEmail"><i class="pi pi-envelope" /> {{ pw.party.meta.contactEmail }}</span>
-                  <span v-if="pw.party.meta.contactPhone"><i class="pi pi-phone" /> {{ pw.party.meta.contactPhone }}</span>
-                  <span v-if="pw.party.meta.address"><i class="pi pi-map-marker" /> {{ pw.party.meta.address }}</span>
+                <div v-if="hasPartyMeta(pw.party.meta)" class="flex flex-col gap-0.5 text-xs text-[var(--text-secondary)]">
+                  <span v-if="pw.party.meta.vatNumber" class="flex items-center gap-1.5"><i class="pi pi-building text-[11px] w-3.5 text-center" /> {{ pw.party.meta.vatNumber }}</span>
+                  <span v-if="pw.party.meta.contactEmail" class="flex items-center gap-1.5"><i class="pi pi-envelope text-[11px] w-3.5 text-center" /> {{ pw.party.meta.contactEmail }}</span>
+                  <span v-if="pw.party.meta.contactPhone" class="flex items-center gap-1.5"><i class="pi pi-phone text-[11px] w-3.5 text-center" /> {{ pw.party.meta.contactPhone }}</span>
+                  <span v-if="pw.party.meta.address" class="flex items-center gap-1.5"><i class="pi pi-map-marker text-[11px] w-3.5 text-center" /> {{ pw.party.meta.address }}</span>
                 </div>
-                <div v-if="getPermissionCount(pw.party.id) > 0" class="party-card-permissions">
-                  <span><i class="pi pi-lock" /> {{ getPermissionCount(pw.party.id) }} document permission{{ getPermissionCount(pw.party.id) !== 1 ? 's' : '' }}</span>
+                <div v-if="getPermissionCount(pw.party.id) > 0" class="text-xs text-[var(--text-secondary)]">
+                  <span><i class="pi pi-lock text-[11px] mr-1" /> {{ getPermissionCount(pw.party.id) }} document permission{{ getPermissionCount(pw.party.id) !== 1 ? 's' : '' }}</span>
                 </div>
               </div>
-              <div class="party-card-actions">
+              <div class="flex flex-col gap-0.5">
                 <Button
                   icon="pi pi-pencil"
                   text
@@ -899,9 +902,9 @@ onMounted(() => {
       :modal="true"
       :style="{ width: '500px' }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
-          <label for="partyName">Party Name</label>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="partyName" class="font-semibold text-sm text-[var(--text-color)]">Party Name</label>
           <InputText
             id="partyName"
             v-model="addPartyForm.name"
@@ -909,8 +912,8 @@ onMounted(() => {
             placeholder="e.g., Legal Team, Finance"
           />
         </div>
-        <div class="form-field">
-          <label for="partyDescription">Description (optional)</label>
+        <div class="flex flex-col gap-2">
+          <label for="partyDescription" class="font-semibold text-sm text-[var(--text-color)]">Description (optional)</label>
           <InputText
             id="partyDescription"
             v-model="addPartyForm.description"
@@ -918,9 +921,9 @@ onMounted(() => {
             placeholder="Brief description"
           />
         </div>
-        <div class="form-section-label">Metadata (optional)</div>
-        <div class="form-field">
-          <label for="addPartyVat">VAT Number</label>
+        <div class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Metadata (optional)</div>
+        <div class="flex flex-col gap-2">
+          <label for="addPartyVat" class="font-semibold text-sm text-[var(--text-color)]">VAT Number</label>
           <InputText
             id="addPartyVat"
             v-model="addPartyForm.vatNumber"
@@ -928,8 +931,8 @@ onMounted(() => {
             placeholder="VAT number"
           />
         </div>
-        <div class="form-field">
-          <label for="addPartyEmail">Contact Email</label>
+        <div class="flex flex-col gap-2">
+          <label for="addPartyEmail" class="font-semibold text-sm text-[var(--text-color)]">Contact Email</label>
           <InputText
             id="addPartyEmail"
             v-model="addPartyForm.contactEmail"
@@ -937,8 +940,8 @@ onMounted(() => {
             placeholder="contact@example.com"
           />
         </div>
-        <div class="form-field">
-          <label for="addPartyPhone">Contact Phone</label>
+        <div class="flex flex-col gap-2">
+          <label for="addPartyPhone" class="font-semibold text-sm text-[var(--text-color)]">Contact Phone</label>
           <InputText
             id="addPartyPhone"
             v-model="addPartyForm.contactPhone"
@@ -946,8 +949,8 @@ onMounted(() => {
             placeholder="+1 234 567 890"
           />
         </div>
-        <div class="form-field">
-          <label for="addPartyAddress">Address</label>
+        <div class="flex flex-col gap-2">
+          <label for="addPartyAddress" class="font-semibold text-sm text-[var(--text-color)]">Address</label>
           <InputText
             id="addPartyAddress"
             v-model="addPartyForm.address"
@@ -975,9 +978,9 @@ onMounted(() => {
       :modal="true"
       :style="{ width: '400px' }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
-          <label for="selectParty">Party</label>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="selectParty" class="font-semibold text-sm text-[var(--text-color)]">Party</label>
           <Select
             id="selectParty"
             v-model="addMemberParty"
@@ -987,8 +990,8 @@ onMounted(() => {
             class="w-full"
           />
         </div>
-        <div class="form-field">
-          <label for="selectUser">User</label>
+        <div class="flex flex-col gap-2">
+          <label for="selectUser" class="font-semibold text-sm text-[var(--text-color)]">User</label>
           <Select
             id="selectUser"
             v-model="selectedUser"
@@ -1018,17 +1021,17 @@ onMounted(() => {
       :modal="true"
       :style="{ width: '600px' }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
-          <label for="editPartyName">Party Name</label>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="editPartyName" class="font-semibold text-sm text-[var(--text-color)]">Party Name</label>
           <InputText
             id="editPartyName"
             v-model="editPartyForm.name"
             class="w-full"
           />
         </div>
-        <div class="form-field">
-          <label for="editPartyDescription">Description</label>
+        <div class="flex flex-col gap-2">
+          <label for="editPartyDescription" class="font-semibold text-sm text-[var(--text-color)]">Description</label>
           <InputText
             id="editPartyDescription"
             v-model="editPartyForm.description"
@@ -1036,9 +1039,9 @@ onMounted(() => {
             placeholder="Brief description"
           />
         </div>
-        <div class="form-section-label">Metadata</div>
-        <div class="form-field">
-          <label for="editPartyVat">VAT Number</label>
+        <div class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Metadata</div>
+        <div class="flex flex-col gap-2">
+          <label for="editPartyVat" class="font-semibold text-sm text-[var(--text-color)]">VAT Number</label>
           <InputText
             id="editPartyVat"
             v-model="editPartyForm.vatNumber"
@@ -1046,8 +1049,8 @@ onMounted(() => {
             placeholder="VAT number"
           />
         </div>
-        <div class="form-field">
-          <label for="editPartyEmail">Contact Email</label>
+        <div class="flex flex-col gap-2">
+          <label for="editPartyEmail" class="font-semibold text-sm text-[var(--text-color)]">Contact Email</label>
           <InputText
             id="editPartyEmail"
             v-model="editPartyForm.contactEmail"
@@ -1055,8 +1058,8 @@ onMounted(() => {
             placeholder="contact@example.com"
           />
         </div>
-        <div class="form-field">
-          <label for="editPartyPhone">Contact Phone</label>
+        <div class="flex flex-col gap-2">
+          <label for="editPartyPhone" class="font-semibold text-sm text-[var(--text-color)]">Contact Phone</label>
           <InputText
             id="editPartyPhone"
             v-model="editPartyForm.contactPhone"
@@ -1064,8 +1067,8 @@ onMounted(() => {
             placeholder="+1 234 567 890"
           />
         </div>
-        <div class="form-field">
-          <label for="editPartyAddress">Address</label>
+        <div class="flex flex-col gap-2">
+          <label for="editPartyAddress" class="font-semibold text-sm text-[var(--text-color)]">Address</label>
           <InputText
             id="editPartyAddress"
             v-model="editPartyForm.address"
@@ -1075,17 +1078,17 @@ onMounted(() => {
         </div>
 
         <!-- Document Permissions -->
-        <div v-if="documentTypes && documentTypes.length > 0" class="form-section-label">Document Permissions</div>
-        <div v-if="documentTypes && documentTypes.length > 0" class="permissions-grid">
-          <div v-for="dt in documentTypes" :key="dt.id" class="permission-row">
-            <span class="permission-type-name">{{ dt.name }}</span>
+        <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Document Permissions</div>
+        <div v-if="documentTypes && documentTypes.length > 0" class="flex flex-col gap-2">
+          <div v-for="dt in documentTypes" :key="dt.id" class="flex items-center justify-between gap-3">
+            <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ dt.name }}</span>
             <Select
               v-model="editPartyPermissions[dt.id]"
               :options="permissionOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="None"
-              class="permission-select"
+              class="w-[140px] shrink-0"
             />
           </div>
         </div>
@@ -1104,110 +1107,12 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.project-settings-page {
-  min-height: 100vh;
-  background: var(--surface-ground);
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 64px;
-  color: var(--text-secondary);
-}
-
-/* Tabs */
-.tabs-container {
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--surface-border);
-  padding: 0 16px;
-}
-
 :deep(.p-tabmenu-nav) {
   border: none;
 }
 
 :deep(.p-tabmenu-item) {
   margin-right: 8px;
-}
-
-/* Tab Content */
-.tab-content {
-  padding: 0;
-}
-
-/* Details Section */
-.details-section {
-  max-width: 600px;
-  padding: 24px;
-}
-
-.section-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 24px 0;
-}
-
-.details-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-row label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.form-input {
-  width: 100%;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 8px;
-}
-
-/* Toolbar */
-.table-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.toolbar-left,
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.party-filter {
-  min-width: 180px;
-}
-
-/* Table */
-.table-container {
-  background: var(--surface-card);
-}
-
-.members-data-table {
-  border: none;
 }
 
 :deep(.p-datatable-header) {
@@ -1231,195 +1136,5 @@ onMounted(() => {
 
 :deep(.p-datatable-tbody > tr:hover) {
   background: var(--surface-hover);
-}
-
-.empty-table {
-  padding: 48px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.name-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.member-name {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.member-name.is-current {
-  color: var(--text-color);
-}
-
-.you-badge {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.party-badge {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.row-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
-}
-
-/* Parties Management */
-.parties-management {
-  padding: 24px 16px;
-  border-top: 1px solid var(--surface-border);
-  background: var(--surface-card);
-}
-
-.parties-management h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 16px 0;
-}
-
-.parties-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
-}
-
-.party-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 12px 16px;
-  background: var(--surface-ground);
-  border: 1px solid var(--surface-border);
-  border-radius: 6px;
-}
-
-.party-card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-}
-
-.party-card-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.party-card-name {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.party-card-count {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.party-card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.party-card-meta span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.party-card-meta i {
-  font-size: 11px;
-  width: 14px;
-  text-align: center;
-}
-
-.party-card-permissions {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.party-card-permissions i {
-  font-size: 11px;
-  margin-right: 4px;
-}
-
-.party-card-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* Dialogs */
-.dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dialog-subtitle {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-field label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.form-section-label {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.permissions-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.permission-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.permission-type-name {
-  font-size: 14px;
-  color: var(--text-color);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.permission-select {
-  width: 140px;
-  flex-shrink: 0;
 }
 </style>

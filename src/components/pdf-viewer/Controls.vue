@@ -75,8 +75,8 @@ const moreMenuItems = ref([
 
 <template>
   <!-- Top variant: page navigation only -->
-  <div v-if="variant === 'top'" class="pdf-controls top-controls">
-    <div class="page-controls">
+  <div v-if="variant === 'top'" class="flex items-center px-3 py-2 bg-[var(--surface-card)] border-[var(--surface-border)] justify-center border-b border-solid border-b-[var(--surface-border)]">
+    <div class="flex items-center gap-2">
       <Button
         icon="pi pi-angle-left"
         text
@@ -85,7 +85,7 @@ const moreMenuItems = ref([
         @click="previousPage"
         :disabled="currentPage <= 1"
       />
-      <span class="page-indicator">Page {{ currentPage }} of {{ pageCount }}</span>
+      <span class="text-[13px] text-[var(--text-secondary)] min-w-[100px] text-center">Page {{ currentPage }} of {{ pageCount }}</span>
       <Button
         icon="pi pi-angle-right"
         text
@@ -98,8 +98,8 @@ const moreMenuItems = ref([
   </div>
 
   <!-- Bottom variant: full toolbar -->
-  <div v-else class="pdf-controls bottom-controls">
-    <div class="toolbar-group">
+  <div v-else class="flex items-center px-3 py-2 bg-[var(--surface-card)] border-[var(--surface-border)] justify-center border-t border-solid border-t-[var(--surface-border)]">
+    <div class="flex items-center gap-1">
       <Button
         icon="pi pi-arrows-alt"
         text
@@ -165,43 +165,6 @@ const moreMenuItems = ref([
 </template>
 
 <style scoped>
-.pdf-controls {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--surface-card);
-  border-color: var(--surface-border);
-}
-
-.top-controls {
-  justify-content: center;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.bottom-controls {
-  justify-content: center;
-  border-top: 1px solid var(--surface-border);
-}
-
-.page-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-indicator {
-  font-size: 13px;
-  color: var(--text-secondary);
-  min-width: 100px;
-  text-align: center;
-}
-
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .marker-active-btn {
   color: var(--primary-color) !important;
   background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;

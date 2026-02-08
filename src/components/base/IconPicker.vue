@@ -27,27 +27,27 @@ function selectIcon(icon: string) {
 </script>
 
 <template>
-  <div class="icon-picker">
+  <div class="inline-flex">
     <Button
       type="button"
       text
-      class="icon-picker-trigger"
+      class="inline-flex items-center gap-2 py-2 px-3 border border-[var(--surface-border)] rounded-md bg-[var(--surface-card)] text-[var(--text-color)] cursor-pointer min-w-40 hover:border-[var(--primary-color)]"
       @click="togglePopover"
     >
-      <i :class="'pi ' + selectedIcon" class="trigger-icon"></i>
-      <span class="trigger-label">{{ selectedIcon }}</span>
-      <i class="pi pi-chevron-down trigger-chevron"></i>
+      <i :class="'pi ' + selectedIcon" class="text-base"></i>
+      <span class="flex-1 text-[13px] text-left text-[var(--text-secondary)]">{{ selectedIcon }}</span>
+      <i class="pi pi-chevron-down text-[10px] text-[var(--text-secondary)]"></i>
     </Button>
 
     <Popover ref="popoverRef" class="icon-picker-popover">
-      <div class="icon-picker-panel">
-        <div class="icon-grid">
+      <div class="w-70 p-3">
+        <div class="grid grid-cols-6 gap-1">
           <button
             v-for="icon in ALLOWED_ICONS"
             :key="icon"
             type="button"
-            class="icon-option"
-            :class="{ selected: icon === selectedIcon }"
+            class="flex items-center justify-center w-10 h-10 border border-transparent rounded-md bg-transparent text-[var(--text-color)] cursor-pointer text-base transition-all duration-150 hover:bg-[var(--surface-ground)] hover:border-[var(--surface-border)]"
+            :class="{ '!bg-[var(--primary-color)] !text-white !border-[var(--primary-color)]': icon === selectedIcon }"
             @click="selectIcon(icon)"
             :title="icon"
           >
@@ -58,79 +58,3 @@ function selectIcon(icon: string) {
     </Popover>
   </div>
 </template>
-
-<style scoped>
-.icon-picker {
-  display: inline-flex;
-}
-
-.icon-picker-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--surface-border);
-  border-radius: 6px;
-  background: var(--surface-card);
-  color: var(--text-color);
-  cursor: pointer;
-  min-width: 160px;
-}
-
-.icon-picker-trigger:hover {
-  border-color: var(--primary-color);
-}
-
-.trigger-icon {
-  font-size: 16px;
-}
-
-.trigger-label {
-  flex: 1;
-  font-size: 13px;
-  text-align: left;
-  color: var(--text-secondary);
-}
-
-.trigger-chevron {
-  font-size: 10px;
-  color: var(--text-secondary);
-}
-
-.icon-picker-panel {
-  width: 280px;
-  padding: 12px;
-}
-
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-}
-
-.icon-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-color);
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.15s;
-}
-
-.icon-option:hover {
-  background: var(--surface-ground);
-  border-color: var(--surface-border);
-}
-
-.icon-option.selected {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-</style>

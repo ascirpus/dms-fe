@@ -1,20 +1,20 @@
 <template>
-  <div class="landing-page">
+  <div class="min-h-screen bg-[var(--surface-ground)]">
     <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-content">
-        <div class="hero-text">
-          <div class="hero-badge">Intelligent Document Hub</div>
-          <h1 class="hero-title">
+    <section class="py-20 px-6 bg-gradient-to-br from-[var(--surface-card)] to-[var(--surface-ground)]">
+      <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div class="order-2 lg:order-none">
+          <div class="inline-block px-4 py-2 bg-[var(--brand-gold-light)] text-[var(--brand-brown-dark)] rounded-[20px] text-sm font-semibold mb-6">Intelligent Document Hub</div>
+          <h1 class="font-[Inter,sans-serif] text-[28px] md:text-[36px] lg:text-[48px] font-bold leading-[1.2] text-[var(--text-color)] mb-6">
             Manage Project Documents<br />
-            <span class="highlight">With Precision Control</span>
+            <span class="text-[var(--primary-color)]">With Precision Control</span>
           </h1>
-          <p class="hero-description">
+          <p class="text-lg leading-[1.7] text-[var(--text-secondary)] mb-8">
             Streamline your document workflows with secure collaboration, approval tracking,
             and digital signatures — all in one place. Organize by project, control who sees what,
             and keep your team aligned.
           </p>
-          <div class="hero-actions">
+          <div class="flex flex-col md:flex-row gap-4 items-center md:items-center">
             <Button
               label="Get Started Free"
               icon="pi pi-arrow-right"
@@ -31,27 +31,27 @@
             />
           </div>
         </div>
-        <div class="hero-visual">
-          <div class="hero-card">
-            <div class="card-header">
-              <i class="pi pi-folder"></i>
+        <div class="flex justify-center order-1 lg:order-none">
+          <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-xl p-6 w-full max-w-[400px] shadow-[0_20px_40px_rgba(0,0,0,0.1)]">
+            <div class="flex items-center gap-3 pb-4 border-b border-[var(--surface-border)] mb-4 font-semibold text-[var(--text-color)]">
+              <i class="pi pi-folder text-[var(--brand-gold)] text-xl"></i>
               <span>Office Renovation Project</span>
             </div>
-            <div class="card-documents">
-              <div class="doc-item">
-                <i class="pi pi-file-pdf"></i>
-                <span>Damage Report v2.pdf</span>
-                <span class="doc-status approved">Approved</span>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-3 p-3 bg-[var(--surface-ground)] rounded-lg text-sm">
+                <i class="pi pi-file-pdf text-[var(--color-danger)]"></i>
+                <span class="flex-1 text-[var(--text-color)]">Damage Report v2.pdf</span>
+                <span class="px-2 py-1 rounded text-xs font-medium bg-[#dcfce7] text-[#166534]">Approved</span>
               </div>
-              <div class="doc-item">
-                <i class="pi pi-file-pdf"></i>
-                <span>Contractor Quote.pdf</span>
-                <span class="doc-status pending">2 Signatures</span>
+              <div class="flex items-center gap-3 p-3 bg-[var(--surface-ground)] rounded-lg text-sm">
+                <i class="pi pi-file-pdf text-[var(--color-danger)]"></i>
+                <span class="flex-1 text-[var(--text-color)]">Contractor Quote.pdf</span>
+                <span class="px-2 py-1 rounded text-xs font-medium bg-[#e0e7ff] text-[#3730a3]">2 Signatures</span>
               </div>
-              <div class="doc-item">
-                <i class="pi pi-file-pdf"></i>
-                <span>Hours Confirmation.pdf</span>
-                <span class="doc-status review">In Review</span>
+              <div class="flex items-center gap-3 p-3 bg-[var(--surface-ground)] rounded-lg text-sm">
+                <i class="pi pi-file-pdf text-[var(--color-danger)]"></i>
+                <span class="flex-1 text-[var(--text-color)]">Hours Confirmation.pdf</span>
+                <span class="px-2 py-1 rounded text-xs font-medium bg-[#fef3c7] text-[#92400e]">In Review</span>
               </div>
             </div>
           </div>
@@ -60,107 +60,107 @@
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="features-section">
-      <div class="section-header">
-        <h2>Everything You Need</h2>
-        <p>Powerful features designed for professional document management</p>
+    <section id="features" class="py-20 px-6 bg-[var(--surface-card)]">
+      <div class="text-center mb-12">
+        <h2 class="font-[Inter,sans-serif] text-[28px] md:text-[36px] font-bold text-[var(--text-color)] mb-4">Everything You Need</h2>
+        <p class="text-lg text-[var(--text-secondary)] m-0">Powerful features designed for professional document management</p>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-folder-open"></i>
+      <div class="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-folder-open text-2xl text-white"></i>
           </div>
-          <h3>Project-Based Organization</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Project-Based Organization</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Organize all your documents by project. Each project maintains its own
             document library, parties, and permission settings.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-comments"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-comments text-2xl text-white"></i>
           </div>
-          <h3>Contextual Comments</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Contextual Comments</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Add comments directly on document pages. Mark specific areas, discuss changes,
             and track resolution status in real-time.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-check-circle"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-check-circle text-2xl text-white"></i>
           </div>
-          <h3>Approval Workflows</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Approval Workflows</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Define approval thresholds per document type. Track pending reviews,
             approvals, and rejections with configurable deadlines.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-pencil"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-pencil text-2xl text-white"></i>
           </div>
-          <h3>Document Sign-Off</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Document Sign-Off</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Assign required signers or allow voluntary acknowledgments.
             Set signature deadlines with reminders and track who signed and when.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-history"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-history text-2xl text-white"></i>
           </div>
-          <h3>Version Control</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Version Control</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Track document history with full version control. Every upload is versioned
             so you never lose important changes.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-search"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-search text-2xl text-white"></i>
           </div>
-          <h3>Full-Text Search</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Full-Text Search</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Search across all document contents instantly. Powered by Apache Tika
             for deep content extraction from PDFs and other file types.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-users"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-users text-2xl text-white"></i>
           </div>
-          <h3>Multi-Party Collaboration</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Multi-Party Collaboration</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Invite contractors, clients, insurers, and other stakeholders.
             Each party sees only what they're permitted to access.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-building"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-building text-2xl text-white"></i>
           </div>
-          <h3>Multiple Workspaces</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Multiple Workspaces</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Run separate workspaces for different teams or clients. Each workspace
             has its own projects, members, roles, and usage limits.
           </p>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="pi pi-bell"></i>
+        <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
+          <div class="w-14 h-14 flex items-center justify-center bg-[var(--primary-color)] rounded-xl mb-5">
+            <i class="pi pi-bell text-2xl text-white"></i>
           </div>
-          <h3>Smart Notifications</h3>
-          <p>
+          <h3 class="text-xl font-semibold text-[var(--text-color)] mb-3">Smart Notifications</h3>
+          <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
             Get alerts for new documents, pending approvals, signature requests,
             and deadline reminders. Stay on top of what matters.
           </p>
@@ -169,55 +169,55 @@
     </section>
 
     <!-- Permission System Section -->
-    <section class="permissions-section">
-      <div class="section-header">
-        <h2>Powerful Permission System</h2>
-        <p>Fine-grained access control that scales with your organization</p>
+    <section class="py-20 px-6 bg-[var(--surface-card)]">
+      <div class="text-center mb-12">
+        <h2 class="font-[Inter,sans-serif] text-[28px] md:text-[36px] font-bold text-[var(--text-color)] mb-4">Powerful Permission System</h2>
+        <p class="text-lg text-[var(--text-secondary)] m-0">Fine-grained access control that scales with your organization</p>
       </div>
 
-      <div class="permissions-content">
-        <div class="permission-diagram">
-          <div class="permission-layer layer-org">
-            <div class="layer-label">Organization Roles</div>
-            <div class="layer-description">Owner, Admin, or Member access levels</div>
+      <div class="max-w-[1200px] mx-auto mb-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+        <div class="flex flex-col gap-3">
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#f3e8ff] border-[#a855f7]">
+            <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">Organization Roles</div>
+            <div class="text-[13px] text-[var(--text-secondary)]">Owner, Admin, or Member access levels</div>
           </div>
-          <div class="permission-layer layer-project">
-            <div class="layer-label">Project Membership</div>
-            <div class="layer-description">Base access to project documents</div>
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#dbeafe] border-[#3b82f6] ml-4">
+            <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">Project Membership</div>
+            <div class="text-[13px] text-[var(--text-secondary)]">Base access to project documents</div>
           </div>
-          <div class="permission-layer layer-party">
-            <div class="layer-label">Party Permissions</div>
-            <div class="layer-description">Role-based access by document type</div>
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#fef3c7] border-[#f59e0b] ml-8">
+            <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">Party Permissions</div>
+            <div class="text-[13px] text-[var(--text-secondary)]">Role-based access by document type</div>
           </div>
-          <div class="permission-layer layer-user">
-            <div class="layer-label">User Overrides</div>
-            <div class="layer-description">Individual exceptions when needed</div>
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#dcfce7] border-[#22c55e] ml-12">
+            <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">User Overrides</div>
+            <div class="text-[13px] text-[var(--text-secondary)]">Individual exceptions when needed</div>
           </div>
         </div>
 
-        <div class="permission-details">
-          <div class="permission-card">
-            <div class="permission-header">
-              <i class="pi pi-eye"></i>
-              <h4>View</h4>
+        <div class="flex flex-col gap-4">
+          <div class="p-5 bg-[var(--surface-ground)] border border-[var(--surface-border)] rounded-xl">
+            <div class="flex items-center gap-3 mb-2">
+              <i class="pi pi-eye text-xl text-[var(--primary-color)]"></i>
+              <h4 class="text-lg font-semibold text-[var(--text-color)] m-0">View</h4>
             </div>
-            <p>See documents and their contents. The foundation of all access.</p>
+            <p class="text-sm text-[var(--text-secondary)] m-0">See documents and their contents. The foundation of all access.</p>
           </div>
 
-          <div class="permission-card">
-            <div class="permission-header">
-              <i class="pi pi-comment"></i>
-              <h4>Comment</h4>
+          <div class="p-5 bg-[var(--surface-ground)] border border-[var(--surface-border)] rounded-xl">
+            <div class="flex items-center gap-3 mb-2">
+              <i class="pi pi-comment text-xl text-[var(--primary-color)]"></i>
+              <h4 class="text-lg font-semibold text-[var(--text-color)] m-0">Comment</h4>
             </div>
-            <p>Add feedback and annotations. Includes View permission automatically.</p>
+            <p class="text-sm text-[var(--text-secondary)] m-0">Add feedback and annotations. Includes View permission automatically.</p>
           </div>
 
-          <div class="permission-card">
-            <div class="permission-header">
-              <i class="pi pi-check-square"></i>
-              <h4>Decide</h4>
+          <div class="p-5 bg-[var(--surface-ground)] border border-[var(--surface-border)] rounded-xl">
+            <div class="flex items-center gap-3 mb-2">
+              <i class="pi pi-check-square text-xl text-[var(--primary-color)]"></i>
+              <h4 class="text-lg font-semibold text-[var(--text-color)] m-0">Decide</h4>
             </div>
-            <p>Approve or reject documents. Full access including View and Comment.</p>
+            <p class="text-sm text-[var(--text-secondary)] m-0">Approve or reject documents. Full access including View and Comment.</p>
           </div>
         </div>
       </div>
@@ -225,20 +225,20 @@
     </section>
 
     <!-- Document Types Section -->
-    <section class="doctypes-section">
-      <div class="section-header">
-        <h2>Flexible Document Types</h2>
-        <p>Each document type carries its own visibility and permission rules</p>
+    <section class="py-20 px-6 bg-[var(--surface-ground)]">
+      <div class="text-center mb-12">
+        <h2 class="font-[Inter,sans-serif] text-[28px] md:text-[36px] font-bold text-[var(--text-color)] mb-4">Flexible Document Types</h2>
+        <p class="text-lg text-[var(--text-secondary)] m-0">Each document type carries its own visibility and permission rules</p>
       </div>
 
-      <div class="doctypes-intro">
-        <div class="intro-card">
-          <div class="intro-icon">
-            <i class="pi pi-cog"></i>
+      <div class="max-w-[800px] mx-auto mb-8">
+        <div class="intro-card flex flex-col md:flex-row gap-6 p-8 rounded-2xl border border-[#bae6fd] md:text-left text-center md:items-start items-center">
+          <div class="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-2xl shrink-0">
+            <i class="pi pi-cog text-[28px] text-white"></i>
           </div>
-          <div class="intro-content">
-            <h3>Customizable Workflows</h3>
-            <p>
+          <div>
+            <h3 class="text-xl font-semibold text-[var(--text-color)] mb-2">Customizable Workflows</h3>
+            <p class="text-[15px] leading-[1.6] text-[var(--text-secondary)] m-0">
               Control which parties can view, comment on, or approve specific types of documents
               — so a contractor sees only what's relevant to them, while sensitive documents stay restricted.
             </p>
@@ -246,246 +246,246 @@
         </div>
       </div>
 
-      <div class="doctypes-visibility">
-        <table class="visibility-matrix">
+      <div class="visibility-matrix-wrapper max-w-[600px] mx-auto mb-10">
+        <table class="visibility-matrix w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th></th>
-              <th><i class="pi pi-wrench"></i> Contractor</th>
-              <th><i class="pi pi-building"></i> Client</th>
-              <th><i class="pi pi-shield"></i> Insurer</th>
+              <th class="px-4 py-3 text-center font-semibold text-[13px] text-[var(--text-color)] border-b-2 border-[var(--surface-border)]"></th>
+              <th class="px-4 py-3 text-center font-semibold text-[13px] text-[var(--text-color)] border-b-2 border-[var(--surface-border)]"><i class="pi pi-wrench block mb-1 text-base text-[var(--text-secondary)]"></i> Contractor</th>
+              <th class="px-4 py-3 text-center font-semibold text-[13px] text-[var(--text-color)] border-b-2 border-[var(--surface-border)]"><i class="pi pi-building block mb-1 text-base text-[var(--text-secondary)]"></i> Client</th>
+              <th class="px-4 py-3 text-center font-semibold text-[13px] text-[var(--text-color)] border-b-2 border-[var(--surface-border)]"><i class="pi pi-shield block mb-1 text-base text-[var(--text-secondary)]"></i> Insurer</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="doc-label">Damage Report</td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-check-circle"></i></td>
+              <td class="px-4 py-3 text-left font-medium text-[var(--text-color)] border-b border-[var(--surface-border)]">Damage Report</td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-check-circle text-[#27ae60]"></i></td>
             </tr>
             <tr>
-              <td class="doc-label">Repair Quote</td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-check-circle"></i></td>
+              <td class="px-4 py-3 text-left font-medium text-[var(--text-color)] border-b border-[var(--surface-border)]">Repair Quote</td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-check-circle text-[#27ae60]"></i></td>
             </tr>
             <tr>
-              <td class="doc-label">Invoice</td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-check-circle"></i></td>
+              <td class="px-4 py-3 text-left font-medium text-[var(--text-color)] border-b border-[var(--surface-border)]">Invoice</td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-check-circle text-[#27ae60]"></i></td>
             </tr>
             <tr>
-              <td class="doc-label">Contract</td>
-              <td><i class="pi pi-eye"></i></td>
-              <td><i class="pi pi-check-circle"></i></td>
-              <td><i class="pi pi-minus"></i></td>
+              <td class="px-4 py-3 text-left font-medium text-[var(--text-color)] border-b border-[var(--surface-border)]">Contract</td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-eye text-[var(--primary-color)]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-check-circle text-[#27ae60]"></i></td>
+              <td class="px-4 py-3 text-center border-b border-[var(--surface-border)]"><i class="pi pi-minus text-[var(--surface-border)]"></i></td>
             </tr>
           </tbody>
         </table>
-        <div class="visibility-legend">
-          <span><i class="pi pi-eye"></i> Can view</span>
-          <span><i class="pi pi-check-circle"></i> Can approve</span>
-          <span><i class="pi pi-minus"></i> No access</span>
+        <div class="flex justify-center gap-6 mt-4 text-xs text-[var(--text-secondary)]">
+          <span class="flex items-center gap-1.5"><i class="pi pi-eye text-xs text-[var(--primary-color)]"></i> Can view</span>
+          <span class="flex items-center gap-1.5"><i class="pi pi-check-circle text-xs text-[#27ae60]"></i> Can approve</span>
+          <span class="flex items-center gap-1.5"><i class="pi pi-minus text-xs text-[var(--surface-border)]"></i> No access</span>
         </div>
       </div>
 
-      <div class="doctypes-example-label">
-        <span>Every account includes these defaults &mdash; all tiers can create custom types:</span>
+      <div class="max-w-[1200px] mx-auto mb-4 text-center">
+        <span class="inline-block px-4 py-2 bg-[var(--surface-card)] rounded-[20px] text-sm text-[var(--text-secondary)] italic">Every account includes these defaults &mdash; all tiers can create custom types:</span>
       </div>
 
-      <div class="doctypes-grid">
-        <div class="doctype-card">
-          <i class="pi pi-file"></i>
-          <h4>Invoice</h4>
-          <span class="doctype-badge info">View</span>
+      <div class="max-w-[1200px] mx-auto grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+        <div class="flex flex-col items-center gap-3 p-6 bg-[var(--surface-card)] rounded-xl text-center">
+          <i class="pi pi-file text-[32px] text-[var(--primary-color)]"></i>
+          <h4 class="text-base font-semibold text-[var(--text-color)] m-0">Invoice</h4>
+          <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#e0f2fe] text-[#0369a1]">View</span>
         </div>
-        <div class="doctype-card">
-          <i class="pi pi-shopping-cart"></i>
-          <h4>Purchase Order</h4>
-          <span class="doctype-badge info">View</span>
+        <div class="flex flex-col items-center gap-3 p-6 bg-[var(--surface-card)] rounded-xl text-center">
+          <i class="pi pi-shopping-cart text-[32px] text-[var(--primary-color)]"></i>
+          <h4 class="text-base font-semibold text-[var(--text-color)] m-0">Purchase Order</h4>
+          <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#e0f2fe] text-[#0369a1]">View</span>
         </div>
-        <div class="doctype-card">
-          <i class="pi pi-file-check"></i>
-          <h4>Contract</h4>
-          <span class="doctype-badge info">View</span>
+        <div class="flex flex-col items-center gap-3 p-6 bg-[var(--surface-card)] rounded-xl text-center">
+          <i class="pi pi-file-check text-[32px] text-[var(--primary-color)]"></i>
+          <h4 class="text-base font-semibold text-[var(--text-color)] m-0">Contract</h4>
+          <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#e0f2fe] text-[#0369a1]">View</span>
         </div>
-        <div class="doctype-card">
-          <i class="pi pi-receipt"></i>
-          <h4>Receipt</h4>
-          <span class="doctype-badge info">View</span>
+        <div class="flex flex-col items-center gap-3 p-6 bg-[var(--surface-card)] rounded-xl text-center">
+          <i class="pi pi-receipt text-[32px] text-[var(--primary-color)]"></i>
+          <h4 class="text-base font-semibold text-[var(--text-color)] m-0">Receipt</h4>
+          <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#e0f2fe] text-[#0369a1]">View</span>
         </div>
-        <div class="doctype-card">
-          <i class="pi pi-dollar"></i>
-          <h4>Quote</h4>
-          <span class="doctype-badge approval">Requires Approval</span>
+        <div class="flex flex-col items-center gap-3 p-6 bg-[var(--surface-card)] rounded-xl text-center">
+          <i class="pi pi-dollar text-[32px] text-[var(--primary-color)]"></i>
+          <h4 class="text-base font-semibold text-[var(--text-color)] m-0">Quote</h4>
+          <span class="px-3 py-1 rounded-xl text-xs font-medium bg-[#fef3c7] text-[#92400e]">Requires Approval</span>
         </div>
       </div>
     </section>
 
     <!-- Plans Section -->
-    <section class="plans-section">
-      <div class="section-header">
-        <h2>Plans That Scale With You</h2>
-        <p>Start free and upgrade as your needs grow</p>
+    <section class="py-20 px-6 bg-[var(--surface-ground)]">
+      <div class="text-center mb-12">
+        <h2 class="font-[Inter,sans-serif] text-[28px] md:text-[36px] font-bold text-[var(--text-color)] mb-4">Plans That Scale With You</h2>
+        <p class="text-lg text-[var(--text-secondary)] m-0">Start free and upgrade as your needs grow</p>
       </div>
 
       <!-- Pricing Calculator (hidden for now) -->
-      <div v-if="false" class="pricing-calculator">
-        <h3><i class="pi pi-calculator"></i> Find Your Plan</h3>
-        <div class="calculator-inputs">
-          <div class="calc-input-group">
-            <div class="calc-input-label">
+      <div v-if="false" class="max-w-[700px] mx-auto mb-12 p-8 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl">
+        <h3 class="text-xl font-semibold text-[var(--text-color)] mb-6 flex items-center gap-2.5"><i class="pi pi-calculator text-[var(--primary-color)]"></i> Find Your Plan</h3>
+        <div class="flex flex-col gap-6 mb-7">
+          <div class="flex flex-col gap-2.5">
+            <div class="flex justify-between items-center text-sm text-[var(--text-secondary)]">
               <span>Projects</span>
-              <strong>{{ calcProjects }}</strong>
+              <strong class="text-base text-[var(--text-color)]">{{ calcProjects }}</strong>
             </div>
             <Slider v-model="calcProjects" :min="1" :max="100" />
           </div>
-          <div class="calc-input-group">
-            <div class="calc-input-label">
+          <div class="flex flex-col gap-2.5">
+            <div class="flex justify-between items-center text-sm text-[var(--text-secondary)]">
               <span>Documents per project</span>
-              <strong>{{ calcDocs }}</strong>
+              <strong class="text-base text-[var(--text-color)]">{{ calcDocs }}</strong>
             </div>
             <Slider v-model="calcDocs" :min="1" :max="500" />
           </div>
         </div>
-        <div class="calculator-result">
-          <div class="result-storage">
-            <i class="pi pi-database"></i>
+        <div class="p-5 bg-[var(--surface-ground)] rounded-xl flex flex-col gap-4">
+          <div class="flex items-center gap-2 text-sm text-[var(--text-color)]">
+            <i class="pi pi-database text-[var(--primary-color)]"></i>
             <span>Estimated storage: <strong>{{ estimatedStorageLabel }}</strong></span>
-            <span class="storage-note">(~{{ AVG_PDF_SIZE_MB }} MB &times; {{ AVG_VERSIONS_PER_DOC }} versions per doc)</span>
+            <span class="text-[var(--text-secondary)] text-xs">(~{{ AVG_PDF_SIZE_MB }} MB &times; {{ AVG_VERSIONS_PER_DOC }} versions per doc)</span>
           </div>
-          <div class="result-recommendation">
-            <div class="result-tier">
+          <div class="flex items-center justify-between flex-wrap gap-2 lg:flex-row flex-col lg:items-center items-start">
+            <div class="flex items-center gap-2 text-[15px] text-[var(--text-color)]">
               <span>Recommended plan:</span>
-              <strong>{{ recommendedTier.name }}</strong>
+              <strong class="text-lg text-[var(--primary-color)]">{{ recommendedTier.name }}</strong>
             </div>
-            <div v-if="recommendedTier.monthlyPrice !== null" class="result-price">
+            <div v-if="recommendedTier.monthlyPrice !== null" class="flex items-center gap-2 text-base text-[var(--text-color)]">
               <template v-if="isYearly">
                 <strong>&euro;{{ recommendedTier.yearlyMonthlyPrice }}/mo</strong>
-                <span class="result-savings">Save &euro;{{ recommendedTier.monthlyPrice * 12 - recommendedTier.yearlyTotal }}/year</span>
+                <span class="px-2.5 py-0.5 bg-[#dcfce7] text-[#166534] rounded-[10px] text-xs font-semibold">Save &euro;{{ recommendedTier.monthlyPrice * 12 - recommendedTier.yearlyTotal }}/year</span>
               </template>
               <template v-else>
                 <strong>&euro;{{ recommendedTier.monthlyPrice }}/mo</strong>
-                <span class="result-yearly-hint">or &euro;{{ recommendedTier.yearlyMonthlyPrice }}/mo billed yearly</span>
+                <span class="text-[13px] text-[var(--text-secondary)]">or &euro;{{ recommendedTier.yearlyMonthlyPrice }}/mo billed yearly</span>
               </template>
             </div>
-            <div v-else class="result-price">
+            <div v-else class="flex items-center gap-2 text-base text-[var(--text-color)]">
               <strong>Custom pricing</strong>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="billing-toggle">
-        <span :class="{ active: !isYearly }">Monthly</span>
+      <div class="flex items-center justify-center gap-3 mb-10 text-[15px] text-[var(--text-secondary)]">
+        <span :class="{ 'text-[var(--text-color)] font-semibold': !isYearly }">Monthly</span>
         <button class="toggle-switch" :class="{ toggled: isYearly }" @click="isYearly = !isYearly">
           <span class="toggle-knob"></span>
         </button>
-        <span :class="{ active: isYearly }">Yearly</span>
-        <span class="billing-save-badge" :style="{ visibility: isYearly ? 'visible' : 'hidden' }">2 months free</span>
+        <span :class="{ 'text-[var(--text-color)] font-semibold': isYearly }">Yearly</span>
+        <span class="px-3 py-1 bg-[#dcfce7] text-[#166534] rounded-xl text-xs font-semibold" :style="{ visibility: isYearly ? 'visible' : 'hidden' }">2 months free</span>
       </div>
 
-      <div class="plans-grid">
-        <div class="plan-card">
-          <div class="plan-header">
-            <h3>Free</h3>
-            <div class="plan-price">
-              <span class="price">&euro;0</span>
-              <span class="period">/month</span>
+      <div class="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="relative p-8 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex flex-col">
+          <div class="text-center mb-6">
+            <h3 class="text-2xl font-semibold text-[var(--text-color)] mb-2">Free</h3>
+            <div class="flex items-baseline justify-center gap-1 min-h-[44px]">
+              <span class="text-[36px] font-bold text-[var(--text-color)]">&euro;0</span>
+              <span class="text-base text-[var(--text-secondary)]">/month</span>
             </div>
-            <div class="plan-price-annual">&nbsp;</div>
+            <div class="text-[13px] text-[var(--text-secondary)] text-center mt-1 min-h-[20px]">&nbsp;</div>
           </div>
-          <ul class="plan-features">
-            <li><i class="pi pi-check"></i> 5 projects, 2 parties each</li>
-            <li><i class="pi pi-check"></i> 10 documents per project</li>
-            <li><i class="pi pi-cloud"></i> 250 MB storage</li>
-            <li><i class="pi pi-check"></i> Comments &amp; annotations</li>
-            <li><i class="pi pi-check"></i> Approvals &amp; deadlines</li>
-            <li><i class="pi pi-check"></i> Email notifications</li>
-            <li><i class="pi pi-check"></i> Custom document types (up to 3)</li>
+          <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> 5 projects, 2 parties each</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> 10 documents per project</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> 250 MB storage</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Comments &amp; annotations</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Approvals &amp; deadlines</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Email notifications</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Custom document types (up to 3)</li>
           </ul>
-          <Button label="Get Started" outlined class="plan-button" @click="handleGetStarted" />
+          <Button label="Get Started" outlined class="w-full" @click="handleGetStarted" />
         </div>
 
-        <div class="plan-card featured">
-          <div class="plan-badge">Recommended</div>
-          <div class="plan-header">
-            <h3>Team</h3>
-            <div class="plan-price">
-              <span v-if="isYearly" class="price-original">&euro;49</span>
-              <span class="price">&euro;{{ isYearly ? 41 : 49 }}</span>
-              <span class="period">/month</span>
+        <div class="plan-card-featured relative p-8 bg-[var(--surface-card)] border-2 border-[var(--primary-color)] rounded-2xl flex flex-col shadow-[0_8px_32px_rgba(59,130,246,0.15)]">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[var(--primary-color)] text-white rounded-xl text-xs font-semibold">Recommended</div>
+          <div class="text-center mb-6">
+            <h3 class="text-2xl font-semibold text-[var(--text-color)] mb-2">Team</h3>
+            <div class="flex items-baseline justify-center gap-1 min-h-[44px]">
+              <span v-if="isYearly" class="text-xl font-medium text-[var(--text-secondary)] line-through mr-1">&euro;49</span>
+              <span class="text-[36px] font-bold text-[var(--text-color)]">&euro;{{ isYearly ? 41 : 49 }}</span>
+              <span class="text-base text-[var(--text-secondary)]">/month</span>
             </div>
-            <div class="plan-price-annual">
+            <div class="text-[13px] text-[var(--text-secondary)] text-center mt-1 min-h-[20px]">
               <template v-if="isYearly">billed &euro;490/year</template>
               <template v-else>&nbsp;</template>
             </div>
           </div>
-          <ul class="plan-features">
-            <li><i class="pi pi-check"></i> Unlimited projects &amp; parties</li>
-            <li><i class="pi pi-check"></i> Unlimited documents</li>
-            <li><i class="pi pi-cloud"></i> 10 GB storage</li>
-            <li><i class="pi pi-check"></i> Document versioning</li>
-            <li><i class="pi pi-check"></i> Document sign-off</li>
-            <li><i class="pi pi-check"></i> Unlimited custom document types</li>
+          <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Unlimited projects &amp; parties</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Unlimited documents</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> 10 GB storage</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Document versioning</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Document sign-off</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Unlimited custom document types</li>
           </ul>
-          <Button label="Start 14-Day Free Trial" class="plan-button" @click="handleGetStarted('team')" />
+          <Button label="Start 14-Day Free Trial" class="w-full" @click="handleGetStarted('team')" />
         </div>
 
-        <div class="plan-card">
-          <div class="plan-header">
-            <h3>Business</h3>
-            <div class="plan-price">
-              <span v-if="isYearly" class="price-original">&euro;149</span>
-              <span class="price">&euro;{{ isYearly ? 124 : 149 }}</span>
-              <span class="period">/month</span>
+        <div class="relative p-8 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex flex-col">
+          <div class="text-center mb-6">
+            <h3 class="text-2xl font-semibold text-[var(--text-color)] mb-2">Business</h3>
+            <div class="flex items-baseline justify-center gap-1 min-h-[44px]">
+              <span v-if="isYearly" class="text-xl font-medium text-[var(--text-secondary)] line-through mr-1">&euro;149</span>
+              <span class="text-[36px] font-bold text-[var(--text-color)]">&euro;{{ isYearly ? 124 : 149 }}</span>
+              <span class="text-base text-[var(--text-secondary)]">/month</span>
             </div>
-            <div class="plan-price-annual">
+            <div class="text-[13px] text-[var(--text-secondary)] text-center mt-1 min-h-[20px]">
               <template v-if="isYearly">billed &euro;1,490/year</template>
               <template v-else>&nbsp;</template>
             </div>
           </div>
-          <ul class="plan-features">
-            <li><i class="pi pi-check"></i> Everything in Team</li>
-            <li><i class="pi pi-cloud"></i> 100 GB cloud storage</li>
-            <li class="storage-divider">or</li>
-            <li><i class="pi pi-server"></i> Self-hosted file storage</li>
-            <li><i class="pi pi-check"></i> Multiple workspaces</li>
-            <li><i class="pi pi-check"></i> Approval stages</li>
-            <li><i class="pi pi-code"></i> API access &amp; webhooks</li>
-            <li><i class="pi pi-check"></i> Advanced reporting</li>
-            <li><i class="pi pi-list"></i> Audit logs</li>
+          <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Everything in Team</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> 100 GB cloud storage</li>
+            <li class="flex justify-center py-0 text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">or</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-server text-sm text-[var(--primary-color)]"></i> Self-hosted file storage</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Multiple workspaces</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Approval stages</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-code text-sm text-[var(--primary-color)]"></i> API access &amp; webhooks</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Advanced reporting</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-list text-sm text-[var(--primary-color)]"></i> Audit logs</li>
           </ul>
-          <Button label="Start 14-Day Free Trial" class="plan-button" @click="handleGetStarted('business')" />
+          <Button label="Start 14-Day Free Trial" class="w-full" @click="handleGetStarted('business')" />
         </div>
 
-        <div class="plan-card">
-          <div class="plan-header">
-            <h3>Enterprise</h3>
-            <div class="plan-price">
-              <span class="price">Custom</span>
+        <div class="relative p-8 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl flex flex-col">
+          <div class="text-center mb-6">
+            <h3 class="text-2xl font-semibold text-[var(--text-color)] mb-2">Enterprise</h3>
+            <div class="flex items-baseline justify-center gap-1 min-h-[44px]">
+              <span class="text-[36px] font-bold text-[var(--text-color)]">Custom</span>
             </div>
-            <div class="plan-price-annual">&nbsp;</div>
+            <div class="text-[13px] text-[var(--text-secondary)] text-center mt-1 min-h-[20px]">&nbsp;</div>
           </div>
-          <ul class="plan-features">
-            <li><i class="pi pi-check"></i> Everything in Business</li>
-            <li><i class="pi pi-cloud"></i> Unlimited storage</li>
-            <li><i class="pi pi-lock"></i> SSO / SAML</li>
-            <li><i class="pi pi-check"></i> Custom SLAs</li>
-            <li><i class="pi pi-check"></i> Dedicated support</li>
+          <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Everything in Business</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> Unlimited storage</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-lock text-sm text-[var(--primary-color)]"></i> SSO / SAML</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Custom SLAs</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Dedicated support</li>
           </ul>
-          <Button label="Contact Sales" outlined class="plan-button" as="a" href="mailto:sales@cedar-stack.com" />
+          <Button label="Contact Sales" outlined class="w-full" as="a" href="mailto:sales@cedar-stack.com" />
         </div>
       </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="cta-section">
-      <div class="cta-content">
-        <h2>Ready to Get Started?</h2>
-        <p>Join teams who trust CedarStack DMS for their document management needs</p>
-        <div class="cta-actions">
+    <section class="cta-section py-20 px-6 bg-gradient-to-br from-[var(--primary-color)] to-[var(--primary-dark)]">
+      <div class="max-w-[600px] mx-auto text-center">
+        <h2 class="text-[36px] font-bold text-white mb-4">Ready to Get Started?</h2>
+        <p class="text-lg text-white/90 mb-8">Join teams who trust CedarStack DMS for their document management needs</p>
+        <div class="flex justify-center gap-4">
           <Button
             label="Start Free"
             icon="pi pi-arrow-right"
@@ -494,19 +494,19 @@
             @click="handleGetStarted('free')"
           />
         </div>
-        <p class="cta-note">No credit card required. 14-day Team trial, then free forever on the Free plan.</p>
+        <p class="text-sm! text-white/70! mt-4!">No credit card required. 14-day Team trial, then free forever on the Free plan.</p>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer class="landing-footer">
-      <div class="footer-content">
-        <div class="footer-brand">
+    <footer class="py-8 px-6 bg-[var(--surface-section)] border-t border-[var(--surface-border)]">
+      <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6 md:gap-0">
+        <div class="flex items-center gap-4">
           <Logo size="sm" />
-          <p>Intelligent Document Hub</p>
+          <p class="text-[var(--text-secondary)] m-0 text-sm">Intelligent Document Hub</p>
         </div>
-        <div class="footer-links">
-          <a href="mailto:support@cedarstack.io">Contact</a>
+        <div class="flex flex-wrap justify-center gap-6">
+          <a href="mailto:support@cedarstack.io" class="text-[var(--text-secondary)] no-underline text-sm transition-colors duration-200 hover:text-[var(--text-color)]">Contact</a>
         </div>
       </div>
     </footer>
@@ -564,358 +564,7 @@ function scrollToFeatures() {
 </script>
 
 <style scoped>
-.landing-page {
-  min-height: 100vh;
-  background-color: var(--surface-ground);
-}
-
-/* Hero Section */
-.hero {
-  padding: 80px 24px;
-  background: linear-gradient(135deg, var(--surface-card) 0%, var(--surface-ground) 100%);
-}
-
-.hero-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: center;
-}
-
-.hero-badge {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: var(--brand-gold-light);
-  color: var(--brand-brown-dark);
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-}
-
-.hero-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--text-color);
-  margin: 0 0 24px 0;
-}
-
-.hero-title .highlight {
-  color: var(--primary-color);
-}
-
-.hero-description {
-  font-size: 18px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-  margin: 0 0 32px 0;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.hero-visual {
-  display: flex;
-  justify-content: center;
-}
-
-.hero-card {
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 12px;
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--surface-border);
-  margin-bottom: 16px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.card-header i {
-  color: var(--brand-gold);
-  font-size: 20px;
-}
-
-.card-documents {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.doc-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background-color: var(--surface-ground);
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.doc-item i {
-  color: var(--color-danger);
-}
-
-.doc-item span:first-of-type {
-  flex: 1;
-  color: var(--text-color);
-}
-
-.doc-status {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.doc-status.approved {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.doc-status.pending {
-  background-color: #e0e7ff;
-  color: #3730a3;
-}
-
-.doc-status.review {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-/* Section Common Styles */
-.section-header {
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.section-header h2 {
-  font-family: 'Inter', sans-serif;
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--text-color);
-  margin: 0 0 16px 0;
-}
-
-.section-header p {
-  font-size: 18px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Features Section */
-.features-section {
-  padding: 80px 24px;
-  background-color: var(--surface-card);
-}
-
-.features-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-}
-
-.feature-card {
-  padding: 32px;
-  background-color: var(--surface-ground);
-  border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-}
-
-.feature-icon {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--primary-color);
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.feature-icon i {
-  font-size: 24px;
-  color: white;
-}
-
-.feature-card h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 12px 0;
-}
-
-.feature-card p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Plans Section */
-.plans-section {
-  padding: 80px 24px;
-  background-color: var(--surface-ground);
-}
-
-/* Pricing Calculator */
-.pricing-calculator {
-  max-width: 700px;
-  margin: 0 auto 48px;
-  padding: 32px;
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 16px;
-}
-
-.pricing-calculator h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 24px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pricing-calculator h3 i {
-  color: var(--primary-color);
-}
-
-.calculator-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  margin-bottom: 28px;
-}
-
-.calc-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.calc-input-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.calc-input-label strong {
-  font-size: 16px;
-  color: var(--text-color);
-}
-
-.calculator-result {
-  padding: 20px;
-  background-color: var(--surface-ground);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.result-storage {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.result-storage i {
-  color: var(--primary-color);
-}
-
-.storage-note {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.result-recommendation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.result-tier {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  color: var(--text-color);
-}
-
-.result-tier strong {
-  font-size: 18px;
-  color: var(--primary-color);
-}
-
-.result-price {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  color: var(--text-color);
-}
-
-.result-savings {
-  padding: 2px 10px;
-  background-color: #dcfce7;
-  color: #166534;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.result-yearly-hint {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-/* Billing Toggle */
-.billing-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 40px;
-  font-size: 15px;
-  color: var(--text-secondary);
-}
-
-.billing-toggle span.active {
-  color: var(--text-color);
-  font-weight: 600;
-}
-
+/* Toggle switch requires precise absolute positioning */
 .toggle-switch {
   position: relative;
   width: 48px;
@@ -947,394 +596,9 @@ function scrollToFeatures() {
   transform: translateX(22px);
 }
 
-.billing-save-badge {
-  padding: 4px 12px;
-  background-color: #dcfce7;
-  color: #166534;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.plans-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-}
-
-.plan-card {
-  position: relative;
-  padding: 32px;
-  background-color: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.plan-card.featured {
-  border-color: var(--primary-color);
-  box-shadow: 0 8px 32px rgba(var(--primary-color-rgb), 0.15);
-}
-
-.plan-badge {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 16px;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.plan-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.plan-header h3 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.plan-price {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px;
-  min-height: 44px;
-}
-
-.plan-price .price {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--text-color);
-}
-
-.plan-price .period {
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-.plan-price .price-original {
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: line-through;
-  margin-right: 4px;
-}
-
-.plan-price-annual {
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-align: center;
-  margin-top: 4px;
-  min-height: 20px;
-}
-
-.plan-features {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 24px 0;
-  flex: 1;
-}
-
-.plan-features li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  font-size: 14px;
-  color: var(--text-color);
-}
-
-.plan-features li i {
-  color: var(--primary-color);
-  font-size: 14px;
-}
-
-li.storage-divider {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  justify-content: center;
-  padding: 0;
-}
-
-.plan-button {
-  width: 100%;
-}
-
-/* Permissions Section */
-.permissions-section {
-  padding: 80px 24px;
-  background-color: var(--surface-card);
-}
-
-.permissions-content {
-  max-width: 1200px;
-  margin: 0 auto 48px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: start;
-}
-
-.permission-diagram {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.permission-layer {
-  padding: 20px 24px;
-  border-radius: 12px;
-  border-left: 4px solid;
-}
-
-.layer-org {
-  background-color: #f3e8ff;
-  border-color: #a855f7;
-}
-
-.layer-project {
-  background-color: #dbeafe;
-  border-color: #3b82f6;
-  margin-left: 16px;
-}
-
-.layer-party {
-  background-color: #fef3c7;
-  border-color: #f59e0b;
-  margin-left: 32px;
-}
-
-.layer-user {
-  background-color: #dcfce7;
-  border-color: #22c55e;
-  margin-left: 48px;
-}
-
-.layer-label {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--text-color);
-  margin-bottom: 2px;
-}
-
-.layer-description {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.permission-details {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.permission-card {
-  padding: 20px;
-  background-color: var(--surface-ground);
-  border: 1px solid var(--surface-border);
-  border-radius: 12px;
-}
-
-.permission-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.permission-header i {
-  font-size: 20px;
-  color: var(--primary-color);
-}
-
-.permission-header h4 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.permission-card p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.permission-examples {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.permission-examples h3 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 24px 0;
-  text-align: center;
-}
-
-.example-scenario {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.example-party {
-  display: flex;
-  gap: 16px;
-  padding: 24px;
-  background-color: var(--surface-ground);
-  border: 1px solid var(--surface-border);
-  border-radius: 12px;
-}
-
-.party-avatar {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.party-avatar i {
-  font-size: 20px;
-  color: white;
-}
-
-
-.party-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.party-info strong {
-  font-size: 16px;
-  color: var(--text-color);
-}
-
-.party-info span {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-/* Document Types - Visibility Matrix */
-.doctypes-visibility {
-  max-width: 600px;
-  margin: 0 auto 40px;
-}
-
-.visibility-matrix {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.visibility-matrix th {
-  padding: 12px 16px;
-  text-align: center;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text-color);
-  border-bottom: 2px solid var(--surface-border);
-}
-
-.visibility-matrix th i {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 16px;
-  color: var(--text-secondary);
-}
-
-.visibility-matrix td {
-  padding: 12px 16px;
-  text-align: center;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.visibility-matrix td.doc-label {
-  text-align: left;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.visibility-matrix td .pi-eye {
-  color: var(--primary-color);
-}
-
-.visibility-matrix td .pi-check-circle {
-  color: #27ae60;
-}
-
-.visibility-matrix td .pi-minus {
-  color: var(--surface-border);
-}
-
-.visibility-legend {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 16px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.visibility-legend span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.visibility-legend .pi-eye {
-  color: var(--primary-color);
-  font-size: 12px;
-}
-
-.visibility-legend .pi-check-circle {
-  color: #27ae60;
-  font-size: 12px;
-}
-
-.visibility-legend .pi-minus {
-  color: var(--surface-border);
-  font-size: 12px;
-}
-
-/* Document Types Section */
-.doctypes-section {
-  padding: 80px 24px;
-  background-color: var(--surface-ground);
-}
-
-.doctypes-intro {
-  max-width: 800px;
-  margin: 0 auto 32px;
-}
-
+/* Intro card gradient needs dark mode override via html.dark which requires :deep or global */
 .intro-card {
-  display: flex;
-  gap: 24px;
-  padding: 32px;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 16px;
-  border: 1px solid #bae6fd;
 }
 
 html.dark .intro-card {
@@ -1342,275 +606,14 @@ html.dark .intro-card {
   border-color: #1e40af;
 }
 
-.intro-icon {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border-radius: 16px;
-  flex-shrink: 0;
-}
-
-.intro-icon i {
-  font-size: 28px;
-  color: white;
-}
-
-.intro-content h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px 0;
-}
-
-.intro-content p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.doctypes-example-label {
-  max-width: 1200px;
-  margin: 0 auto 16px;
-  text-align: center;
-}
-
-.doctypes-example-label span {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: var(--surface-card);
-  border-radius: 20px;
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.doctypes-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.doctype-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 24px;
-  background-color: var(--surface-card);
-  border-radius: 12px;
-  text-align: center;
-}
-
-.doctype-card i {
-  font-size: 32px;
-  color: var(--primary-color);
-}
-
-.doctype-card h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.doctype-badge {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.doctype-badge.info {
-  background-color: #e0f2fe;
-  color: #0369a1;
-}
-
-.doctype-badge.approval {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.doctype-badge.signature {
-  background-color: #e0e7ff;
-  color: #3730a3;
-}
-
-/* CTA Section */
-.cta-section {
-  padding: 80px 24px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-}
-
-.cta-content {
-  max-width: 600px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.cta-content h2 {
-  font-size: 36px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 16px 0;
-}
-
-.cta-content p {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 32px 0;
-}
-
-.cta-note {
-  font-size: 14px !important;
-  color: rgba(255, 255, 255, 0.7) !important;
-  margin-top: 16px !important;
-}
-
-.cta-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-}
-
-.cta-actions :deep(.p-button) {
+/* CTA button overrides for PrimeVue internals */
+.cta-section :deep(.p-button) {
   background-color: white;
   color: var(--primary-color);
   border: none;
 }
 
-.cta-actions :deep(.p-button:hover) {
+.cta-section :deep(.p-button:hover) {
   background-color: rgba(255, 255, 255, 0.9);
-}
-
-/* Footer */
-.landing-footer {
-  padding: 32px 24px;
-  background-color: var(--surface-section);
-  border-top: 1px solid var(--surface-border);
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.footer-brand p {
-  color: var(--text-secondary);
-  margin: 0;
-  font-size: 14px;
-}
-
-.footer-links {
-  display: flex;
-  gap: 24px;
-}
-
-.footer-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: var(--text-color);
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .hero-content {
-    grid-template-columns: 1fr;
-    gap: 48px;
-  }
-
-  .hero-visual {
-    order: -1;
-  }
-
-  .hero-title {
-    font-size: 36px;
-  }
-
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .plans-grid {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 700px;
-  }
-
-  .result-recommendation {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .permissions-content {
-    grid-template-columns: 1fr;
-  }
-
-  .example-scenario {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .hero {
-    padding: 48px 16px;
-  }
-
-  .hero-title {
-    font-size: 28px;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .plans-grid {
-    grid-template-columns: 1fr;
-    max-width: 400px;
-  }
-
-  .section-header h2 {
-    font-size: 28px;
-  }
-
-  .intro-card {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-  }
-
-  .footer-content {
-    flex-direction: column;
-    gap: 24px;
-    text-align: center;
-  }
-
-  .footer-links {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
 }
 </style>

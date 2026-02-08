@@ -58,14 +58,14 @@ const completeSetup = async () => {
 </script>
 
 <template>
-  <div class="setup-page">
-    <div class="setup-panel">
-      <div class="setup-content">
+  <div class="flex min-h-screen w-full bg-white/90 justify-center">
+    <div class="w-full max-w-[482px] flex flex-col justify-center py-15 px-7 max-[540px]:py-12 max-[540px]:px-5">
+      <div class="flex flex-col gap-6 w-full max-w-[426px]">
         <!-- Logo -->
         <Logo size="lg" :show-tagline="true" />
 
         <!-- Heading -->
-        <h1 class="setup-heading">Complete Account Setup</h1>
+        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-slate-800 m-0">Complete Account Setup</h1>
 
         <!-- Error message -->
         <Message v-if="errorMessage" severity="error" :closable="false">
@@ -73,14 +73,14 @@ const completeSetup = async () => {
         </Message>
 
         <!-- Username (read-only) -->
-        <div class="form-group">
-          <label class="form-label">Username</label>
-          <p class="form-value">{{ username }}</p>
+        <div class="flex flex-col gap-1.5">
+          <label class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Username</label>
+          <p class="font-[Inter,sans-serif] font-normal text-sm leading-5 text-[var(--text-color)] m-0 py-2">{{ username }}</p>
         </div>
 
         <!-- Firstname -->
-        <div class="form-group">
-          <label for="firstName" class="form-label">Firstname</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="firstName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Firstname</label>
           <InputText
             id="firstName"
             v-model="firstName"
@@ -90,8 +90,8 @@ const completeSetup = async () => {
         </div>
 
         <!-- Lastname -->
-        <div class="form-group">
-          <label for="lastName" class="form-label">Lastname</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="lastName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Lastname</label>
           <InputText
             id="lastName"
             v-model="lastName"
@@ -101,8 +101,8 @@ const completeSetup = async () => {
         </div>
 
         <!-- Phone Number -->
-        <div class="form-group">
-          <label for="phoneNumber" class="form-label">Phone Number</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="phoneNumber" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Phone Number</label>
           <InputText
             id="phoneNumber"
             v-model="phoneNumber"
@@ -113,8 +113,8 @@ const completeSetup = async () => {
         </div>
 
         <!-- Password -->
-        <div class="form-group">
-          <label for="password" class="form-label">Password</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="password" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Password</label>
           <Password
             id="password"
             v-model="password"
@@ -127,8 +127,8 @@ const completeSetup = async () => {
         </div>
 
         <!-- Confirm Password -->
-        <div class="form-group">
-          <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <div class="flex flex-col gap-1.5">
+          <label for="confirmPassword" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Confirm Password</label>
           <Password
             id="confirmPassword"
             v-model="confirmPassword"
@@ -139,11 +139,11 @@ const completeSetup = async () => {
             class="w-full"
             :invalid="!passwordsMatch"
           />
-          <small v-if="!passwordsMatch" class="field-error">Passwords do not match</small>
+          <small v-if="!passwordsMatch" class="text-[var(--color-danger)] font-[Inter,sans-serif] text-xs">Passwords do not match</small>
         </div>
 
         <!-- Submit -->
-        <div class="form-actions">
+        <div class="flex items-center">
           <Button
             type="button"
             @click="completeSetup"
@@ -156,80 +156,3 @@ const completeSetup = async () => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.setup-page {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.9);
-  justify-content: center;
-}
-
-.setup-panel {
-  width: 100%;
-  max-width: 482px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 60px 28px;
-}
-
-.setup-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: 100%;
-  max-width: 426px;
-}
-
-.setup-heading {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.25;
-  color: #1e293b;
-  margin: 0;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--ui-input-label);
-}
-
-.form-value {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--text-color);
-  margin: 0;
-  padding: 8px 0;
-}
-
-.field-error {
-  color: var(--color-danger);
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-}
-
-.form-actions {
-  display: flex;
-  align-items: center;
-}
-
-@media (max-width: 540px) {
-  .setup-panel {
-    padding: 48px 20px;
-  }
-}
-</style>

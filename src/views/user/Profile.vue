@@ -140,16 +140,16 @@ function onPageChange(event: { first: number; rows: number }) {
 </script>
 
 <template>
-  <div class="profile-view">
-    <div class="profile-content">
+  <div class="flex flex-col h-full p-0">
+    <div class="max-w-[980px] mx-auto w-full flex flex-col md:px-0 px-3">
       <!-- User Name Heading -->
-      <div class="profile-heading">
-        <h1 class="user-name">{{ fullName }}</h1>
+      <div class="p-4">
+        <h1 class="font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ fullName }}</h1>
       </div>
 
       <!-- General Information Section -->
-      <div class="section-header">
-        <h2 class="section-title">General Information</h2>
+      <div class="flex items-center justify-between p-4 gap-2">
+        <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">General Information</h2>
         <Button
           icon="pi pi-pencil"
           label="Edit"
@@ -159,58 +159,58 @@ function onPageChange(event: { first: number; rows: number }) {
       </div>
 
       <!-- Profile Fields (Read-only) -->
-      <div class="profile-fields">
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">Email</label>
-            <p class="field-value">{{ profileData.email || 'Placeholder' }}</p>
+      <div class="flex flex-col">
+        <div class="flex md:flex-row flex-col md:gap-6 gap-0 p-4">
+          <div class="flex-1 flex flex-col gap-1.5">
+            <label class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Email</label>
+            <p class="font-normal text-sm leading-5 text-[var(--ui-button-primary)] m-0 py-2 px-0">{{ profileData.email || 'Placeholder' }}</p>
           </div>
-          <div class="field-group">
-            <label class="field-label">Phone Number</label>
-            <p class="field-value">{{ profileData.phone || 'Placeholder' }}</p>
+          <div class="flex-1 flex flex-col gap-1.5">
+            <label class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Phone Number</label>
+            <p class="font-normal text-sm leading-5 text-[var(--ui-button-primary)] m-0 py-2 px-0">{{ profileData.phone || 'Placeholder' }}</p>
           </div>
         </div>
 
-        <div class="field-row">
-          <div class="field-group">
-            <label class="field-label">First Name</label>
-            <p class="field-value">{{ profileData.firstName || 'Placeholder' }}</p>
+        <div class="flex md:flex-row flex-col md:gap-6 gap-0 p-4">
+          <div class="flex-1 flex flex-col gap-1.5">
+            <label class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">First Name</label>
+            <p class="font-normal text-sm leading-5 text-[var(--ui-button-primary)] m-0 py-2 px-0">{{ profileData.firstName || 'Placeholder' }}</p>
           </div>
-          <div class="field-group">
-            <label class="field-label">Last Name</label>
-            <p class="field-value">{{ profileData.lastName || 'Placeholder' }}</p>
+          <div class="flex-1 flex flex-col gap-1.5">
+            <label class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Last Name</label>
+            <p class="font-normal text-sm leading-5 text-[var(--ui-button-primary)] m-0 py-2 px-0">{{ profileData.lastName || 'Placeholder' }}</p>
           </div>
         </div>
       </div>
 
       <!-- Notifications Section -->
-      <div class="section-header section-header-inline">
-        <h2 class="section-title">Notifications</h2>
-        <div class="notification-toggle">
-          <span class="toggle-label">Receive email notifications</span>
+      <div class="flex md:flex-row md:items-center flex-col items-start justify-between p-4 gap-2 md:gap-2 max-md:gap-4">
+        <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Notifications</h2>
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-sm leading-5 text-[var(--ui-input-label)]">Receive email notifications</span>
           <ToggleSwitch v-model="receiveEmailNotifications" />
         </div>
       </div>
 
       <!-- Access Section -->
-      <div class="section-header">
-        <h2 class="section-title">Access</h2>
+      <div class="flex items-center justify-between p-4 gap-2">
+        <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Access</h2>
       </div>
 
       <!-- Dev: JWT Debug (collapsible) -->
-      <details v-if="isDev" class="jwt-debug">
-        <summary>Decoded JWT (Dev Only)</summary>
-        <pre>{{ JSON.stringify(decodedToken, null, 2) }}</pre>
+      <details v-if="isDev" class="mx-4 mb-4 p-3 bg-[var(--surface-ground)] border border-dashed border-[var(--ui-input-border)] rounded-lg">
+        <summary class="cursor-pointer font-semibold text-sm text-[var(--text-secondary)]">Decoded JWT (Dev Only)</summary>
+        <pre class="mt-3 p-3 bg-[var(--surface-card)] rounded text-xs overflow-x-auto max-h-[400px] overflow-y-auto">{{ JSON.stringify(decodedToken, null, 2) }}</pre>
       </details>
 
       <!-- Access Table -->
-      <div class="access-table-container">
+      <div class="access-table-container bg-[var(--ui-input-fill-default)] border border-[var(--ui-input-fill-disabled)] rounded-[10px] overflow-hidden mx-4 mb-4 md:mx-4 md:mb-4 max-md:mx-3 max-md:mb-3">
         <DataTable
           :value="accessData"
           :first="first"
           :rows="rows"
           dataKey="id"
-          class="access-table"
+          class="access-table w-full"
           :pt="{
             table: { class: 'w-full' },
             bodyRow: { class: 'access-row' }
@@ -218,23 +218,23 @@ function onPageChange(event: { first: number; rows: number }) {
         >
           <Column field="project" header="Project" sortable>
             <template #body="{ data }">
-              <span class="project-link">{{ data.project }}</span>
+              <span class="text-[var(--primary-color)] font-normal">{{ data.project }}</span>
             </template>
           </Column>
           <Column field="documentName" header="Document Name" sortable>
             <template #body="{ data }">
-              <span class="document-link">{{ data.documentName }}</span>
+              <span class="text-[var(--primary-color)] font-normal">{{ data.documentName }}</span>
             </template>
           </Column>
           <Column field="access" header="Access" sortable>
             <template #body="{ data }">
-              <span class="access-level">{{ data.access }}</span>
+              <span class="text-[var(--ui-input-label)] font-normal">{{ data.access }}</span>
             </template>
           </Column>
         </DataTable>
 
         <!-- Pagination -->
-        <div class="table-pagination">
+        <div class="table-pagination flex justify-center py-2 px-4 border-t border-[var(--ui-button-outlined-stroke)]">
           <Paginator
             :first="first"
             :rows="rows"
@@ -259,8 +259,8 @@ function onPageChange(event: { first: number; rows: number }) {
         content: { class: 'edit-dialog-content' }
       }"
     >
-      <div class="dialog-form">
-        <div class="form-field">
+      <div class="flex flex-col gap-4 py-2 px-0">
+        <div class="w-full">
           <FloatLabel variant="on">
             <InputText
               id="firstName"
@@ -271,7 +271,7 @@ function onPageChange(event: { first: number; rows: number }) {
           </FloatLabel>
         </div>
 
-        <div class="form-field">
+        <div class="w-full">
           <FloatLabel variant="on">
             <InputText
               id="lastName"
@@ -282,7 +282,7 @@ function onPageChange(event: { first: number; rows: number }) {
           </FloatLabel>
         </div>
 
-        <div class="form-field">
+        <div class="w-full">
           <FloatLabel variant="on">
             <InputText
               id="phone"
@@ -295,7 +295,7 @@ function onPageChange(event: { first: number; rows: number }) {
       </div>
 
       <template #footer>
-        <div class="dialog-footer">
+        <div class="flex justify-end gap-4">
           <Button
             label="Cancel"
             text
@@ -313,126 +313,9 @@ function onPageChange(event: { first: number; rows: number }) {
 </template>
 
 <style scoped>
-.profile-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0;
-}
-
-.profile-content {
-  max-width: 980px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* User Name Heading */
-.profile-heading {
-  padding: 16px;
-}
-
-.user-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  gap: 8px;
-}
-
-.section-header-inline {
-  justify-content: space-between;
-}
-
-.section-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 1.25;
-  color: var(--text-color);
-  margin: 0;
-}
-
-/* Notification Toggle */
-.notification-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.toggle-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--ui-input-label);
-}
-
-/* Profile Fields */
-.profile-fields {
-  display: flex;
-  flex-direction: column;
-}
-
-.field-row {
-  display: flex;
-  gap: 24px;
-  padding: 16px;
-}
-
-.field-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--ui-input-label);
-}
-
-.field-value {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--ui-button-primary);
-  margin: 0;
-  padding: 8px 0;
-}
-
-/* Access Table */
-.access-table-container {
-  background-color: var(--ui-input-fill-default);
-  border: 1px solid var(--ui-input-fill-disabled);
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 0 16px 16px;
-}
-
-.access-table {
-  width: 100%;
-}
-
 .access-table :deep(.p-datatable-thead > tr > th) {
   background-color: var(--surface-ground);
   color: var(--ui-input-label);
-  font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: 14px;
   line-height: 20px;
@@ -445,104 +328,13 @@ function onPageChange(event: { first: number; rows: number }) {
   padding: 16px;
   border-color: var(--ui-button-outlined-stroke);
   border-top: 1px solid var(--ui-button-outlined-stroke);
-  font-family: 'Inter', sans-serif;
   font-size: 14px;
   line-height: 20px;
-}
-
-.project-link,
-.document-link {
-  color: var(--primary-color);
-  font-weight: 400;
-}
-
-.access-level {
-  color: var(--ui-input-label);
-  font-weight: 400;
-}
-
-/* Pagination */
-.table-pagination {
-  display: flex;
-  justify-content: center;
-  padding: 8px 16px;
-  border-top: 1px solid var(--ui-button-outlined-stroke);
 }
 
 .table-pagination :deep(.p-paginator) {
   background: transparent;
   border: none;
   padding: 0;
-}
-
-/* Edit Dialog */
-.dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 8px 0;
-}
-
-.form-field {
-  width: 100%;
-}
-
-.form-field :deep(.p-inputtext) {
-  width: 100%;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-}
-
-/* JWT Debug */
-.jwt-debug {
-  margin: 0 16px 16px;
-  padding: 12px;
-  background: var(--surface-ground);
-  border: 1px dashed var(--ui-input-border);
-  border-radius: 8px;
-}
-
-.jwt-debug summary {
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.jwt-debug pre {
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--surface-card);
-  border-radius: 4px;
-  font-size: 12px;
-  overflow-x: auto;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .profile-content {
-    padding: 0 12px;
-  }
-
-  .field-row {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .section-header-inline {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .access-table-container {
-    margin: 0 12px 12px;
-  }
 }
 </style>

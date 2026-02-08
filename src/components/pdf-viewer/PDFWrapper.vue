@@ -119,8 +119,8 @@ defineExpose({ jumpToPage });
 </script>
 
 <template>
-  <div class="pdf-container">
-    <div class="pdf-viewer-wrapper">
+  <div class="relative w-full h-full flex flex-col">
+    <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top controls: page navigation -->
       <Controls
         variant="top"
@@ -129,7 +129,7 @@ defineExpose({ jumpToPage });
         @update:page="onPageUpdate"
       />
 
-      <div ref="scrollAreaRef" class="pdf-scroll-area">
+      <div ref="scrollAreaRef" class="flex-1 relative overflow-auto">
         <VuePdf
           ref="pdfComponent"
           :src="pdfUrl"
@@ -180,30 +180,7 @@ defineExpose({ jumpToPage });
 </template>
 
 <style scoped>
-.pdf-file {
-  &.marker-active {
-    cursor: crosshair;
-  }
-}
-
-.pdf-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.pdf-viewer-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.pdf-scroll-area {
-  flex: 1;
-  position: relative;
-  overflow: auto;
+.pdf-file.marker-active {
+  cursor: crosshair;
 }
 </style>

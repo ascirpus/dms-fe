@@ -7,7 +7,3 @@
     © 2025 Some licensing text
   </div>
 </template>
-
-<style scoped>
-
-</style>

@@ -317,18 +317,18 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="overlayRef" class="markers-overlay">
+  <div ref="overlayRef" class="absolute top-0 left-0 w-full h-full pointer-events-none">
     <!-- Marker circles -->
     <div
       v-for="marker in visibleMarkers"
       :key="marker.id"
-      class="comment-marker"
+      class="comment-marker absolute pointer-events-auto cursor-pointer z-10 transition-transform duration-150 hover:scale-[1.15]"
       :class="{ 'marker-pop': animatingMarkerId === marker.id }"
       :style="getMarkerStyle(marker)"
       @click.stop="showMarkerDetails(marker)"
     >
       <span
-        class="marker-avatar"
+        class="flex items-center justify-center w-8 h-8 rounded-full text-white text-[11px] font-semibold shadow-[0_2px_6px_rgba(0,0,0,0.25)] select-none"
         :style="{ backgroundColor: getMarkerColor(marker) }"
       >
         {{ getMarkerInitials(marker) }}
@@ -339,21 +339,21 @@ onBeforeUnmount(() => {
     <div
       v-for="marker in expandedMarkers"
       :key="'card-' + marker.id"
-      class="marker-card-inline"
+      class="marker-card-inline absolute pointer-events-auto bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-lg p-3 w-80 shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-[15]"
       :style="getExpandedCardStyle(marker)"
     >
-      <div class="comment-card-header">
+      <div class="flex items-center gap-2 mb-2">
         <span
-          class="card-avatar"
+          class="flex items-center justify-center w-7 h-7 min-w-7 rounded-full text-white text-[10px] font-semibold select-none"
           :style="{ backgroundColor: getMarkerColor(marker) }"
         >
           {{ getMarkerInitials(marker) }}
         </span>
-        <div class="card-header-text">
-          <span class="card-author">{{ getDisplayName(marker.author) }}</span>
-          <span class="card-date">{{ formatDate(marker.createdAt) }}</span>
+        <div class="flex-1 flex flex-col">
+          <span class="text-[13px] font-semibold text-[var(--text-color)]">{{ getDisplayName(marker.author) }}</span>
+          <span class="text-[11px] text-[var(--text-secondary)]">{{ formatDate(marker.createdAt) }}</span>
         </div>
-        <div class="card-actions">
+        <div class="flex gap-0.5">
           <Button
             v-if="!marker.isResolved"
             icon="pi pi-check"
@@ -376,10 +376,10 @@ onBeforeUnmount(() => {
           -->
         </div>
       </div>
-      <p class="card-comment">{{ marker.comment }}</p>
+      <p class="text-[13px] text-[var(--text-color)] m-0 mb-2 leading-[1.4]">{{ marker.comment }}</p>
       <!-- TODO: re-enable when reply feature is ready
       <a
-        class="card-reply-link"
+        class="text-xs text-[var(--primary-color)] cursor-pointer no-underline hover:underline"
         @click="emit('reply-to-comment', marker)"
       >
         Reply
@@ -389,41 +389,41 @@ onBeforeUnmount(() => {
   </div>
 
   <!-- New marker input -->
-  <div v-if="newMarkerModal" class="marker-modal">
-    <div class="marker-modal-content new-marker-input" :style="modalPosition">
+  <div v-if="newMarkerModal" class="fixed top-0 left-0 w-full h-full z-[100] pointer-events-none">
+    <div class="marker-modal-content absolute pointer-events-auto bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-lg p-3 w-80 shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex items-center gap-2 px-3 py-2" :style="modalPosition">
       <span
         v-if="currentUser"
-        class="card-avatar"
+        class="flex items-center justify-center w-7 h-7 min-w-7 rounded-full text-white text-[10px] font-semibold select-none"
         :style="{ backgroundColor: getAvatarColor(currentUser.email) }"
       >
         {{ getInitialsFromUser(currentUser) }}
       </span>
-      <div class="input-wrapper">
+      <div class="flex-1 relative">
         <input
           id="marker-comment-input"
           v-model="newMarkerComment"
-          class="comment-input"
+          class="w-full border-none outline-none text-[13px] text-[var(--text-color)] bg-transparent py-1 px-0 placeholder:text-[var(--text-secondary)]"
           placeholder="Add a comment..."
           @input="handleCommentInput"
         />
         <!-- @mention dropdown -->
-        <div v-if="mentionActive && mentionResults.length > 0" class="mention-dropdown">
+        <div v-if="mentionActive && mentionResults.length > 0" class="absolute bottom-full left-0 w-[260px] max-h-[200px] overflow-y-auto bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-md shadow-[0_4px_12px_rgba(0,0,0,0.15)] mb-1 z-[200]">
           <div
             v-for="member in mentionResults"
             :key="member.userId"
-            class="mention-item"
+            class="flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors duration-100 hover:bg-[var(--surface-hover,#f1f5f9)]"
             @mousedown.prevent="selectMention(member)"
           >
             <span
-              class="mention-avatar"
+              class="flex items-center justify-center w-6 h-6 min-w-6 rounded-full text-white text-[9px] font-semibold"
               :style="{ backgroundColor: getAvatarColor(member.email) }"
             >
               {{ (member.firstName?.[0] ?? '') + (member.lastName?.[0] ?? '') }}
             </span>
-            <span class="mention-name">
+            <span class="text-[13px] font-medium text-[var(--text-color)]">
               {{ member.firstName }} {{ member.lastName }}
             </span>
-            <span class="mention-email">{{ member.email }}</span>
+            <span class="text-[11px] text-[var(--text-secondary)] ml-auto">{{ member.email }}</span>
           </div>
         </div>
       </div>
@@ -440,216 +440,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.markers-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.comment-marker {
-  position: absolute;
-  pointer-events: auto;
-  cursor: pointer;
-  z-index: 10;
-  transition: transform 0.15s;
-}
-
-.comment-marker:hover {
-  transform: scale(1.15);
-}
-
-.marker-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  user-select: none;
-}
-
-.marker-card-inline {
-  position: absolute;
-  pointer-events: auto;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  padding: 12px;
-  width: 320px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 15;
-}
-
-.marker-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 100;
-  pointer-events: none;
-}
-
-.marker-modal-content {
-  position: absolute;
-  pointer-events: auto;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  padding: 12px;
-  width: 320px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.comment-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.card-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-radius: 50%;
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  user-select: none;
-}
-
-.card-header-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-author {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.card-date {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.card-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.card-comment {
-  font-size: 13px;
-  color: var(--text-color);
-  margin: 0 0 8px;
-  line-height: 1.4;
-}
-
-.card-reply-link {
-  font-size: 12px;
-  color: var(--primary-color);
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.card-reply-link:hover {
-  text-decoration: underline;
-}
-
-/* New marker input */
-.new-marker-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-}
-
-.input-wrapper {
-  flex: 1;
-  position: relative;
-}
-
-.comment-input {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 13px;
-  color: var(--text-color);
-  background: transparent;
-  padding: 4px 0;
-}
-
-.comment-input::placeholder {
-  color: var(--text-secondary);
-}
-
-.mention-dropdown {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  width: 260px;
-  max-height: 200px;
-  overflow-y: auto;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin-bottom: 4px;
-  z-index: 200;
-}
-
-.mention-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.mention-item:hover {
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.mention-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  border-radius: 50%;
-  color: white;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.mention-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.mention-email {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-left: auto;
-}
-
-/* Marker pop animation for jump-to-marker */
 .marker-pop {
   animation: marker-pop 0.6s ease-out;
   z-index: 20;
