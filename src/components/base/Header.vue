@@ -5,6 +5,7 @@ import { useAuth } from '@/composables/useAuth';
 import { useNotifications } from '@/composables/useNotifications';
 import { useSearch } from '@/composables/useSearch';
 import { useProjects } from '@/composables/useProjects';
+import { useMainStore } from '@/stores/mainStore';
 import { getInitialsFromUser } from '@/utils/avatar';
 import Logo from './Logo.vue';
 import WorkspaceSwitcher from './WorkspaceSwitcher.vue';
@@ -19,6 +20,7 @@ import IconField from 'primevue/iconfield';
 const router = useRouter();
 const route = useRoute();
 const auth = useAuth();
+const store = useMainStore();
 const { unreadCount, fetchUnreadCount } = useNotifications();
 const { resolveProject } = useProjects();
 
@@ -148,6 +150,21 @@ const toggleUserMenu = (event: Event) => {
   userMenu.value.toggle(event);
 };
 
+const currentResolvedTheme = computed(() => {
+  if (store.theme === 'auto') {
+    const hour = new Date().getHours();
+    return (hour >= 20 || hour < 7) ? 'dark' : 'light';
+  }
+  return store.theme;
+});
+const themeIcon = computed(() => currentResolvedTheme.value === 'dark' ? 'pi pi-sun' : 'pi pi-moon');
+
+function toggleTheme() {
+  const newTheme = currentResolvedTheme.value === 'dark' ? 'light' : 'dark';
+  store.setTheme(newTheme);
+  auth.updateProfile({ themePreference: newTheme });
+}
+
 const goToAdmin = () => {
   router.push({ name: 'admin' });
 };
@@ -243,6 +260,16 @@ const goToNotifications = () => {
             class="!absolute !top-0 !right-0 translate-x-1/4 -translate-y-1/4 !min-w-5 !h-5 !text-xs"
           />
         </div>
+
+        <!-- Theme Toggle -->
+        <Button
+          :icon="themeIcon"
+          text
+          rounded
+          class="!text-[var(--text-secondary)] hover:!text-[var(--text-color)]"
+          aria-label="Toggle theme"
+          @click="toggleTheme"
+        />
 
         <!-- User Avatar -->
         <div class="cursor-pointer">

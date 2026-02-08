@@ -93,6 +93,12 @@ export function createRouter(app: App): Router {
                         meta: { title: 'Search' }
                     },
                     {
+                        path: 'workspace/new',
+                        name: 'create-workspace',
+                        component: () => import('@/views/workspace/CreateWorkspace.vue'),
+                        meta: { title: 'Create Workspace' }
+                    },
+                    {
                         path: 'workspace',
                         name: 'workspace-overview',
                         component: () => import("@/views/workspace/WorkspaceOverview.vue"),
@@ -103,6 +109,18 @@ export function createRouter(app: App): Router {
                         name: 'workspace-settings',
                         component: () => import("@/views/workspace/WorkspaceSettings.vue"),
                         meta: { title: 'Workspace Settings' }
+                    },
+                    {
+                        path: 'billing/success',
+                        name: 'billing-success',
+                        component: () => import('@/views/billing/BillingSuccess.vue'),
+                        meta: { title: 'Payment Successful' }
+                    },
+                    {
+                        path: 'billing/cancel',
+                        name: 'billing-cancel',
+                        component: () => import('@/views/billing/BillingCancel.vue'),
+                        meta: { title: 'Payment Cancelled' }
                     },
                     {
                         path: 'settings',

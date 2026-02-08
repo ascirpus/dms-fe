@@ -1,8 +1,9 @@
 /* CSS Layer ordering for Tailwind + PrimeVue */
 @layer tailwind-base, primevue, tailwind-utilities;
 
-/* Tailwind base */
+/* Tailwind base + theme + utilities */
 @import "tailwindcss/preflight" layer(tailwind-base);
+@import "tailwindcss/theme" layer(tailwind-base);
 @import "tailwindcss/utilities" layer(tailwind-utilities);
 
 /* ===================================
@@ -35,11 +36,12 @@
   --ui-input-fill-disabled: #e3e8f0;
 
   /* Surface colors */
-  --surface-ground: #ffffff;
+  --surface-ground: #f8fafc;
   --surface-section: #ffffff;
   --surface-card: #ffffff;
   --surface-overlay: rgba(255, 255, 255, 0.9);
   --surface-border: #e2e8f0;
+  --surface-hover: #f8fafc;
 
   /* Text colors */
   --text-color: #1e293b;
@@ -51,6 +53,12 @@
   --color-danger: #e74c3c;
   --color-warning: #f39c12;
   --color-info: #3b82f6;
+
+  /* Role hierarchy backgrounds */
+  --role-bg-purple: #f3e8ff;
+  --role-bg-blue: #dbeafe;
+  --role-bg-amber: #fef3c7;
+  --role-bg-green: #dcfce7;
 }
 
 html.dark {
@@ -59,13 +67,28 @@ html.dark {
   --surface-card: #1e293b;
   --surface-overlay: rgba(30, 41, 59, 0.95);
   --surface-border: #334155;
+  --surface-hover: #334155;
   --text-color: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
   --ui-button-primary: #3b82f6;
+  --ui-button-secondary: #94a3b8;
+  --ui-button-tertiary: #64748b;
+  --ui-button-subtle: #334155;
+  --ui-button-text: #ffffff;
+  --ui-button-link: #60a5fa;
+  --ui-button-outlined-stroke: #475569;
+  --ui-input-label: #f8fafc;
+  --ui-input-border: #475569;
+  --ui-input-placeholder: #64748b;
   --ui-input-fill-default: #1e293b;
   --ui-input-fill-disabled: #334155;
-  --ui-input-border: #475569;
+
+  /* Role hierarchy backgrounds */
+  --role-bg-purple: #3b1f6e;
+  --role-bg-blue: #1e3a5f;
+  --role-bg-amber: #5c3d10;
+  --role-bg-green: #14532d;
 }
 
 /* ===================================

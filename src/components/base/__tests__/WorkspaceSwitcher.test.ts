@@ -7,14 +7,18 @@ const mockFetchWorkspaces = vi.fn();
 const mockSwitchWorkspace = vi.fn();
 const mockRouterPush = vi.fn();
 
+const canCreateWorkspaceRef = ref(true);
+
 vi.mock('@/composables/useWorkspace', () => ({
   useWorkspace: vi.fn(() => ({
+    currentWorkspace: ref({ tier: { name: 'Team', maxTenants: 5 } }),
     currentWorkspaceName: computed(() => 'Acme Corp'),
     userWorkspaces: ref([
       { tenantId: 'tenant-1', name: 'Acme Corp', role: 'OWNER', createdAt: '2024-01-01' },
       { tenantId: 'tenant-2', name: 'Beta Inc', role: 'MEMBER', createdAt: '2024-02-01' },
     ]),
     workspacesLoaded: ref(true),
+    canCreateWorkspace: canCreateWorkspaceRef,
     fetchWorkspaces: mockFetchWorkspaces,
     switchWorkspace: mockSwitchWorkspace,
   })),
@@ -25,12 +29,6 @@ vi.mock('@/composables/useAuth', () => ({
     getCurrentTenantId: () => 'tenant-1',
   })),
 }));
-
-vi.mock('primevue/usetoast', () => ({
-  useToast: () => ({ add: mockToastAdd }),
-}));
-
-const mockToastAdd = vi.fn();
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({
@@ -51,6 +49,7 @@ const stubs = {
 describe('WorkspaceSwitcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    canCreateWorkspaceRef.value = true;
   });
 
   it('should render with workspace name', () => {
@@ -58,7 +57,7 @@ describe('WorkspaceSwitcher', () => {
       global: { stubs },
     });
 
-    expect(wrapper.find('.workspace-name').text()).toBe('Acme Corp');
+    expect(wrapper.text()).toContain('Acme Corp');
   });
 
   it('should render chevron icon', () => {
@@ -66,7 +65,7 @@ describe('WorkspaceSwitcher', () => {
       global: { stubs },
     });
 
-    expect(wrapper.find('.chevron-icon').exists()).toBe(true);
+    expect(wrapper.find('.pi-chevron-down').exists()).toBe(true);
   });
 
   it('should show current workspace with check icon', () => {
@@ -74,8 +73,8 @@ describe('WorkspaceSwitcher', () => {
       global: { stubs },
     });
 
-    expect(wrapper.find('.workspace-item-current').exists()).toBe(true);
-    expect(wrapper.find('.check-icon').exists()).toBe(true);
+    expect(wrapper.find('.pi-check').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Acme Corp');
   });
 
   it('should show other workspaces as switchable', () => {
@@ -83,9 +82,7 @@ describe('WorkspaceSwitcher', () => {
       global: { stubs },
     });
 
-    const switchable = wrapper.findAll('.workspace-item-switchable');
-    expect(switchable).toHaveLength(1);
-    expect(switchable[0].text()).toBe('Beta Inc');
+    expect(wrapper.text()).toContain('Beta Inc');
   });
 
   it('should render settings and usage links', () => {
@@ -93,10 +90,8 @@ describe('WorkspaceSwitcher', () => {
       global: { stubs },
     });
 
-    const links = wrapper.findAll('.workspace-item-link');
-    expect(links).toHaveLength(2);
-    expect(links[0].text()).toBe('Workspace Settings');
-    expect(links[1].text()).toContain('Usage');
+    expect(wrapper.text()).toContain('Workspace Settings');
+    expect(wrapper.text()).toContain('Usage');
   });
 
   it('should render "New Workspace" add button', () => {
@@ -104,24 +99,41 @@ describe('WorkspaceSwitcher', () => {
       global: { stubs },
     });
 
-    const addItem = wrapper.find('.workspace-item-add');
-    expect(addItem.exists()).toBe(true);
-    expect(addItem.text()).toBe('New Workspace');
+    expect(wrapper.text()).toContain('New Workspace');
   });
 
-  it('should show toast when "New Workspace" is clicked', async () => {
+  it('should navigate to create-workspace when canCreateWorkspace is true', async () => {
+    canCreateWorkspaceRef.value = true;
+
     const wrapper = mount(WorkspaceSwitcher, {
       global: { stubs },
     });
 
-    await wrapper.find('.workspace-item-add').trigger('click');
+    const popoverContent = wrapper.find('.popover-stub');
+    const items = popoverContent.findAll('div[class*="cursor-pointer"]');
+    const addItem = items.find(el => el.text().includes('New Workspace'));
+    expect(addItem).toBeDefined();
 
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severity: 'info',
-        summary: 'Coming Soon',
-      }),
-    );
+    await addItem!.trigger('click');
+
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'create-workspace' });
+  });
+
+  it('should navigate to workspace-overview when canCreateWorkspace is false', async () => {
+    canCreateWorkspaceRef.value = false;
+
+    const wrapper = mount(WorkspaceSwitcher, {
+      global: { stubs },
+    });
+
+    const popoverContent = wrapper.find('.popover-stub');
+    const items = popoverContent.findAll('div[class*="cursor-pointer"]');
+    const addItem = items.find(el => el.text().includes('New Workspace'));
+    expect(addItem).toBeDefined();
+
+    await addItem!.trigger('click');
+
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: 'workspace-overview' });
   });
 
   it('should not fetch workspaces on mount if already loaded', () => {

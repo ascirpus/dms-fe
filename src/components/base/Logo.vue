@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useMainStore } from '@/stores/mainStore';
 
 const props = defineProps<{
   size?: 'sm' | 'md' | 'lg'
   showTagline?: boolean
 }>();
 
+const mainStore = useMainStore();
+
 const resolvedSize = computed(() => props.size ?? 'md');
+
+const isDark = computed(() => {
+  if (mainStore.theme === 'auto') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return mainStore.theme === 'dark';
+});
+
+const logoTextSrc = computed(() =>
+  isDark.value ? '/images/logo-text-dark.svg' : '/images/logo-text.svg'
+);
 
 const iconWidthClass = computed(() => {
   switch (resolvedSize.value) {
@@ -28,8 +42,8 @@ const textWidthClass = computed(() => {
 <template>
   <div class="flex items-end gap-2">
     <img src="/images/logo.svg" alt="CedarStack Logo" class="block h-auto" :class="iconWidthClass" />
-    <img src="/images/logo-text.svg" alt="CedarStack" class="block h-auto" :class="textWidthClass" />
-    <div v-if="showTagline" class="font-['Inter',sans-serif] font-medium text-sm leading-[1.4] text-slate-800 flex flex-col ml-2">
+    <img :src="logoTextSrc" alt="CedarStack" class="block h-auto" :class="textWidthClass" />
+    <div v-if="showTagline" class="font-['Inter',sans-serif] font-medium text-sm leading-[1.4] text-[var(--text-color)] flex flex-col ml-2">
       <span>Intelligent</span>
       <span>Document Hub</span>
     </div>

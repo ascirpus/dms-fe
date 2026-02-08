@@ -29,6 +29,7 @@ function makeTenant(overrides: Partial<Tenant> = {}): Tenant {
     tier: {
       id: 'tier-1',
       name: 'Pro',
+      rank: 1,
       features: [],
     },
     usage: { projectsCount: 5, documentsCount: 20, storageUsedMb: 100 },

@@ -4,20 +4,24 @@
   <ConfirmDialog />
 </template>
 
-<script setup>
-import { onMounted } from 'vue';
+<script setup lang="ts">
+import { onMounted, watch } from 'vue';
 
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useMainStore } from "@/stores/mainStore.ts";
+import { useAuth } from "@/composables/useAuth.ts";
 
 const store = useMainStore();
+const auth = useAuth();
 
 onMounted(() => {
-  if (!store.theme && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    store.setTheme('dark');
-  } else {
-    store.setTheme(store.theme);
+  store.setTheme(store.theme || 'auto');
+});
+
+watch(auth.currentUser, (user) => {
+  if (user?.themePreference) {
+    store.setTheme(user.themePreference);
   }
 });
 </script>

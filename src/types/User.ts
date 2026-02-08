@@ -5,4 +5,7 @@ export interface User {
     phone?: string;
     locale?: string;
     picture?: string;
+    themePreference?: ThemeMode;
 }
+
+export type ThemeMode = 'light' | 'dark' | 'auto';

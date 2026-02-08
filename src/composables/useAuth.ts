@@ -116,7 +116,7 @@ export function useAuth() {
         }
     }
 
-    async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; locale?: string }): Promise<User | null> {
+    async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; locale?: string; themePreference?: string }): Promise<User | null> {
         try {
             const response = await apiClient.put<{ status: string; data: User }>('/api/me', data);
             currentUser.value = response.data.data;

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useAuth } from "@/composables/useAuth";
+import { useMainStore } from '@/stores/mainStore';
 import { getDisplayName } from '@/utils/avatar';
+import type { ThemeMode } from '@/types';
 
 // PrimeVue Components
 import Button from 'primevue/button';
@@ -12,8 +14,10 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import ToggleSwitch from 'primevue/toggleswitch';
 import FloatLabel from 'primevue/floatlabel';
+import SelectButton from 'primevue/selectbutton';
 
 const auth = useAuth();
+const store = useMainStore();
 
 // Dev mode check
 const isDev = import.meta.env.DEV;
@@ -32,6 +36,20 @@ const saving = ref(false);
 
 // Notifications
 const receiveEmailNotifications = ref(false);
+
+// Appearance
+const themeOptions = [
+  { label: 'Light', value: 'light' },
+  { label: 'Dark', value: 'dark' },
+  { label: 'System', value: 'auto' },
+];
+const selectedTheme = computed(() => store.theme);
+
+function onThemeChange(value: ThemeMode) {
+  if (!value) return;
+  store.setTheme(value);
+  auth.updateProfile({ themePreference: value });
+}
 
 // Edit dialog
 const showEditDialog = ref(false);
@@ -180,6 +198,23 @@ function onPageChange(event: { first: number; rows: number }) {
             <label class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Last Name</label>
             <p class="font-normal text-sm leading-5 text-[var(--ui-button-primary)] m-0 py-2 px-0">{{ profileData.lastName || 'Placeholder' }}</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Appearance Section -->
+      <div class="flex flex-col p-4 gap-4">
+        <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Appearance</h2>
+        <div class="flex flex-col gap-2">
+          <SelectButton
+            :modelValue="selectedTheme"
+            :options="themeOptions"
+            optionLabel="label"
+            optionValue="value"
+            @update:modelValue="onThemeChange"
+          />
+          <p v-if="selectedTheme === 'auto'" class="text-sm text-[var(--text-secondary)] m-0">
+            Follows your operating system preference
+          </p>
         </div>
       </div>
 

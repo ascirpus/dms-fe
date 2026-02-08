@@ -3,18 +3,23 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { useAuth } from '@/composables/useAuth';
+import { useBilling } from '@/composables/useBilling';
 import { useToast } from 'primevue/usetoast';
 import { ProjectsService, type ProjectListItem } from '@/services/ProjectsService';
 import { DocumentsService } from '@/services/DocumentsService';
 import type { Document } from '@/types/Document';
+import type { BillingInterval, BillingPlan } from '@/types';
 import ProgressBar from 'primevue/progressbar';
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import SelectButton from 'primevue/selectbutton';
 import ProgressSpinner from 'primevue/progressspinner';
 
 const router = useRouter();
 const toast = useToast();
 const { apiClient } = useAuth();
 const { currentWorkspace, fetchCurrentWorkspace } = useWorkspace();
+const { billingStatus, plans, isSubscribed, currentSubscription, fetchBillingStatus, fetchPlans, startCheckout, openBillingPortal, cancelSubscription } = useBilling();
 
 const loading = ref(true);
 
@@ -72,7 +77,7 @@ function getPercentage(current: number, max?: number): number {
 
 function formatUsageValue(current: number, max?: number, formatter?: (v: number) => string): string {
   const fmt = formatter ?? ((v: number) => v.toString());
-  if (max === undefined) return `${fmt(current)} / Unlimited`;
+  if (max === undefined || max === 2147483647) return `${fmt(current)} / Unlimited`;
   return `${fmt(current)} / ${fmt(max)}`;
 }
 
@@ -123,13 +128,80 @@ function navigateToItem(item: CleanupItem) {
   }
 }
 
-function onUpgradeClick() {
-  toast.add({
-    severity: 'info',
-    summary: 'Coming Soon',
-    detail: 'Plan upgrades will be available soon.',
-    life: 3000,
-  });
+const checkoutLoading = ref<string | null>(null);
+const selectedInterval = ref<BillingInterval>('YEARLY');
+const intervalOptions = [
+  { label: 'Monthly', value: 'MONTHLY' as BillingInterval },
+  { label: 'Yearly', value: 'YEARLY' as BillingInterval },
+];
+
+function getPlanPrice(plan: BillingPlan, interval: BillingInterval): number {
+  return plan.prices.find(p => p.interval === interval)?.priceInCents ?? 0;
+}
+
+function formatPrice(cents: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
+}
+
+const tierRank = computed(() => currentWorkspace.value?.tier.rank ?? 0);
+
+const isTopTier = computed(() => tierRank.value >= 2);
+
+const isHighestTier = computed(() => tierRank.value >= 3);
+
+const nextUpgradePlan = computed(() => {
+  if (isTopTier.value) return null;
+  const currentTierName = currentWorkspace.value?.tier.name?.toLowerCase() ?? '';
+  const available = plans.value
+    .filter(p => p.name.toLowerCase() !== currentTierName)
+    .sort((a, b) => getPlanPrice(a, 'MONTHLY') - getPlanPrice(b, 'MONTHLY'));
+  return available[0] ?? null;
+});
+
+async function onStartCheckout(planId: string) {
+  checkoutLoading.value = planId;
+  try {
+    await startCheckout(planId, selectedInterval.value);
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not start checkout. Please try again.', life: 3000 });
+  } finally {
+    checkoutLoading.value = null;
+  }
+}
+
+async function onManageSubscription() {
+  try {
+    await openBillingPortal();
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not open billing portal. Please try again.', life: 3000 });
+  }
+}
+
+const showCancelDialog = ref(false);
+const cancelLoading = ref(false);
+const cancelledPeriodEnd = ref<string | null>(null);
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+async function onConfirmCancel() {
+  cancelLoading.value = true;
+  try {
+    const result = await cancelSubscription();
+    showCancelDialog.value = false;
+    cancelledPeriodEnd.value = result.currentPeriodEnd;
+    toast.add({
+      severity: 'success',
+      summary: 'Subscription Cancelled',
+      detail: `Your subscription has been cancelled. You will continue to have access to your current plan benefits until ${formatDate(result.currentPeriodEnd)}.`,
+      life: 8000,
+    });
+  } catch {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not cancel subscription. Please try again.', life: 3000 });
+  } finally {
+    cancelLoading.value = false;
+  }
 }
 
 async function fetchCleanupSuggestions() {
@@ -185,6 +257,10 @@ async function fetchCleanupSuggestions() {
 onMounted(async () => {
   try {
     await fetchCurrentWorkspace();
+    await Promise.all([
+      fetchBillingStatus().catch(() => {}),
+      fetchPlans().catch(() => {}),
+    ]);
     if (anyUsageAbove80.value) {
       await fetchCleanupSuggestions();
     }
@@ -279,22 +355,146 @@ onMounted(async () => {
           </div>
         </template>
 
-        <!-- Upgrade CTA -->
+        <!-- Billing -->
         <div class="flex items-center justify-between p-4 gap-2">
-          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Upgrade</h2>
+          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">
+            {{ isSubscribed ? 'Subscription' : 'Upgrade' }}
+          </h2>
         </div>
 
-        <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
-          <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">Need more from your workspace?</h3>
+        <!-- Subscribed: manage existing subscription -->
+        <div v-if="isSubscribed" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
+          <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">{{ billingStatus?.currentPlan?.name ?? 'Active' }} Plan</h3>
           <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
-            Unlock higher limits, advanced features, and priority support by upgrading your plan.
+            Your subscription is active. Manage billing, update payment methods, or change your plan.
+          </p>
+          <div class="flex gap-3">
+            <Button
+              label="Manage Subscription"
+              icon="pi pi-credit-card"
+              @click="onManageSubscription"
+            />
+            <Button
+              label="Cancel Subscription"
+              icon="pi pi-times"
+              severity="danger"
+              text
+              @click="showCancelDialog = true"
+            />
+          </div>
+        </div>
+
+        <!-- Cancellation notice -->
+        <div v-else-if="cancelledPeriodEnd || currentSubscription?.status === 'canceled'" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="pi pi-info-circle text-[var(--text-secondary)]"></i>
+            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">Subscription Cancelled</h3>
+          </div>
+          <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
+            Your subscription has been cancelled. You will continue to receive your current plan benefits until
+            <strong class="text-[var(--text-color)]">{{ formatDate(cancelledPeriodEnd ?? currentSubscription?.currentPeriodEnd ?? '') }}</strong>.
           </p>
           <Button
-            label="Upgrade Plan"
-            icon="pi pi-arrow-up"
-            @click="onUpgradeClick"
+            label="Resubscribe"
+            icon="pi pi-refresh"
+            @click="onManageSubscription"
           />
         </div>
+
+        <!-- Not subscribed: show next upgrade option -->
+        <template v-else>
+          <!-- Second-highest tier: contact sales for Enterprise -->
+          <div v-if="isTopTier && !isHighestTier" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
+            <div class="flex items-center gap-2.5 mb-2">
+              <i class="pi pi-building text-lg text-[var(--primary-color)]"></i>
+              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">Need more?</h3>
+            </div>
+            <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
+              Get unlimited storage, SSO, custom SLAs, and dedicated support with an Enterprise plan tailored to your organization.
+            </p>
+            <Button
+              label="Contact Sales"
+              icon="pi pi-envelope"
+              as="a"
+              href="mailto:sales@cedarstack.com"
+            />
+          </div>
+
+          <!-- Highest tier: already on the top plan -->
+          <div v-else-if="isHighestTier" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
+            <div class="flex items-center gap-2.5">
+              <i class="pi pi-check-circle text-lg text-[#27ae60]"></i>
+              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">You're on our top-tier plan</h3>
+            </div>
+            <p class="text-sm text-[var(--text-secondary)] mt-2 mb-0 leading-normal">
+              You have access to all features and the highest limits available. Contact support if you need anything.
+            </p>
+          </div>
+
+          <!-- Show next upgrade plan -->
+          <template v-else-if="nextUpgradePlan">
+            <div class="flex justify-center px-4 pb-4">
+              <SelectButton
+                v-model="selectedInterval"
+                :options="intervalOptions"
+                optionLabel="label"
+                optionValue="value"
+                :allowEmpty="false"
+              />
+            </div>
+            <div class="w-sm mx-auto px-4 pb-4">
+              <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 flex flex-col gap-3">
+                <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">{{ nextUpgradePlan.name }}</h3>
+                <div class="text-2xl font-bold text-[var(--text-color)]">
+                  {{ formatPrice(getPlanPrice(nextUpgradePlan, selectedInterval), nextUpgradePlan.currency) }}
+                  <span class="text-sm font-normal text-[var(--text-secondary)]">{{ selectedInterval === 'YEARLY' ? '/year' : '/month' }}</span>
+                </div>
+                <span class="text-xs font-medium text-[#27ae60]" :class="{ 'invisible': selectedInterval !== 'YEARLY' }">
+                  2 months free
+                </span>
+                <Button
+                  label="Upgrade"
+                  icon="pi pi-arrow-up"
+                  :loading="checkoutLoading === nextUpgradePlan.id"
+                  @click="onStartCheckout(nextUpgradePlan.id)"
+                  class="mt-auto"
+                />
+              </div>
+            </div>
+          </template>
+
+          <!-- Fallback -->
+          <div v-else class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
+            <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">Need more from your workspace?</h3>
+            <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
+              Unlock higher limits, advanced features, and priority support by upgrading your plan.
+            </p>
+            <Button
+              label="Manage Subscription"
+              icon="pi pi-credit-card"
+              @click="onManageSubscription"
+            />
+          </div>
+        </template>
+
+        <!-- Cancel confirmation dialog -->
+        <Dialog v-model:visible="showCancelDialog" header="Cancel Subscription" modal class="max-w-md">
+          <div class="flex flex-col gap-4">
+            <p class="text-sm text-[var(--text-secondary)] m-0 leading-normal">
+              Are you sure you want to cancel your subscription? You will continue to have access to your current plan benefits until the end of your billing period
+              <span v-if="currentSubscription?.currentPeriodEnd">
+                (<strong>{{ formatDate(currentSubscription.currentPeriodEnd) }}</strong>)
+              </span>.
+            </p>
+            <p class="text-sm text-[var(--text-secondary)] m-0 leading-normal">
+              After that date, your workspace will be downgraded to the free tier.
+            </p>
+          </div>
+          <template #footer>
+            <Button label="Keep Subscription" text severity="secondary" @click="showCancelDialog = false" />
+            <Button label="Cancel Subscription" severity="danger" :loading="cancelLoading" @click="onConfirmCancel" />
+          </template>
+        </Dialog>
       </template>
     </div>
   </div>

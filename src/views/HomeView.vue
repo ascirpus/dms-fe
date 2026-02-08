@@ -109,6 +109,10 @@
             Assign required signers or allow voluntary acknowledgments.
             Set signature deadlines with reminders and track who signed and when.
           </p>
+          <p class="text-[12px] leading-[1.5] text-[var(--text-secondary)] mt-3 mb-0 opacity-80">
+            Every sign-off records signer identity, intent, and a tamper-evident audit trail
+            &mdash; meeting eIDAS Simple Electronic Signature (SES) criteria.
+          </p>
         </div>
 
         <div class="p-8 bg-[var(--surface-ground)] rounded-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
@@ -177,19 +181,19 @@
 
       <div class="max-w-[1200px] mx-auto mb-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
         <div class="flex flex-col gap-3">
-          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#f3e8ff] border-[#a855f7]">
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[var(--role-bg-purple)] border-[#a855f7]">
             <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">Organization Roles</div>
             <div class="text-[13px] text-[var(--text-secondary)]">Owner, Admin, or Member access levels</div>
           </div>
-          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#dbeafe] border-[#3b82f6] ml-4">
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[var(--role-bg-blue)] border-[#3b82f6] ml-4">
             <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">Project Membership</div>
             <div class="text-[13px] text-[var(--text-secondary)]">Base access to project documents</div>
           </div>
-          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#fef3c7] border-[#f59e0b] ml-8">
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[var(--role-bg-amber)] border-[#f59e0b] ml-8">
             <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">Party Permissions</div>
             <div class="text-[13px] text-[var(--text-secondary)]">Role-based access by document type</div>
           </div>
-          <div class="py-5 px-6 rounded-xl border-l-4 bg-[#dcfce7] border-[#22c55e] ml-12">
+          <div class="py-5 px-6 rounded-xl border-l-4 bg-[var(--role-bg-green)] border-[#22c55e] ml-12">
             <div class="font-semibold text-[15px] text-[var(--text-color)] mb-0.5">User Overrides</div>
             <div class="text-[13px] text-[var(--text-secondary)]">Individual exceptions when needed</div>
           </div>
@@ -400,6 +404,7 @@
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> 5 projects, 2 parties each</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> 10 documents per project</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> 250 MB storage</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-building text-sm text-[var(--primary-color)]"></i> 1 workspace</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Comments &amp; annotations</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Approvals &amp; deadlines</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Email notifications</li>
@@ -426,6 +431,7 @@
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Unlimited projects &amp; parties</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Unlimited documents</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> 10 GB storage</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-building text-sm text-[var(--primary-color)]"></i> 1 workspace</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Document versioning</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Document sign-off</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Unlimited custom document types</li>
@@ -451,11 +457,9 @@
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> 100 GB cloud storage</li>
             <li class="flex justify-center py-0 text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">or</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-server text-sm text-[var(--primary-color)]"></i> Self-hosted file storage</li>
-            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Multiple workspaces</li>
-            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Approval stages</li>
-            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-code text-sm text-[var(--primary-color)]"></i> API access &amp; webhooks</li>
-            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Advanced reporting</li>
-            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-list text-sm text-[var(--primary-color)]"></i> Audit logs</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-building text-sm text-[var(--primary-color)]"></i> Up to 3 workspaces</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-upload text-sm text-[var(--primary-color)]"></i> 250 MB file uploads</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-star text-sm text-[var(--primary-color)]"></i> Priority support</li>
           </ul>
           <Button label="Start 14-Day Free Trial" class="w-full" @click="handleGetStarted('business')" />
         </div>
@@ -470,12 +474,46 @@
           </div>
           <ul class="list-none p-0 mb-6 flex-1">
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Everything in Business</li>
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-building text-sm text-[var(--primary-color)]"></i> Custom workspaces</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> Unlimited storage</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-lock text-sm text-[var(--primary-color)]"></i> SSO / SAML</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Custom SLAs</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> Dedicated support</li>
           </ul>
           <Button label="Contact Sales" outlined class="w-full" as="a" href="mailto:sales@cedar-stack.com" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="py-14 px-6 bg-[var(--surface-card)] border-t border-[var(--surface-border)]">
+      <div class="max-w-[800px] mx-auto">
+        <p class="text-center text-sm text-[var(--text-secondary)] mb-6 tracking-wide uppercase">On the roadmap</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <span class="roadmap-pill">
+            <i class="pi pi-link text-xs"></i> Odoo Integration
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-code text-xs"></i> API Access
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-bolt text-xs"></i> Webhooks
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-list text-xs"></i> Audit Logs
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-check-circle text-xs"></i> Cascading Approvals
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-pencil text-xs"></i> Digital Signatures
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-shield text-xs"></i> eIDAS AdES
+          </span>
+          <span class="roadmap-pill">
+            <i class="pi pi-verified text-xs"></i> eIDAS QES
+          </span>
         </div>
       </div>
     </section>
@@ -604,6 +642,18 @@ function scrollToFeatures() {
 html.dark .intro-card {
   background: linear-gradient(135deg, #1e3a5f 0%, #1e40af20 100%);
   border-color: #1e40af;
+}
+
+.roadmap-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--surface-ground);
+  border: 1px solid var(--surface-border);
 }
 
 /* CTA button overrides for PrimeVue internals */

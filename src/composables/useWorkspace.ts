@@ -26,6 +26,12 @@ export function useWorkspace() {
         return match?.role ?? null;
     });
 
+    const canCreateWorkspace = computed(() => {
+        const maxTenants = currentWorkspace.value?.tier.maxTenants;
+        if (maxTenants === undefined || maxTenants === null) return false;
+        return userWorkspaces.value.length < maxTenants;
+    });
+
     async function fetchCurrentWorkspace(): Promise<Tenant> {
         const result = await queryClient.fetchQuery<Tenant>({
             queryKey: ['tenant'],
@@ -47,6 +53,21 @@ export function useWorkspace() {
         await fetchCurrentWorkspace();
     }
 
+    async function createWorkspace(name: string): Promise<void> {
+        const newTenant = await tenantService.createWorkspace(name);
+        userWorkspaces.value = [
+            ...userWorkspaces.value,
+            {
+                tenantId: newTenant.id,
+                name: newTenant.name,
+                role: 'OWNER' as TenantRole,
+                createdAt: newTenant.createdAt,
+            },
+        ];
+        queryClient.invalidateQueries(['userTenants']);
+        await switchWorkspace(newTenant.id);
+    }
+
     async function switchWorkspace(tenantId: string): Promise<void> {
         authStore.setTenantId(tenantId);
         queryClient.clear();
@@ -65,8 +86,10 @@ export function useWorkspace() {
         workspacesLoaded,
         currentWorkspaceName,
         currentWorkspaceRole,
+        canCreateWorkspace,
         fetchWorkspaces,
         fetchCurrentWorkspace,
+        createWorkspace,
         switchWorkspace,
     };
 }

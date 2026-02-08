@@ -15,7 +15,7 @@ function makeTenant(features: Tenant['tier']['features']): Tenant {
   return {
     id: 'tenant-1',
     name: 'Test',
-    tier: { id: 'tier-1', name: 'Pro', features },
+    tier: { id: 'tier-1', name: 'Pro', rank: 1, features },
     usage: { projectsCount: 0, documentsCount: 0, storageUsedMb: 0 },
     createdAt: '2024-01-01T00:00:00Z',
   };

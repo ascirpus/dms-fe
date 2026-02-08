@@ -83,19 +83,62 @@ const CedarStack = definePreset(Aura, {
                 }
             },
             dark: {
+                // Surface palette must go light→dark (0→950) so Aura's
+                // semantic token references like {surface.800} resolve to
+                // dark colors, not light ones.
                 surface: {
-                    0: '#1e293b',
-                    50: '#1e293b',
-                    100: '#334155',
-                    200: '#475569',
-                    300: '#64748b',
+                    0: '#ffffff',
+                    50: '#f8fafc',
+                    100: '#f1f5f9',
+                    200: '#e2e8f0',
+                    300: '#cbd5e1',
                     400: '#94a3b8',
-                    500: '#cbd5e1',
-                    600: '#e2e8f0',
-                    700: '#f1f5f9',
-                    800: '#f8fafc',
-                    900: '#ffffff',
-                    950: '#ffffff'
+                    500: '#64748b',
+                    600: '#475569',
+                    700: '#334155',
+                    800: '#1e293b',
+                    900: '#0f172a',
+                    950: '#020617'
+                },
+                content: {
+                    background: '{surface.800}',
+                    hoverBackground: '{surface.700}',
+                    borderColor: '{surface.600}',
+                    color: '{text.color}',
+                    hoverColor: '{text.hover.color}'
+                },
+                overlay: {
+                    select: {
+                        background: '{surface.800}',
+                        borderColor: '{surface.600}',
+                        color: '{text.color}'
+                    },
+                    popover: {
+                        background: '{surface.800}',
+                        borderColor: '{surface.600}',
+                        color: '{text.color}'
+                    },
+                    modal: {
+                        background: '{surface.800}',
+                        borderColor: '{surface.600}',
+                        color: '{text.color}'
+                    }
+                },
+                list: {
+                    option: {
+                        focusBackground: '{surface.700}',
+                        color: '{text.color}',
+                        focusColor: '{text.hover.color}'
+                    }
+                },
+                navigation: {
+                    item: {
+                        focusBackground: '{surface.700}',
+                        activeBackground: '{surface.700}',
+                        color: '{text.color}',
+                        focusColor: '{text.hover.color}',
+                        activeColor: '{text.hover.color}'
+                    }
                 },
                 primary: {
                     color: '#3b82f6',
@@ -110,13 +153,13 @@ const CedarStack = definePreset(Aura, {
                     hoverMutedColor: '#e2e8f0'
                 },
                 formField: {
-                    background: '#1e293b',
-                    disabledBackground: '#334155',
-                    filledBackground: '#334155',
-                    filledHoverBackground: '#475569',
-                    filledFocusBackground: '#1e293b',
-                    borderColor: '#475569',
-                    hoverBorderColor: '#64748b',
+                    background: '{surface.800}',
+                    disabledBackground: '{surface.700}',
+                    filledBackground: '{surface.700}',
+                    filledHoverBackground: '{surface.600}',
+                    filledFocusBackground: '{surface.800}',
+                    borderColor: '{surface.600}',
+                    hoverBorderColor: '{surface.500}',
                     focusBorderColor: '#3b82f6',
                     invalidBorderColor: '#e74c3c',
                     color: '#f8fafc',
@@ -279,6 +322,28 @@ const CedarStack = definePreset(Aura, {
             }
         },
         datatable: {
+            colorScheme: {
+                light: {
+                    root: {
+                        borderColor: '#e2e8f0'
+                    },
+                    row: {
+                        background: '#ffffff',
+                        hoverBackground: '#f8fafc',
+                        color: '#1e293b'
+                    }
+                },
+                dark: {
+                    root: {
+                        borderColor: '#475569'
+                    },
+                    row: {
+                        background: '#1e293b',
+                        hoverBackground: '#334155',
+                        color: '#f8fafc'
+                    }
+                }
+            },
             headerCell: {
                 colorScheme: {
                     light: {

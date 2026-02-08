@@ -1,18 +1,36 @@
 import { acceptHMRUpdate, defineStore } from 'pinia';
-import type { Theme, User } from "@/types";
+import type { ThemeMode, User } from "@/types";
 import { type Ref, ref } from "vue";
 import { useAuth } from "@/composables/useAuth.ts";
 
 interface RootState {
-    theme: Theme,
+    theme: ThemeMode,
     sidebarVisible: Ref<boolean>,
     documentMarker: boolean,
 
     user: User | null,
 
-    setTheme: (theme: Theme) => void,
+    setTheme: (theme: ThemeMode) => void,
     setSidebarState: (state: boolean) => void,
     toggleDocumentMarker: (state: boolean) => void,
+}
+
+let mediaQuery: MediaQueryList | null = null;
+let mediaHandler: ((e: MediaQueryListEvent) => void) | null = null;
+
+function resolveAutoTheme(): 'light' | 'dark' {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyResolvedTheme(resolved: 'light' | 'dark') {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', resolved);
+
+    if (resolved === 'dark') {
+        html.classList.add('dark');
+    } else {
+        html.classList.remove('dark');
+    }
 }
 
 export const useMainStore = defineStore('main', {
@@ -21,12 +39,12 @@ export const useMainStore = defineStore('main', {
 
         return {
             user: userAuth.getCurrentUser(),
-            theme: 'light',
+            theme: 'auto',
             sidebarVisible: ref(true),
             documentMarker: false,
 
             setSidebarState(state: boolean) {},
-            setTheme(theme: Theme) {},
+            setTheme(theme: ThemeMode) {},
             toggleDocumentMarker(state: boolean) {},
         }
     },
@@ -40,28 +58,22 @@ export const useMainStore = defineStore('main', {
             this.documentMarker = state;
         },
 
-        setTheme(theme: Theme) {
-            this.theme = theme;
+        setTheme(mode: ThemeMode) {
+            this.theme = mode;
 
-            const html = document.documentElement;
+            if (mediaQuery && mediaHandler) {
+                mediaQuery.removeEventListener('change', mediaHandler);
+                mediaHandler = null;
+                mediaQuery = null;
+            }
 
-            // Update data-theme attribute and class
-            html.setAttribute('data-theme', theme);
-
-            if (theme === 'dark') {
-                html.classList.add('dark');
-                // In a real app, you would use the theme from @primefaces/lara-dark-blue
-                document.documentElement.style.setProperty('--primary-color', '#3b82f6');
-                document.documentElement.style.setProperty('--surface-ground', '#121212');
-                document.documentElement.style.setProperty('--surface-card', '#1e1e1e');
-                document.documentElement.style.setProperty('--text-color', '#f9f9f9');
+            if (mode === 'auto') {
+                applyResolvedTheme(resolveAutoTheme());
+                mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaHandler = (e) => applyResolvedTheme(e.matches ? 'dark' : 'light');
+                mediaQuery.addEventListener('change', mediaHandler);
             } else {
-                html.classList.remove('dark');
-                // In a real app, you would use the theme from @primefaces/lara-light-blue
-                document.documentElement.style.setProperty('--primary-color', '#3b82f6');
-                document.documentElement.style.setProperty('--surface-ground', '#f8f9fa');
-                document.documentElement.style.setProperty('--surface-card', '#ffffff');
-                document.documentElement.style.setProperty('--text-color', '#495057');
+                applyResolvedTheme(mode);
             }
         },
     },

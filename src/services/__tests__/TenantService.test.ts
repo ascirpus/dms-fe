@@ -12,6 +12,7 @@ describe('TenantService', () => {
     tier: {
       id: 'tier-1',
       name: 'Pro',
+      rank: 1,
       features: [
         { feature: 'DOCUMENT_VERSIONING', enabled: true, config: {} },
         { feature: 'OCR_PROCESSING', enabled: false, config: {} },
@@ -55,7 +56,7 @@ describe('TenantService', () => {
 
       const result = await service.fetchTenant();
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/tenant');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/tenants/current');
       expect(result).toEqual(mockTenant);
       expect(result.tier.features).toHaveLength(2);
     });
