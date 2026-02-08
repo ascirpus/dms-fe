@@ -112,8 +112,9 @@ For detailed UX documentation of each feature (what it does, how to interact wit
 |---------|----------------|-----------------|-------|
 | Organization Workspaces | ✅ Live | ✅ Implemented | Tenant isolation via X-Tenant-ID header. Tests: `TenantService.test.ts` |
 | Tenant Features | ✅ Live | ✅ Implemented | Feature flags (e.g., versioning). Tests: `useTenantFeatures.test.ts` |
-| Tiered Plans | ✅ Live | ⚠️ Partial | Plans displayed on landing page only |
-| Usage Tracking | ✅ Live | ❌ Not Implemented | No UI |
+| Workspace Switcher | ✅ Live | ✅ Implemented | Header dropdown for switching workspaces. Tests: `useWorkspace.test.ts`, `WorkspaceSwitcher.test.ts` |
+| Tiered Plans | ✅ Live | ⚠️ Partial | Plans displayed on landing page and workspace overview |
+| Usage Tracking | ✅ Live | ✅ Implemented | Usage & Limits page with progress bars and cleanup suggestions. Tests: `WorkspaceOverview.test.ts` |
 
 ---
 
@@ -127,7 +128,7 @@ For detailed UX documentation of each feature (what it does, how to interact wit
 | Account Setup | 🔶 Code Only | First-time account completion page. No tests. |
 | User Profile | 🔶 Code Only | View/edit user info. No tests. |
 | Dark Mode | 🔶 Code Only | Theme switching via header toggle, system preference detection. No tests. |
-| Tenant Settings | ✅ Implemented | Document type management. Tests: `TenantSettings.test.ts` (4) |
+| Workspace Settings | ✅ Implemented | Document type management (refactored from TenantSettings, no tabs). Tests: `WorkspaceSettings.test.ts` |
 | Project Settings | ✅ Implemented | Parties, members, permissions management. Tests: `ProjectSettings.test.ts` |
 
 ---
@@ -156,7 +157,10 @@ For detailed UX documentation of each feature (what it does, how to interact wit
 | `views/project/__tests__/ProjectList.test.ts` | — | Project list UI |
 | `views/project/__tests__/ProjectSettings.test.ts` | — | Project settings UI |
 | `views/search/__tests__/SearchResults.test.ts` | — | Search results UI |
-| `views/settings/__tests__/TenantSettings.test.ts` | 4 | Tenant settings UI |
+| `composables/__tests__/useWorkspace.test.ts` | 6 | Workspace state management |
+| `components/base/__tests__/WorkspaceSwitcher.test.ts` | 6 | Workspace switcher UI |
+| `views/workspace/__tests__/WorkspaceOverview.test.ts` | 6 | Usage & Limits page UI |
+| `views/workspace/__tests__/WorkspaceSettings.test.ts` | 5 | Workspace settings UI |
 | `components/project/__tests__/NewProjectDialog.test.ts` | — | New project dialog |
 | `utils/__tests__/avatar.test.ts` | — | Avatar utility |
 
@@ -184,8 +188,8 @@ For detailed UX documentation of each feature (what it does, how to interact wit
 - **Approval Workflow** — Full UI needed: request approval, approve/decline with reason, deadlines, status tracking
 - **Digital Signatures** — Full UI needed: request signatures, sign, track, deadlines
 - **User Management** — Invite users, manage roles at tenant level
-- **Billing / Subscription** — Plan management, usage dashboard
-- **Limit Enforcement** — Warnings when approaching tier limits
+- **Billing / Subscription** — Plan management (upgrade CTA is placeholder)
+- **Limit Enforcement** — Cleanup suggestions shown at 80%+ usage, upgrade flow not yet implemented
 - **OCR Processing** — Enterprise feature, no UI
 - **Advanced Reporting** — Enterprise feature, no UI
 

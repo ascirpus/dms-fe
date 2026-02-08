@@ -93,10 +93,20 @@ export function createRouter(app: App): Router {
                         meta: { title: 'Search' }
                     },
                     {
+                        path: 'workspace',
+                        name: 'workspace-overview',
+                        component: () => import("@/views/workspace/WorkspaceOverview.vue"),
+                        meta: { title: 'Workspace' }
+                    },
+                    {
+                        path: 'workspace/settings',
+                        name: 'workspace-settings',
+                        component: () => import("@/views/workspace/WorkspaceSettings.vue"),
+                        meta: { title: 'Workspace Settings' }
+                    },
+                    {
                         path: 'settings',
-                        name: 'settings',
-                        component: () => import("@/views/settings/TenantSettings.vue"),
-                        meta: { title: 'Settings' }
+                        redirect: { name: 'workspace-settings' },
                     },
                 ]
             },

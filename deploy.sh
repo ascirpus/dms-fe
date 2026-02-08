@@ -97,7 +97,7 @@ fi
 
 log "Deploying frontend on $DROPLET_IP..."
 ssh -o StrictHostKeyChecking=accept-new "$DROPLET_USER@$DROPLET_IP" \
-    "cd /opt/dms && docker-compose pull frontend && docker-compose up -d frontend"
+    "cd /opt/dms && docker compose pull frontend && docker compose up -d frontend"
 
 log "Deploy complete! (commit: $GIT_SHA)"
 notify_discord 3066993 "Deploy Succeeded" "**DMS Frontend** deployed to production via manual CLI deploy."

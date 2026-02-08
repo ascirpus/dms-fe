@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mount, flushPromises } from '@vue/test-utils';
-import { ref } from 'vue';
-import TenantSettings from '../TenantSettings.vue';
+import { mount } from '@vue/test-utils';
+import { ref, computed } from 'vue';
+import WorkspaceSettings from '../WorkspaceSettings.vue';
 
-// Mock composables
 const mockCreateDocumentType = vi.fn();
 const mockUpdateDocumentType = vi.fn();
 const mockDeleteDocumentType = vi.fn();
@@ -38,7 +37,12 @@ vi.mock('@/composables/useDocumentTypes', () => ({
   })),
 }));
 
-// Mock PrimeVue
+vi.mock('@/composables/useWorkspace', () => ({
+  useWorkspace: vi.fn(() => ({
+    currentWorkspaceName: computed(() => 'Acme Corp'),
+  })),
+}));
+
 vi.mock('primevue/usetoast', () => ({
   useToast: () => ({ add: vi.fn() }),
 }));
@@ -49,7 +53,6 @@ vi.mock('primevue/useconfirm', () => ({
   }),
 }));
 
-// Stub PrimeVue components
 const stubs = {
   Button: { template: '<button @click="$attrs.onClick?.($event)"><slot /></button>', inheritAttrs: true },
   DataTable: { template: '<div class="datatable"><slot /><slot name="empty" v-if="!value?.length" /></div>', props: ['value'] },
@@ -59,48 +62,57 @@ const stubs = {
   InputNumber: { template: '<input type="number" />', props: ['modelValue'] },
   ToggleSwitch: { template: '<input type="checkbox" />', props: ['modelValue'] },
   Select: { template: '<select />', props: ['modelValue', 'options'] },
-  TabMenu: { template: '<div class="tabmenu"><slot /></div>', props: ['activeIndex', 'model'] },
+  Popover: { template: '<div class="popover"><slot /></div>' },
   ProgressSpinner: { template: '<div class="spinner" />' },
+  IconPicker: { template: '<div class="icon-picker" />', props: ['modelValue'] },
 };
 
-describe('TenantSettings', () => {
+describe('WorkspaceSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should render the page with tab menu', () => {
-    const wrapper = mount(TenantSettings, {
+  it('should render the page with workspace name in heading', () => {
+    const wrapper = mount(WorkspaceSettings, {
       global: { stubs },
     });
 
-    expect(wrapper.find('.tenant-settings-page').exists()).toBe(true);
-    expect(wrapper.find('.tabmenu').exists()).toBe(true);
+    expect(wrapper.find('.workspace-settings').exists()).toBe(true);
+    expect(wrapper.find('.page-title').text()).toBe('Acme Corp Settings');
+  });
+
+  it('should display document types section header with add button', () => {
+    const wrapper = mount(WorkspaceSettings, {
+      global: { stubs },
+    });
+
+    expect(wrapper.find('.section-header').exists()).toBe(true);
+    expect(wrapper.find('.section-title').text()).toBe('Document Types');
+    const buttons = wrapper.findAll('button');
+    expect(buttons.length).toBeGreaterThan(0);
   });
 
   it('should display document types in a table', () => {
-    const wrapper = mount(TenantSettings, {
+    const wrapper = mount(WorkspaceSettings, {
       global: { stubs },
     });
 
     expect(wrapper.find('.datatable').exists()).toBe(true);
   });
 
-  it('should show toolbar with add button', () => {
-    const wrapper = mount(TenantSettings, {
+  it('should not render TabMenu (tabs removed)', () => {
+    const wrapper = mount(WorkspaceSettings, {
       global: { stubs },
     });
 
-    expect(wrapper.find('.table-toolbar').exists()).toBe(true);
-    const buttons = wrapper.findAll('button');
-    expect(buttons.length).toBeGreaterThan(0);
+    expect(wrapper.find('.tabmenu').exists()).toBe(false);
   });
 
-  it('should render the toolbar', () => {
-    const wrapper = mount(TenantSettings, {
+  it('should render table container with rounded style', () => {
+    const wrapper = mount(WorkspaceSettings, {
       global: { stubs },
     });
 
-    expect(wrapper.find('.table-toolbar').exists()).toBe(true);
-    expect(wrapper.find('.toolbar-right').exists()).toBe(true);
+    expect(wrapper.find('.table-container').exists()).toBe(true);
   });
 });

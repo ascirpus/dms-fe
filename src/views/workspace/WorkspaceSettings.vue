@@ -3,10 +3,10 @@ import { ref, reactive, computed, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { useDocumentTypes } from '@/composables/useDocumentTypes';
+import { useWorkspace } from '@/composables/useWorkspace';
 import { sanitizeIcon } from '@/utils/documentTypeIcons';
 import type { DocumentTypeDTO, CreateDocumentTypeRequest, UpdateDocumentTypeRequest } from '@/types/DocumentType';
 
-// PrimeVue Components
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -16,7 +16,6 @@ import InputNumber from 'primevue/inputnumber';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Select from 'primevue/select';
 import Popover from 'primevue/popover';
-import TabMenu from 'primevue/tabmenu';
 import ProgressSpinner from 'primevue/progressspinner';
 import IconPicker from '@/components/base/IconPicker.vue';
 
@@ -24,6 +23,7 @@ const permissionInfoPopover = ref();
 
 const toast = useToast();
 const confirm = useConfirm();
+const { currentWorkspaceName } = useWorkspace();
 
 const {
   documentTypes,
@@ -35,13 +35,6 @@ const {
   deleteDocumentType,
 } = useDocumentTypes();
 
-// Tab navigation
-const activeTab = ref(0);
-const tabItems = [
-  { label: 'Document Types', icon: 'pi pi-file' },
-];
-
-// Permission helpers
 const permissionOptions = [
   { label: 'View', value: 1 },
   { label: 'Comment', value: 3 },
@@ -52,7 +45,6 @@ function getPermissionLabel(value: number): string {
   return permissionOptions.find(o => o.value === value)?.label ?? `Custom (${value})`;
 }
 
-// Add/Edit dialog
 const showDialog = ref(false);
 const editing = ref<DocumentTypeDTO | null>(null);
 const dialogForm = reactive({
@@ -184,14 +176,24 @@ async function handleDelete(dt: DocumentTypeDTO) {
 </script>
 
 <template>
-  <div class="tenant-settings-page">
-    <!-- Tabs -->
-    <div class="tabs-container">
-      <TabMenu v-model:activeIndex="activeTab" :model="tabItems" />
-    </div>
+  <div class="workspace-settings">
+    <div class="settings-content">
+      <!-- Heading -->
+      <div class="settings-heading">
+        <h1 class="page-title">{{ currentWorkspaceName || 'Workspace' }} Settings</h1>
+      </div>
 
-    <!-- Document Types Tab -->
-    <div v-if="activeTab === 0" class="tab-content">
+      <!-- Document Types Section -->
+      <div class="section-header">
+        <h2 class="section-title">Document Types</h2>
+        <Button
+          icon="pi pi-plus"
+          label="Add Document Type"
+          size="small"
+          @click="openAddDialog"
+        />
+      </div>
+
       <!-- Loading -->
       <div v-if="loading" class="loading-container">
         <ProgressSpinner style="width: 50px; height: 50px" />
@@ -206,116 +208,100 @@ async function handleDelete(dt: DocumentTypeDTO) {
         <Button icon="pi pi-refresh" label="Try Again" @click="refetch" />
       </div>
 
-      <!-- Content -->
-      <template v-else>
-        <!-- Toolbar -->
-        <div class="table-toolbar">
-          <div class="toolbar-left"></div>
-          <div class="toolbar-right">
-            <Button
-              icon="pi pi-plus"
-              label="Add Document Type"
-              size="small"
-              @click="openAddDialog"
-            />
-          </div>
-        </div>
+      <!-- Table -->
+      <div v-else class="table-container">
+        <DataTable
+          :value="documentTypes ?? []"
+          dataKey="id"
+          stripedRows
+          class="dt-table"
+        >
+          <template #empty>
+            <div class="empty-state">
+              <i class="pi pi-file"></i>
+              <h3>No document types</h3>
+              <p>Create a document type to get started.</p>
+              <Button
+                icon="pi pi-plus"
+                label="Add Document Type"
+                @click="openAddDialog"
+              />
+            </div>
+          </template>
 
-        <!-- Table -->
-        <div class="table-container">
-          <DataTable
-            :value="documentTypes ?? []"
-            dataKey="id"
-            stripedRows
-            class="dt-table"
-          >
-            <template #empty>
-              <div class="empty-state">
-                <i class="pi pi-file"></i>
-                <h3>No document types</h3>
-                <p>Create a document type to get started.</p>
+          <Column field="name" header="Name" sortable style="min-width: 200px">
+            <template #body="{ data }">
+              <span class="dt-name">
+                <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="dt-icon"></i>
+                {{ data.name }}
+              </span>
+            </template>
+          </Column>
+
+          <Column field="requiresApproval" header="Requires Approval" style="min-width: 140px">
+            <template #body="{ data }">
+              <i :class="data.requiresApproval ? 'pi pi-check text-green-600' : 'pi pi-minus text-gray-400'"></i>
+            </template>
+          </Column>
+
+          <Column field="defaultApprovalThreshold" header="Threshold" style="min-width: 100px">
+            <template #body="{ data }">
+              <span v-if="data.requiresApproval">{{ data.defaultApprovalThreshold }}</span>
+              <span v-else class="text-gray-400">&mdash;</span>
+            </template>
+          </Column>
+
+          <Column field="requiresSignature" header="Requires Signature" style="min-width: 140px">
+            <template #body="{ data }">
+              <i :class="data.requiresSignature ? 'pi pi-check text-green-600' : 'pi pi-minus text-gray-400'"></i>
+            </template>
+          </Column>
+
+          <Column field="defaultPermissions" style="min-width: 160px">
+            <template #header>
+              <span class="column-header-with-info">
+                Required Permission
+                <i
+                  class="pi pi-info-circle info-icon"
+                  @click.stop="permissionInfoPopover.toggle($event)"
+                ></i>
+              </span>
+              <Popover ref="permissionInfoPopover">
+                <div class="info-popover-content">
+                  The minimum party permission level required to access documents of this type.
+                </div>
+              </Popover>
+            </template>
+            <template #body="{ data }">
+              {{ getPermissionLabel(data.defaultPermissions) }}
+            </template>
+          </Column>
+
+          <Column header="" style="width: 100px" :exportable="false">
+            <template #body="{ data }">
+              <div class="row-actions">
                 <Button
-                  icon="pi pi-plus"
-                  label="Add Document Type"
-                  @click="openAddDialog"
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  @click="openEditDialog(data)"
+                  aria-label="Edit"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  text
+                  rounded
+                  size="small"
+                  severity="danger"
+                  @click="confirmDelete(data)"
+                  aria-label="Delete"
                 />
               </div>
             </template>
-
-            <Column field="name" header="Name" sortable style="min-width: 200px">
-              <template #body="{ data }">
-                <span class="dt-name">
-                  <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="dt-icon"></i>
-                  {{ data.name }}
-                </span>
-              </template>
-            </Column>
-
-            <Column field="requiresApproval" header="Requires Approval" style="min-width: 140px">
-              <template #body="{ data }">
-                <i :class="data.requiresApproval ? 'pi pi-check text-green-600' : 'pi pi-minus text-gray-400'"></i>
-              </template>
-            </Column>
-
-            <Column field="defaultApprovalThreshold" header="Threshold" style="min-width: 100px">
-              <template #body="{ data }">
-                <span v-if="data.requiresApproval">{{ data.defaultApprovalThreshold }}</span>
-                <span v-else class="text-gray-400">—</span>
-              </template>
-            </Column>
-
-            <Column field="requiresSignature" header="Requires Signature" style="min-width: 140px">
-              <template #body="{ data }">
-                <i :class="data.requiresSignature ? 'pi pi-check text-green-600' : 'pi pi-minus text-gray-400'"></i>
-              </template>
-            </Column>
-
-            <Column field="defaultPermissions" style="min-width: 160px">
-              <template #header>
-                <span class="column-header-with-info">
-                  Required Permission
-                  <i
-                    class="pi pi-info-circle info-icon"
-                    @click.stop="permissionInfoPopover.toggle($event)"
-                  ></i>
-                </span>
-                <Popover ref="permissionInfoPopover">
-                  <div class="info-popover-content">
-                    The minimum party permission level required to access documents of this type.
-                  </div>
-                </Popover>
-              </template>
-              <template #body="{ data }">
-                {{ getPermissionLabel(data.defaultPermissions) }}
-              </template>
-            </Column>
-
-            <Column header="" style="width: 100px" :exportable="false">
-              <template #body="{ data }">
-                <div class="row-actions">
-                  <Button
-                    icon="pi pi-pencil"
-                    text
-                    rounded
-                    size="small"
-                    @click="openEditDialog(data)"
-                    aria-label="Edit"
-                  />
-                  <Button
-                    icon="pi pi-trash"
-                    text
-                    rounded
-                    size="small"
-                    severity="danger"
-                    @click="confirmDelete(data)"
-                    aria-label="Delete"
-                  />
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        </div>
-      </template>
+          </Column>
+        </DataTable>
+      </div>
     </div>
 
     <!-- Add/Edit Dialog -->
@@ -397,25 +383,51 @@ async function handleDelete(dt: DocumentTypeDTO) {
 </template>
 
 <style scoped>
-.tenant-settings-page {
-  min-height: 100vh;
-  background: var(--surface-ground);
-}
-
-/* Tabs */
-.tabs-container {
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--surface-border);
-  padding: 0 16px;
-}
-
-:deep(.p-tabmenu-nav) {
-  border: none;
-}
-
-/* Tab Content */
-.tab-content {
+.workspace-settings {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 0;
+}
+
+.settings-content {
+  max-width: 980px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Heading */
+.settings-heading {
+  padding: 16px;
+}
+
+.page-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.25;
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  gap: 8px;
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1.25;
+  color: var(--text-color);
+  margin: 0;
 }
 
 /* Loading / Error */
@@ -446,25 +458,13 @@ async function handleDelete(dt: DocumentTypeDTO) {
   margin: 0;
 }
 
-/* Toolbar */
-.table-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 /* Table */
 .table-container {
   background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 16px 16px;
 }
 
 .dt-table {
@@ -600,5 +600,12 @@ async function handleDelete(dt: DocumentTypeDTO) {
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-content {
+    padding: 0 12px;
+  }
 }
 </style>

@@ -7,6 +7,7 @@ import { useSearch } from '@/composables/useSearch';
 import { useProjects } from '@/composables/useProjects';
 import { getInitialsFromUser } from '@/utils/avatar';
 import Logo from './Logo.vue';
+import WorkspaceSwitcher from './WorkspaceSwitcher.vue';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Badge from 'primevue/badge';
@@ -126,11 +127,6 @@ const userMenuItems = computed(() => {
         icon: 'pi pi-user',
         command: () => router.push({ name: 'profile' })
       },
-      {
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        command: () => router.push({ name: 'settings' })
-      },
       { separator: true },
       {
         label: 'Sign Out',
@@ -164,10 +160,14 @@ const goToNotifications = () => {
 <template>
   <header class="app-header">
     <div class="header-container">
-      <!-- Logo -->
-      <router-link to="/" class="header-logo">
-        <Logo size="sm" />
-      </router-link>
+      <!-- Logo + Workspace Switcher -->
+      <div class="header-left">
+        <router-link to="/app" class="header-logo">
+          <Logo size="sm" />
+        </router-link>
+        <span v-if="isAuthenticated" class="header-separator">/</span>
+        <WorkspaceSwitcher v-if="isAuthenticated" />
+      </div>
 
       <!-- Search Bar (only when authenticated) -->
       <div v-if="isAuthenticated" ref="searchContainer" class="header-search">
@@ -291,10 +291,24 @@ const goToNotifications = () => {
   background-color: var(--surface-card);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .header-logo {
   display: flex;
   align-items: center;
   text-decoration: none;
+}
+
+.header-separator {
+  color: var(--text-secondary);
+  font-size: 20px;
+  font-weight: 300;
+  user-select: none;
+  opacity: 0.6;
 }
 
 .header-search {
