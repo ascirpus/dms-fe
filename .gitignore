@@ -27,4 +27,4 @@ dist-ssr
 public/pdfs/*
 
 # Deploy
-.env.deploy
+deploy.conf

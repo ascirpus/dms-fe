@@ -26,11 +26,18 @@ Services:
 - Backend API: `http://api.dms.internal:8080`
 - Keycloak: `http://auth.dms.internal:8083`
 
-Environment variables (`.env`):
+Environment files:
+- `.env` — Production values (committed). Vite loads this by default.
+- `.env.local` — Local dev overrides (gitignored). Vite auto-loads this on top of `.env`.
+- `deploy.conf` — Deployment infra config: DROPLET_IP, SSH user, registry, Discord webhook (gitignored). Used by `deploy.sh`.
+- `deploy.conf.example` — Template for `deploy.conf` (committed).
+
+App variables (`VITE_*`):
 - `VITE_DOCUMENT_STORE_URL` - API base URL (proxied through Vite)
 - `VITE_AUTH_PROVIDER` - Keycloak URL
 - `VITE_AUTH_CLIENT_ID` - Keycloak client ID
 - `VITE_AUTH_REALM` - Keycloak realm
+- `VITE_TURNSTILE_SITE_KEY` - Cloudflare Turnstile site key
 
 ## Backend API Reference
 
