@@ -91,11 +91,6 @@ export function createRouter(app: App): Router {
                         component: () => import("@/views/project/ProjectDetail.vue"),
                     },
                     {
-                        path: 'projects/:id/settings',
-                        name: 'project-settings',
-                        component: () => import("@/views/project/ProjectSettings.vue"),
-                    },
-                    {
                         path: 'projects/:id/documents/:documentId',
                         name: 'project-document',
                         component: () => import("@/views/project/DocumentViewer.vue"),

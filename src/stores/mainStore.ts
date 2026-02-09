@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia';
-import type { ThemeMode, User } from "@/types";
+import type { ThemeMode, User, DocumentViewMode } from "@/types";
 import { type Ref, ref } from "vue";
 import { useAuth } from "@/composables/useAuth.ts";
 
@@ -7,12 +7,14 @@ interface RootState {
     theme: ThemeMode,
     sidebarVisible: Ref<boolean>,
     documentMarker: boolean,
+    documentViewMode: DocumentViewMode,
 
     user: User | null,
 
     setTheme: (theme: ThemeMode) => void,
     setSidebarState: (state: boolean) => void,
     toggleDocumentMarker: (state: boolean) => void,
+    setDocumentViewMode: (mode: DocumentViewMode) => void,
 }
 
 let mediaQuery: MediaQueryList | null = null;
@@ -42,10 +44,12 @@ export const useMainStore = defineStore('main', {
             theme: 'auto',
             sidebarVisible: ref(true),
             documentMarker: false,
+            documentViewMode: 'tiles',
 
             setSidebarState(state: boolean) {},
             setTheme(theme: ThemeMode) {},
             toggleDocumentMarker(state: boolean) {},
+            setDocumentViewMode(mode: DocumentViewMode) {},
         }
     },
 
@@ -56,6 +60,10 @@ export const useMainStore = defineStore('main', {
 
         toggleDocumentMarker(state: boolean) {
             this.documentMarker = state;
+        },
+
+        setDocumentViewMode(mode: DocumentViewMode) {
+            this.documentViewMode = mode;
         },
 
         setTheme(mode: ThemeMode) {

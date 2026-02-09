@@ -38,9 +38,17 @@ describe('mainStore', () => {
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
 
-    it('should resolve auto to dark during night hours', () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(2024, 0, 15, 22, 0, 0));
+    it('should resolve auto to dark when system prefers dark', () => {
+      vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })));
 
       const store = useMainStore();
       store.setTheme('auto');
@@ -48,12 +56,20 @@ describe('mainStore', () => {
       expect(store.theme).toBe('auto');
       expect(document.documentElement.classList.contains('dark')).toBe(true);
 
-      vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
-    it('should resolve auto to light during day hours', () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(2024, 0, 15, 12, 0, 0));
+    it('should resolve auto to light when system prefers light', () => {
+      vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })));
 
       const store = useMainStore();
       store.setTheme('auto');
@@ -61,7 +77,7 @@ describe('mainStore', () => {
       expect(store.theme).toBe('auto');
       expect(document.documentElement.classList.contains('dark')).toBe(false);
 
-      vi.useRealTimers();
+      vi.unstubAllGlobals();
     });
 
     it('should switch from dark to light', () => {

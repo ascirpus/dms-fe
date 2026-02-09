@@ -109,6 +109,9 @@ const FRONTEND_ENDPOINTS: Endpoint[] = [
   { service: 'useAuth', method: 'get', path: '/api/tenants' },
   { service: 'useAuth', method: 'put', path: '/api/me/active-tenant' },
 
+  // UserPermissionsService.ts
+  { service: 'UserPermissionsService', method: 'get', path: '/api/me/permission-overrides' },
+
   // BillingService.ts
   { service: 'BillingService', method: 'get', path: '/api/billing/status' },
   { service: 'BillingService', method: 'get', path: '/api/billing/plans' },

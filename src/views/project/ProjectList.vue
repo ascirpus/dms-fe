@@ -39,6 +39,10 @@ const filteredProjects = computed(() => {
   );
 });
 
+const showGettingStarted = computed(() =>
+  projects.value && projects.value.length > 0 && projects.value.length <= 5
+);
+
 function onProjectCreated(project: Project) {
   showNewProjectDialog.value = false;
   toast.add({
@@ -90,7 +94,7 @@ async function handleDeleteProject(projectId: string) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full">
+  <div class="flex flex-col gap-4 h-full max-w-5xl mx-auto w-full">
     <!-- Error State -->
     <div v-if="error" class="flex flex-col items-center justify-center p-12 text-center bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px]">
       <i class="pi pi-exclamation-triangle text-5xl mb-4 text-[var(--color-danger,#e74c3c)]"></i>
@@ -150,48 +154,78 @@ async function handleDeleteProject(projectId: string) {
       </div>
 
       <!-- Card Grid -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          v-for="item in filteredProjects"
-          :key="item.project.id"
-          class="group bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 cursor-pointer transition-colors hover:border-[var(--primary-color)]"
-          @click="navigateToProject(item)"
-        >
-          <!-- Card Header -->
-          <div class="flex items-start justify-between gap-2 mb-3">
-            <h3 class="text-[15px] font-semibold text-[var(--text-color)] m-0 group-hover:text-[var(--primary-color)] transition-colors truncate">
-              {{ item.project.name }}
-            </h3>
-            <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-              <Button
-                icon="pi pi-pencil"
-                text
-                rounded
-                size="small"
-                aria-label="Edit"
-                @click.stop="editRow(item)"
-              />
-              <Button
-                icon="pi pi-trash"
-                text
-                rounded
-                size="small"
-                severity="danger"
-                aria-label="Delete"
-                @click.stop="confirmDeleteRow(item)"
-              />
+      <div v-else>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="item in filteredProjects"
+            :key="item.project.id"
+            class="group bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 cursor-pointer transition-colors hover:border-[var(--primary-color)]"
+            @click="navigateToProject(item)"
+          >
+            <!-- Card Header -->
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <h3 class="text-[15px] font-semibold text-[var(--text-color)] m-0 group-hover:text-[var(--primary-color)] transition-colors truncate">
+                {{ item.project.name }}
+              </h3>
+              <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <Button
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  aria-label="Edit"
+                  @click.stop="editRow(item)"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  text
+                  rounded
+                  size="small"
+                  severity="danger"
+                  aria-label="Delete"
+                  @click.stop="confirmDeleteRow(item)"
+                />
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="text-[13px] text-[var(--text-secondary)] m-0 mb-4 line-clamp-2 min-h-[2.6em]">
+              {{ item.project.description || '—' }}
+            </p>
+
+            <!-- Footer -->
+            <div class="flex items-center gap-1.5 text-[var(--text-secondary)] text-xs">
+              <i class="pi pi-file text-xs"></i>
+              <span>{{ item.document_count }} {{ item.document_count === 1 ? 'document' : 'documents' }}</span>
             </div>
           </div>
+        </div>
 
-          <!-- Description -->
-          <p class="text-[13px] text-[var(--text-secondary)] m-0 mb-4 line-clamp-2 min-h-[2.6em]">
-            {{ item.project.description || '—' }}
-          </p>
-
-          <!-- Footer -->
-          <div class="flex items-center gap-1.5 text-[var(--text-secondary)] text-xs">
-            <i class="pi pi-file text-xs"></i>
-            <span>{{ item.document_count }} {{ item.document_count === 1 ? 'document' : 'documents' }}</span>
+        <!-- Getting Started Tips -->
+        <div v-if="showGettingStarted" class="mt-8 border border-dashed border-[var(--surface-border)] rounded-[10px] p-6">
+          <h4 class="text-sm font-semibold text-[var(--text-color)] m-0 mb-4">Getting started</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="flex items-start gap-3">
+              <i class="pi pi-upload text-lg text-[var(--primary-color)] mt-0.5"></i>
+              <div>
+                <p class="text-sm font-medium text-[var(--text-color)] m-0">Upload documents</p>
+                <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">Open a project and add PDFs to start annotating.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="pi pi-users text-lg text-[var(--primary-color)] mt-0.5"></i>
+              <div>
+                <p class="text-sm font-medium text-[var(--text-color)] m-0">Invite your team</p>
+                <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">Collaborate by inviting members from project settings.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="pi pi-comments text-lg text-[var(--primary-color)] mt-0.5"></i>
+              <div>
+                <p class="text-sm font-medium text-[var(--text-color)] m-0">Leave comments</p>
+                <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">Highlight text in a document to add annotations.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

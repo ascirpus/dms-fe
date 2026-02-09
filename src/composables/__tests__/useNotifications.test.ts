@@ -26,6 +26,7 @@ describe('useNotifications', () => {
     mockApiClient = {
       get: vi.fn(),
       post: vi.fn(),
+      put: vi.fn(),
     };
 
     mockQueryClient = {
@@ -207,12 +208,12 @@ describe('useNotifications', () => {
         'document.added': { web: true, email: true },
       };
 
-      mockApiClient.post.mockResolvedValue({});
+      mockApiClient.put.mockResolvedValue({});
 
       const { updatePreferences } = useNotifications();
       await updatePreferences(preferences);
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/profile/notifications', preferences);
+      expect(mockApiClient.put).toHaveBeenCalledWith('/api/me', { notificationOverrides: preferences });
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith(['notification-preferences']);
     });
   });

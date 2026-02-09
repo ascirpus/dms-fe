@@ -148,7 +148,7 @@ describe('ProjectList.vue', () => {
       });
 
       expect(wrapper.vm.error).toBe(mockError);
-      expect(wrapper.find('.error-container').exists()).toBe(true);
+      expect(wrapper.text()).toContain('Error loading projects');
     });
   });
 
@@ -396,13 +396,12 @@ describe('ProjectList.vue', () => {
         global: { stubs: globalStubs },
       });
 
-      expect(wrapper.vm.globalFilter).toBe('');
-      expect(wrapper.vm.filters.global.value).toBeNull();
+      expect(wrapper.vm.filterText).toBe('');
     });
   });
 
-  describe('Pagination', () => {
-    it('should update pagination state', () => {
+  describe('Filtering', () => {
+    it('should filter projects by name', async () => {
       vi.mocked(useProjects).mockReturnValue({
         projects: ref(mockProjects),
         loading: ref(false),
@@ -421,13 +420,14 @@ describe('ProjectList.vue', () => {
         global: { stubs: globalStubs },
       });
 
-      wrapper.vm.onPageChange({ first: 10, rows: 20 });
+      wrapper.vm.filterText = 'Project 1';
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.vm.first).toBe(10);
-      expect(wrapper.vm.rows).toBe(20);
+      expect(wrapper.vm.filteredProjects).toHaveLength(1);
+      expect(wrapper.vm.filteredProjects[0].project.name).toBe('Project 1');
     });
 
-    it('should calculate total records correctly', () => {
+    it('should return all projects when filter is empty', () => {
       vi.mocked(useProjects).mockReturnValue({
         projects: ref(mockProjects),
         loading: ref(false),
@@ -446,7 +446,7 @@ describe('ProjectList.vue', () => {
         global: { stubs: globalStubs },
       });
 
-      expect(wrapper.vm.totalRecords).toBe(2);
+      expect(wrapper.vm.filteredProjects).toHaveLength(2);
     });
   });
 });

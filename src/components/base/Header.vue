@@ -176,7 +176,7 @@ const goToNotifications = () => {
 
 <template>
   <header class="bg-[var(--surface-card)] py-3 px-4 w-full">
-    <div class="flex items-center justify-between gap-8 py-3 px-4 border border-[var(--surface-border)] rounded-[10px] bg-[var(--surface-card)]">
+    <div class="flex items-center justify-between gap-8 py-3 px-4 border border-[var(--surface-border)] rounded-[10px] bg-[var(--surface-card)] max-w-7xl mx-auto">
       <!-- Logo + Workspace Switcher -->
       <div class="flex items-center gap-1.5">
         <router-link to="/app" class="flex items-center no-underline">

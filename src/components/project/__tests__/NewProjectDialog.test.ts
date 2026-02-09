@@ -14,6 +14,19 @@ vi.mock('@/composables/useAuth');
 const mockCreateProject = vi.fn();
 const mockFetchTenantUsers = vi.fn();
 
+// Mock useProjects composable
+vi.mock('@/composables/useProjects', () => ({
+  useProjects: () => ({
+    createProject: mockCreateProject,
+    projects: ref([]),
+    loading: ref(false),
+    error: ref(null),
+    refetchProjects: vi.fn(),
+    getProjectUrl: vi.fn(),
+    deleteProject: vi.fn(),
+  }),
+}));
+
 // Mock ProjectsService class
 vi.mock('@/services/ProjectsService', () => {
   return {

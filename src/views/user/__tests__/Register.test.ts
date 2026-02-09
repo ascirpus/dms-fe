@@ -67,7 +67,7 @@ describe('Register.vue', () => {
 
         expect(wrapper.text()).toContain('Create Account');
         expect(wrapper.find('#email').exists()).toBe(true);
-        expect(wrapper.find('#companyName').exists()).toBe(true);
+        expect(wrapper.find('#tenantName').exists()).toBe(true);
         expect(wrapper.find('#firstName').exists()).toBe(true);
         expect(wrapper.find('#lastName').exists()).toBe(true);
     });
@@ -106,7 +106,7 @@ describe('Register.vue', () => {
         const wrapper = mountRegister();
 
         await wrapper.find('#email').setValue('test@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
         expect(submitButton?.attributes('disabled')).toBeDefined();
@@ -117,7 +117,7 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
@@ -134,7 +134,7 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
@@ -143,7 +143,7 @@ describe('Register.vue', () => {
 
         expect(mockRegisterCompany).toHaveBeenCalledWith({
             email: 'test@example.com',
-            companyName: 'Acme Corp',
+            tenantName: 'Acme Corp',
             firstName: undefined,
             lastName: undefined,
             captchaToken: 'test-captcha-token',
@@ -160,7 +160,7 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
@@ -186,7 +186,7 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
@@ -210,7 +210,7 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('existing@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
@@ -246,7 +246,7 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
-        await wrapper.find('#companyName').setValue('Acme Corp');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');

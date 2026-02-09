@@ -31,7 +31,7 @@ describe('RegistrationService', () => {
 
         const request: RegisterCompanyRequest = {
             email: 'test@example.com',
-            companyName: 'Acme Corp',
+            tenantName: 'Acme Corp',
         };
 
         const result = await service.registerCompany(request);
@@ -47,7 +47,7 @@ describe('RegistrationService', () => {
 
         const request: RegisterCompanyRequest = {
             email: 'test@example.com',
-            companyName: 'Acme Corp',
+            tenantName: 'Acme Corp',
             firstName: 'John',
             lastName: 'Doe',
         };
@@ -70,7 +70,7 @@ describe('RegistrationService', () => {
 
         const request: RegisterCompanyRequest = {
             email: 'test@example.com',
-            companyName: 'Acme Corp',
+            tenantName: 'Acme Corp',
             checkout: { planId: 'plan-team', interval: 'MONTHLY' },
         };
 
@@ -93,7 +93,7 @@ describe('RegistrationService', () => {
 
         await expect(service.registerCompany({
             email: 'existing@example.com',
-            companyName: 'Acme Corp',
+            tenantName: 'Acme Corp',
         })).rejects.toThrow('Conflict');
     });
 
@@ -102,7 +102,7 @@ describe('RegistrationService', () => {
 
         await expect(service.registerCompany({
             email: 'test@example.com',
-            companyName: 'Acme Corp',
+            tenantName: 'Acme Corp',
         })).rejects.toThrow('Network Error');
     });
 });

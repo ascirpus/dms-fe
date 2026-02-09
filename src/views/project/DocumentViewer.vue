@@ -104,11 +104,11 @@ const showDocumentInfoDialog = ref(false);
 const uploading = ref(false);
 const uploadFile = ref<File | null>(null);
 
-// Wait for both projects and documents to load before fetching data
+// Wait for project ID to resolve and documents to load before fetching data
 watch(
-  [projectsLoading, documentsLoading],
-  ([projLoading, docsLoading]) => {
-    if (!projLoading && !docsLoading && !document.value) {
+  [projectId, documentsLoading],
+  ([id, docsLoading]) => {
+    if (id && !docsLoading && !document.value) {
       fetchData();
     }
   },
@@ -116,7 +116,7 @@ watch(
 );
 
 async function fetchData() {
-  if (projectsLoading.value || documentsLoading.value) return;
+  if (!projectId.value || !documentId.value || documentsLoading.value) return;
 
   loading.value = true;
   error.value = null;
@@ -348,24 +348,36 @@ async function uploadNewVersion() {
     <!-- Document Content -->
     <template v-else-if="document">
       <!-- Document Header -->
-      <div class="flex items-start justify-between p-6 bg-[var(--surface-card)] shrink-0 max-md:flex-col max-md:gap-4">
-        <div class="flex flex-col gap-2">
-          <span class="text-sm text-[var(--primary-color)] font-medium">{{ project?.name }}</span>
-          <h1 class="text-[28px] font-semibold text-[var(--text-color)] m-0">{{ document.title }}</h1>
-        </div>
-        <div class="flex items-center gap-3 max-md:self-start">
-          <Button
-            v-if="versioningEnabled"
-            icon="pi pi-plus"
-            label="Add Version"
-            @click="showAddVersionDialog = true"
-          />
-          <Button
-            icon="pi pi-send"
-            label="Invite User"
-            severity="secondary"
-            @click="showInviteUserDialog = true"
-          />
+      <div class="mx-4 mt-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 shrink-0">
+        <nav class="flex items-center gap-1.5 text-sm mb-3">
+          <router-link :to="{ name: 'projects' }" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors no-underline">
+            Projects
+          </router-link>
+          <i class="pi pi-chevron-right text-[10px] text-[var(--text-secondary)] opacity-60"></i>
+          <router-link :to="{ name: 'project-details', params: { id: projectSlug } }" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors no-underline">
+            {{ project?.name }}
+          </router-link>
+        </nav>
+        <div class="flex items-start justify-between max-md:flex-col max-md:gap-4">
+          <h1 class="text-2xl font-semibold text-[var(--text-color)] m-0">{{ document.title }}</h1>
+          <div class="flex items-center gap-3 max-md:self-start shrink-0">
+            <Button
+              v-if="versioningEnabled"
+              icon="pi pi-plus"
+              label="Add Version"
+              outlined
+              size="small"
+              @click="showAddVersionDialog = true"
+            />
+            <Button
+              icon="pi pi-send"
+              label="Invite User"
+              outlined
+              size="small"
+              severity="secondary"
+              @click="showInviteUserDialog = true"
+            />
+          </div>
         </div>
       </div>
 

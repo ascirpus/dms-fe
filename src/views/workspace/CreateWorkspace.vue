@@ -5,6 +5,7 @@ import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import FloatLabel from 'primevue/floatlabel';
+import { generateWorkspaceName } from '@/utils/workspaceNames';
 
 const toast = useToast();
 const { createWorkspace } = useWorkspace();
@@ -32,10 +33,20 @@ async function onSubmit() {
       <p class="text-[var(--text-secondary)] text-sm mt-2 mb-8">Set up a new workspace for your team.</p>
 
       <form @submit.prevent="onSubmit" class="flex flex-col gap-6">
-        <FloatLabel variant="on">
-          <InputText id="workspace-name" v-model="name" class="w-full" />
-          <label for="workspace-name">Workspace name</label>
-        </FloatLabel>
+        <div class="flex flex-col gap-1.5">
+          <FloatLabel variant="on">
+            <InputText id="workspace-name" v-model="name" class="w-full" />
+            <label for="workspace-name">Workspace name</label>
+          </FloatLabel>
+          <button
+            type="button"
+            class="self-start flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:text-[var(--primary-dark)] cursor-pointer bg-transparent border-0 p-0 font-medium"
+            @click="name = generateWorkspaceName()"
+          >
+            <i class="pi pi-sparkles text-xs"></i>
+            Suggest a name
+          </button>
+        </div>
 
         <Button
           type="submit"

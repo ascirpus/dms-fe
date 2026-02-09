@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useAuth } from "@/composables/useAuth";
+import { useUserPermissions } from "@/composables/useUserPermissions";
+import type { PermissionLevel } from "@/types/UserPermission";
 
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -11,6 +13,14 @@ import InputText from 'primevue/inputtext';
 import FloatLabel from 'primevue/floatlabel';
 
 const auth = useAuth();
+const { overrides, loading: overridesLoading, fetchOverrides } = useUserPermissions();
+
+const permissionLabels: Record<PermissionLevel, string> = {
+  NONE: 'Blocked',
+  VIEW: 'View',
+  COMMENT: 'Comment',
+  DECIDE: 'Decide',
+};
 
 const isDev = import.meta.env.DEV;
 const decodedToken = auth.decodedToken;
@@ -31,27 +41,9 @@ const editForm = ref({
   phone: '',
 });
 
-interface AccessItem {
-  id: string;
-  project: string;
-  documentName: string;
-  access: string;
-}
-
-const accessData = ref<AccessItem[]>([
-  { id: '1', project: 'Project Alpha', documentName: 'Requirements.pdf', access: 'View, Comment, Approve' },
-  { id: '2', project: 'Project Beta', documentName: 'Design Specs.pdf', access: 'View, Comment' },
-  { id: '3', project: 'Project Gamma', documentName: 'Technical Review.pdf', access: 'View' },
-  { id: '4', project: 'Project Delta', documentName: 'Budget Report.pdf', access: 'View' },
-  { id: '5', project: 'Project Epsilon', documentName: 'Meeting Notes.pdf', access: 'View' },
-  { id: '6', project: 'Project Zeta', documentName: 'Contract Draft.pdf', access: 'View' },
-  { id: '7', project: 'Project Eta', documentName: 'Proposal.pdf', access: 'View' },
-  { id: '8', project: 'Project Theta', documentName: 'Analysis.pdf', access: 'View' },
-]);
-
 const first = ref(0);
 const rows = ref(10);
-const totalRecords = computed(() => accessData.value.length);
+const totalRecords = computed(() => overrides.value.length);
 
 function populateFromUser() {
   const user = auth.getCurrentUser();
@@ -74,6 +66,7 @@ onMounted(async () => {
     await auth.fetchCurrentUser();
   }
   populateFromUser();
+  fetchOverrides();
 });
 
 function openEditDialog() {
@@ -154,43 +147,43 @@ function onPageChange(event: { first: number; rows: number }) {
       </div>
     </div>
 
-    <!-- Access Section -->
-    <div class="flex items-center justify-between mt-6 gap-2">
-      <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Access</h2>
-    </div>
-
     <!-- Dev: JWT Debug (collapsible) -->
-    <details v-if="isDev" class="mt-4 p-3 bg-[var(--surface-ground)] border border-dashed border-[var(--ui-input-border)] rounded-lg">
+    <details v-if="isDev" class="mt-6 p-3 bg-[var(--surface-ground)] border border-dashed border-[var(--ui-input-border)] rounded-lg">
       <summary class="cursor-pointer font-semibold text-sm text-[var(--text-secondary)]">Decoded JWT (Dev Only)</summary>
       <pre class="mt-3 p-3 bg-[var(--surface-card)] rounded text-xs overflow-x-auto max-h-[400px] overflow-y-auto">{{ JSON.stringify(decodedToken, null, 2) }}</pre>
     </details>
 
-    <!-- Access Table -->
+    <!-- Access Section (only shown when overrides exist) -->
+    <template v-if="overrides.length > 0">
+    <div class="flex items-center justify-between mt-6 gap-2">
+      <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Access</h2>
+    </div>
+
     <div class="access-table-container bg-[var(--ui-input-fill-default)] border border-[var(--ui-input-fill-disabled)] rounded-[10px] overflow-hidden mt-4">
       <DataTable
-        :value="accessData"
+        :value="overrides"
         :first="first"
         :rows="rows"
-        dataKey="id"
+        dataKey="documentId"
         class="access-table w-full"
         :pt="{
           table: { class: 'w-full' },
           bodyRow: { class: 'access-row' }
         }"
       >
-        <Column field="project" header="Project" sortable>
+        <Column field="projectName" header="Project" sortable>
           <template #body="{ data }">
-            <span class="text-[var(--primary-color)] font-normal">{{ data.project }}</span>
+            <span class="text-[var(--primary-color)] font-normal">{{ data.projectName }}</span>
           </template>
         </Column>
-        <Column field="documentName" header="Document Name" sortable>
+        <Column field="documentTitle" header="Document Name" sortable>
           <template #body="{ data }">
-            <span class="text-[var(--primary-color)] font-normal">{{ data.documentName }}</span>
+            <span class="text-[var(--primary-color)] font-normal">{{ data.documentTitle }}</span>
           </template>
         </Column>
-        <Column field="access" header="Access" sortable>
+        <Column field="permission" header="Access" sortable>
           <template #body="{ data }">
-            <span class="text-[var(--ui-input-label)] font-normal">{{ data.access }}</span>
+            <span class="text-[var(--ui-input-label)] font-normal">{{ permissionLabels[data.permission as PermissionLevel] }}</span>
           </template>
         </Column>
       </DataTable>
@@ -206,6 +199,7 @@ function onPageChange(event: { first: number; rows: number }) {
         />
       </div>
     </div>
+    </template>
 
     <!-- Edit General Information Dialog -->
     <Dialog

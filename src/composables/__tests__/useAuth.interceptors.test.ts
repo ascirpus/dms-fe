@@ -16,7 +16,7 @@ describe('useAuth interceptors', () => {
     mockAuthStore = {
       tenantId: null,
       permissions: [],
-      logout: vi.fn(),
+      cleanStorage: vi.fn(),
       setTenantId: vi.fn(),
     };
 
@@ -127,7 +127,7 @@ describe('useAuth interceptors', () => {
 
       await expect(apiClient.get('/test')).rejects.toThrow();
 
-      expect(mockAuthStore.logout).toHaveBeenCalled();
+      expect(mockAuthStore.cleanStorage).toHaveBeenCalled();
     });
 
     it('does not retry more than once (prevents infinite loop)', async () => {
@@ -170,7 +170,7 @@ describe('useAuth interceptors', () => {
       await expect(apiClient.get('/test')).rejects.toThrow();
 
       expect(callCount).toBe(1);
-      expect(mockAuthStore.logout).not.toHaveBeenCalled();
+      expect(mockAuthStore.cleanStorage).not.toHaveBeenCalled();
     });
   });
 

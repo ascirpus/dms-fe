@@ -14,7 +14,7 @@ describe('useAuth', () => {
     mockAuthStore = {
       tenantId: null,
       permissions: [],
-      logout: vi.fn(),
+      cleanStorage: vi.fn(),
       setTenantId: vi.fn(),
     };
 

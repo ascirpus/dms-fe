@@ -52,10 +52,10 @@ export function useProjects() {
   function useResolvedProjectId(slugRef: Ref<string> | (() => string)) {
     const slug = typeof slugRef === 'function' ? computed(slugRef) : slugRef;
     return computed(() => {
-      if (!projects.value) return slug.value; // Fallback to slug while loading
+      if (!projects.value) return null;
       const shortId = extractShortId(slug.value);
       const match = projects.value.find(item => item.project.id.startsWith(shortId));
-      return match?.project.id ?? slug.value;
+      return match?.project.id ?? null;
     });
   }
 
@@ -152,10 +152,10 @@ export function useProjectDocuments(projectId: () => string | null) {
   function useResolvedDocumentId(slugRef: Ref<string> | (() => string)) {
     const slug = typeof slugRef === 'function' ? computed(slugRef) : slugRef;
     return computed(() => {
-      if (!documents.value) return slug.value;
+      if (!documents.value) return null;
       const shortId = extractShortId(slug.value);
       const match = documents.value.find(doc => doc.id.startsWith(shortId));
-      return match?.id ?? slug.value;
+      return match?.id ?? null;
     });
   }
 

@@ -19,7 +19,7 @@ import Tag from 'primevue/tag';
 
 const toast = useToast();
 const confirm = useConfirm();
-const { apiClient } = useAuth();
+const { apiClient, getCurrentTenantId } = useAuth();
 const { currentWorkspaceName } = useWorkspace();
 const {
   pendingInvites,
@@ -55,6 +55,7 @@ const inviteLink = computed(() => {
   const invite = lastCreatedInvite.value;
   const params = new URLSearchParams({
     email: invite.email,
+    tenantId: getCurrentTenantId() ?? '',
     workspace: currentWorkspaceName.value,
   });
   return `${window.location.origin}/invite/${invite.id}?${params.toString()}`;

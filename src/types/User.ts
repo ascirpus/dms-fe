@@ -12,3 +12,4 @@ export interface User {
 }
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
+export type DocumentViewMode = 'tiles' | 'table';

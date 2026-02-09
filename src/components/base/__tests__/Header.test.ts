@@ -257,7 +257,7 @@ describe('Header.vue', () => {
 
       profileItem.command();
 
-      expect(mockRouter.push).toHaveBeenCalledWith({ name: 'profile' });
+      expect(mockRouter.push).toHaveBeenCalledWith({ name: 'profile-general' });
     });
 
     it('should call logout when sign out is clicked', async () => {

@@ -26,7 +26,7 @@ vi.mock('vue-query', () => ({
 
 const stubs = {
   Button: {
-    template: '<button :disabled="$attrs.disabled" @click="$attrs.onClick?.($event)"><slot /></button>',
+    template: '<button :type="$attrs.type || \'button\'" :disabled="$attrs.disabled" @click="$attrs.onClick?.($event)"><slot /></button>',
     inheritAttrs: true,
   },
   InputText: {
@@ -57,7 +57,7 @@ describe('CreateWorkspace', () => {
       global: { stubs },
     });
 
-    const button = wrapper.find('button');
+    const button = wrapper.find('button[type="submit"]');
     expect(button.attributes('disabled')).toBeDefined();
   });
 
@@ -68,7 +68,7 @@ describe('CreateWorkspace', () => {
 
     await wrapper.find('input').setValue('My Workspace');
 
-    const button = wrapper.find('button');
+    const button = wrapper.find('button[type="submit"]');
     expect(button.attributes('disabled')).toBeUndefined();
   });
 

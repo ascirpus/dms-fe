@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { RegistrationService } from '@/services/RegistrationService';
+import { generateWorkspaceName } from '@/utils/workspaceNames';
 import type { RegistrationErrorResponse } from '@/types';
 
 interface TurnstileInstance {
@@ -32,7 +33,7 @@ const route = useRoute();
 const service = new RegistrationService();
 
 const email = ref('');
-const companyName = ref('');
+const tenantName = ref('');
 const firstName = ref('');
 const lastName = ref('');
 const isLoading = ref(false);
@@ -52,7 +53,7 @@ const isValidEmail = computed(() => {
 });
 
 const canSubmit = computed(() =>
-  isValidEmail.value && companyName.value.trim().length > 0 && captchaToken.value.length > 0,
+  isValidEmail.value && tenantName.value.trim().length > 0 && captchaToken.value.length > 0,
 );
 
 const renderTurnstile = () => {
@@ -97,10 +98,10 @@ const submitRegistration = async () => {
   try {
     await service.registerCompany({
       email: email.value,
-      companyName: companyName.value.trim(),
+      tenantName: tenantName.value.trim(),
       firstName: firstName.value.trim() || undefined,
       lastName: lastName.value.trim() || undefined,
-      captchaToken: captchaToken.value,
+      //captchaToken: captchaToken.value,
     });
     isSubmitted.value = true;
   } catch (error) {
@@ -161,15 +162,23 @@ const goToLogin = () => {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="companyName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Workspace Name</label>
+            <label for="tenantName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Workspace Name</label>
             <InputText
-              id="companyName"
-              v-model="companyName"
+              id="tenantName"
+              v-model="tenantName"
               type="text"
               placeholder="Your company or team name"
               class="w-full"
               @keypress="handleKeyPress"
             />
+            <button
+              type="button"
+              class="self-start flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:text-[var(--primary-dark)] cursor-pointer bg-transparent border-0 p-0 font-medium"
+              @click="tenantName = generateWorkspaceName()"
+            >
+              <i class="pi pi-sparkles text-xs"></i>
+              Suggest a name
+            </button>
           </div>
 
           <div class="grid grid-cols-2 gap-4">

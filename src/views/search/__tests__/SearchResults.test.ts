@@ -151,7 +151,8 @@ describe('SearchResults', () => {
     const wrapper = mount(SearchResults, { global: { stubs } });
     await flushPromises();
 
-    await wrapper.find('.search-result-card').trigger('click');
+    const resultCards = wrapper.findAll('[class*="cursor-pointer"]').filter(el => el.text().includes('Contract Agreement'));
+    await resultCards[0].trigger('click');
 
     expect(mockPush).toHaveBeenCalledWith({
       name: 'project-document',
