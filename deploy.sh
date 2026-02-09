@@ -7,7 +7,7 @@ set -euo pipefail
 # Prerequisites:
 #   - doctl authenticated (doctl auth init)
 #   - SSH key in agent (ssh-add)
-#   - .env.deploy with at least DROPLET_IP
+#   - deploy.conf with at least DROPLET_IP
 #
 # Usage:
 #   ./deploy.sh              # docker build + push + deploy
@@ -15,22 +15,38 @@ set -euo pipefail
 #   ./deploy.sh --build-only # docker build + push (no remote deploy)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ENV_FILE="${DEPLOY_ENV_FILE:-$SCRIPT_DIR/.env.deploy}"
+DEPLOY_CONF="${DEPLOY_CONF:-$SCRIPT_DIR/deploy.conf}"
+APP_ENV="$SCRIPT_DIR/.env"
 
-# ── Load env ──────────────────────────────────────────────────────────────
+# ── Load deploy config ──────────────────────────────────────────────────
 
-if [[ -f "$ENV_FILE" ]]; then
+if [[ -f "$DEPLOY_CONF" ]]; then
     set -a
     # shellcheck disable=SC1090
-    source "$ENV_FILE"
+    source "$DEPLOY_CONF"
     set +a
+fi
+
+# ── Load VITE_* build args from .env ────────────────────────────────────
+
+BUILD_ARGS=()
+if [[ -f "$APP_ENV" ]]; then
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" =~ ^# ]] && continue
+        if [[ "$key" == VITE_* ]]; then
+            BUILD_ARGS+=(--build-arg "$key=$value")
+        fi
+    done < "$APP_ENV"
+else
+    echo "ERROR: $APP_ENV not found — cannot resolve build args." >&2
+    exit 1
 fi
 
 # ── Resolve config ────────────────────────────────────────────────────────
 
 REGISTRY="registry.digitalocean.com"
 IMAGE_NAME="dms-frontend"
-DROPLET_IP="${DROPLET_IP:?Set DROPLET_IP in $ENV_FILE}"
+DROPLET_IP="${DROPLET_IP:?Set DROPLET_IP in $DEPLOY_CONF}"
 DROPLET_USER="${DROPLET_USER:-deploy}"
 DOCR_REGISTRY_NAME="${DOCR_REGISTRY_NAME:-$(doctl registry get --format Name --no-header)}"
 FULL_IMAGE="$REGISTRY/$DOCR_REGISTRY_NAME/$IMAGE_NAME"
@@ -70,10 +86,7 @@ fi
 
 log "Building Docker image ($GIT_SHA)..."
 docker build \
-    --build-arg VITE_DOCUMENT_STORE_URL=https://app.cedar-stack.com \
-    --build-arg VITE_AUTH_PROVIDER=https://auth.cedar-stack.com \
-    --build-arg VITE_AUTH_CLIENT_ID=dms-fe \
-    --build-arg VITE_AUTH_REALM=dms \
+    "${BUILD_ARGS[@]}" \
     -t "$FULL_IMAGE:$GIT_SHA" \
     -t "$FULL_IMAGE:latest" \
     "$SCRIPT_DIR"

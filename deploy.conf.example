@@ -1,7 +1,7 @@
 # =============================================================================
-# DMS Frontend Manual Deploy — Environment Variables
+# DMS Frontend — Deploy Configuration
 # =============================================================================
-# Copy to .env.deploy and fill in values:  cp .env.deploy.example .env.deploy
+# Copy template and fill in values:  cp deploy.conf.example deploy.conf
 # Used by ./deploy.sh for manual CLI deployments.
 # =============================================================================
 
