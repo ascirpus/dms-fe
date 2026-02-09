@@ -3,15 +3,10 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
-import { FilterMatchMode } from '@primevue/core/api';
-// PrimeVue Components
 import Button from 'primevue/button';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
-import Paginator from 'primevue/paginator';
 import { useProjects } from "@/composables/useProjects";
 import type { ProjectListItem } from "@/services/ProjectsService";
 import NewProjectDialog from "@/components/project/NewProjectDialog.vue";
@@ -32,26 +27,18 @@ const {
 } = useProjects();
 
 const showNewProjectDialog = ref(false);
+const filterText = ref('');
 
-// Table filter
-const globalFilter = ref('');
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+const filteredProjects = computed(() => {
+  if (!projects.value) return [];
+  const q = filterText.value.toLowerCase();
+  if (!q) return projects.value;
+  return projects.value.filter(item =>
+    item.project.name.toLowerCase().includes(q) ||
+    (item.project.description?.toLowerCase().includes(q) ?? false)
+  );
 });
 
-// Pagination
-const first = ref(0);
-const rows = ref(10);
-const totalRecords = computed(() => projects.value?.length ?? 0);
-
-// Helper to truncate description for preview
-function truncateDescription(description: string | null, maxLength = 80): string {
-  if (!description) return '—';
-  if (description.length <= maxLength) return description;
-  return description.substring(0, maxLength) + '...';
-}
-
-// Handle project created from dialog
 function onProjectCreated(project: Project) {
   showNewProjectDialog.value = false;
   toast.add({
@@ -100,11 +87,6 @@ async function handleDeleteProject(projectId: string) {
     });
   }
 }
-
-function onPageChange(event: { first: number; rows: number }) {
-  first.value = event.first;
-  rows.value = event.rows;
-}
 </script>
 
 <template>
@@ -117,10 +99,9 @@ function onPageChange(event: { first: number; rows: number }) {
       <Button icon="pi pi-refresh" label="Try Again" @click="refetchProjects" />
     </div>
 
-    <!-- Table Container -->
-    <div v-else class="bg-[var(--ui-input-fill-default)] border border-[var(--ui-input-fill-disabled)] rounded-[10px] overflow-hidden flex flex-col flex-1">
+    <template v-else>
       <!-- Toolbar -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--ui-button-outlined-stroke)] gap-4 max-md:flex-col max-md:items-stretch">
+      <div class="flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch">
         <div class="flex items-center gap-3">
           <Button
             icon="pi pi-plus"
@@ -135,88 +116,60 @@ function onPageChange(event: { first: number; rows: number }) {
           <IconField>
             <InputIcon class="pi pi-filter" />
             <InputText
-              v-model="globalFilter"
+              v-model="filterText"
               placeholder="Filter projects..."
               size="small"
-              @input="filters.global.value = globalFilter"
             />
           </IconField>
         </div>
       </div>
 
-      <!-- Data Table -->
-      <DataTable
-        :value="projects"
-        :loading="loading"
-        :filters="filters"
-        :globalFilterFields="['project.name', 'project.description']"
-        :first="first"
-        :rows="rows"
-        dataKey="project.id"
-        stripedRows
-        @row-click="(e) => navigateToProject(e.data)"
-        class="projects-table flex-1"
-        :pt="{
-          table: { class: 'w-full' },
-          bodyRow: { class: 'cursor-pointer hover:bg-gray-50' }
-        }"
-      >
-        <template #empty>
-          <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
-            <i class="pi pi-folder-open text-5xl mb-4 text-[var(--text-muted)]"></i>
-            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No projects found</h3>
-            <p class="m-0 mb-6">Get started by creating a new project.</p>
-            <Button
-              icon="pi pi-plus"
-              label="Create Project"
-              @click="showNewProjectDialog = true"
-            />
-          </div>
-        </template>
+      <!-- Loading State -->
+      <div v-if="loading" class="flex items-center justify-center gap-3 p-12 text-[var(--text-secondary)]">
+        <i class="pi pi-spin pi-spinner text-2xl"></i>
+        <span>Loading projects...</span>
+      </div>
 
-        <template #loading>
-          <div class="flex items-center justify-center gap-3 p-12 text-[var(--text-secondary)]">
-            <i class="pi pi-spin pi-spinner text-2xl"></i>
-            <span>Loading projects...</span>
-          </div>
-        </template>
+      <!-- Empty State -->
+      <div v-else-if="!filteredProjects.length && !filterText" class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
+        <i class="pi pi-folder-open text-5xl mb-4 text-[var(--text-muted)]"></i>
+        <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No projects found</h3>
+        <p class="m-0 mb-6">Get started by creating a new project.</p>
+        <Button
+          icon="pi pi-plus"
+          label="Create Project"
+          @click="showNewProjectDialog = true"
+        />
+      </div>
 
-        <Column field="project.name" header="Project" sortable style="min-width: 200px">
-          <template #body="{ data }">
-            <span class="text-[var(--primary-color)] font-medium">{{ data.project.name }}</span>
-          </template>
-        </Column>
+      <!-- No filter results -->
+      <div v-else-if="!filteredProjects.length && filterText" class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
+        <i class="pi pi-search text-5xl mb-4 text-[var(--text-muted)]"></i>
+        <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No matching projects</h3>
+        <p class="m-0">No projects match "{{ filterText }}"</p>
+      </div>
 
-        <Column field="project.description" header="Description" sortable style="min-width: 300px">
-          <template #body="{ data }">
-            <span class="text-[var(--text-secondary)] text-[13px]">{{ truncateDescription(data.project.description) }}</span>
-          </template>
-        </Column>
-
-        <!-- Document Name column - commented out until API returns document details
-        <Column field="documentName" header="Document Name" sortable style="min-width: 200px">
-          <template #body="{ data }">
-            <span class="document-link">{{ data.documentName }}</span>
-          </template>
-        </Column>
-        -->
-
-        <Column field="document_count" header="Documents" sortable style="min-width: 120px">
-          <template #body="{ data }">
-            <span class="font-medium">{{ data.document_count }}</span>
-          </template>
-        </Column>
-
-        <Column header="" style="width: 100px" :exportable="false">
-          <template #body="{ data }">
-            <div class="flex items-center gap-1 opacity-60 hover:opacity-100">
+      <!-- Card Grid -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="item in filteredProjects"
+          :key="item.project.id"
+          class="group bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 cursor-pointer transition-colors hover:border-[var(--primary-color)]"
+          @click="navigateToProject(item)"
+        >
+          <!-- Card Header -->
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <h3 class="text-[15px] font-semibold text-[var(--text-color)] m-0 group-hover:text-[var(--primary-color)] transition-colors truncate">
+              {{ item.project.name }}
+            </h3>
+            <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
               <Button
                 icon="pi pi-pencil"
                 text
                 rounded
                 size="small"
                 aria-label="Edit"
-                @click.stop="editRow(data)"
+                @click.stop="editRow(item)"
               />
               <Button
                 icon="pi pi-trash"
@@ -225,25 +178,24 @@ function onPageChange(event: { first: number; rows: number }) {
                 size="small"
                 severity="danger"
                 aria-label="Delete"
-                @click.stop="confirmDeleteRow(data)"
+                @click.stop="confirmDeleteRow(item)"
               />
             </div>
-          </template>
-        </Column>
-      </DataTable>
+          </div>
 
-      <!-- Pagination -->
-      <div class="flex justify-center px-4 py-2 border-t border-[var(--ui-button-outlined-stroke)]">
-        <Paginator
-          :first="first"
-          :rows="rows"
-          :totalRecords="totalRecords"
-          :rowsPerPageOptions="[10, 20, 50]"
-          @page="onPageChange"
-          template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-        />
+          <!-- Description -->
+          <p class="text-[13px] text-[var(--text-secondary)] m-0 mb-4 line-clamp-2 min-h-[2.6em]">
+            {{ item.project.description || '—' }}
+          </p>
+
+          <!-- Footer -->
+          <div class="flex items-center gap-1.5 text-[var(--text-secondary)] text-xs">
+            <i class="pi pi-file text-xs"></i>
+            <span>{{ item.document_count }} {{ item.document_count === 1 ? 'document' : 'documents' }}</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </template>
 
     <!-- New Project Dialog -->
     <NewProjectDialog
@@ -252,31 +204,3 @@ function onPageChange(event: { first: number; rows: number }) {
     />
   </div>
 </template>
-
-<style scoped>
-.projects-table :deep(.p-datatable-thead > tr > th) {
-  background-color: var(--surface-ground);
-  color: var(--ui-input-label);
-  font-weight: 600;
-  font-size: 14px;
-  padding: 16px;
-  border-color: var(--ui-button-outlined-stroke);
-}
-
-.projects-table :deep(.p-datatable-tbody > tr > td) {
-  padding: 16px;
-  border-color: var(--ui-button-outlined-stroke);
-  font-size: 14px;
-  color: var(--ui-input-label);
-}
-
-.projects-table :deep(.p-datatable-tbody > tr:hover) {
-  background-color: var(--surface-ground);
-}
-
-.projects-table :deep(.p-paginator) {
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-</style>

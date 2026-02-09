@@ -32,6 +32,30 @@ export function createRouter(app: App): Router {
                         name: 'complete-setup',
                         component: () => import("@/views/user/CompleteAccountSetup.vue"),
                     },
+                    {
+                        path: 'register',
+                        name: 'register',
+                        component: () => import("@/views/user/Register.vue"),
+                        meta: { title: 'Create Account' },
+                    },
+                    {
+                        path: 'invite/:inviteId',
+                        name: 'accept-invite',
+                        component: () => import("@/views/invite/AcceptInvite.vue"),
+                        meta: { title: 'Accept Invite' },
+                    },
+                    {
+                        path: 'terms',
+                        name: 'terms',
+                        component: () => import("@/views/legal/TermsOfService.vue"),
+                        meta: { title: 'Terms of Service' },
+                    },
+                    {
+                        path: 'privacy',
+                        name: 'privacy',
+                        component: () => import("@/views/legal/PrivacyPolicy.vue"),
+                        meta: { title: 'Privacy Policy' },
+                    },
                 ],
             },
             {
@@ -78,8 +102,28 @@ export function createRouter(app: App): Router {
                     },
                     {
                         path: 'profile',
-                        name: 'profile',
-                        component: () => import("@/views/user/Profile.vue"),
+                        component: () => import("@/views/user/ProfileLayout.vue"),
+                        children: [
+                            {
+                                path: '',
+                                redirect: { name: 'profile-general' },
+                            },
+                            {
+                                path: 'general',
+                                name: 'profile-general',
+                                component: () => import("@/views/user/Profile.vue"),
+                            },
+                            {
+                                path: 'notifications',
+                                name: 'profile-notifications',
+                                component: () => import("@/views/user/ProfileNotifications.vue"),
+                            },
+                            {
+                                path: 'appearance',
+                                name: 'profile-appearance',
+                                component: () => import("@/views/user/ProfileAppearance.vue"),
+                            },
+                        ],
                     },
                     {
                         path: 'notifications',
@@ -106,9 +150,25 @@ export function createRouter(app: App): Router {
                     },
                     {
                         path: 'workspace/settings',
-                        name: 'workspace-settings',
                         component: () => import("@/views/workspace/WorkspaceSettings.vue"),
-                        meta: { title: 'Workspace Settings' }
+                        meta: { title: 'Workspace Settings' },
+                        children: [
+                            {
+                                path: '',
+                                name: 'workspace-settings',
+                                redirect: { name: 'workspace-document-types' },
+                            },
+                            {
+                                path: 'document-types',
+                                name: 'workspace-document-types',
+                                component: () => import("@/views/workspace/WorkspaceDocumentTypes.vue"),
+                            },
+                            {
+                                path: 'members',
+                                name: 'workspace-members',
+                                component: () => import("@/views/workspace/WorkspaceMembers.vue"),
+                            },
+                        ],
                     },
                     {
                         path: 'billing/success',

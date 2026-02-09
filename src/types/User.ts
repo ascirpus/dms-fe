@@ -1,3 +1,5 @@
+import type { NotificationPreferences } from './Notification';
+
 export interface User {
     email: string;
     firstName?: string;
@@ -6,6 +8,7 @@ export interface User {
     locale?: string;
     picture?: string;
     themePreference?: ThemeMode;
+    notificationOverrides?: NotificationPreferences;
 }
 
 export type ThemeMode = 'light' | 'dark' | 'auto';

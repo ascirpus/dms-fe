@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import ToggleSwitch from 'primevue/toggleswitch';
 import Button from 'primevue/button';
 import { useNotifications } from '@/composables/useNotifications';
 import type { Notification } from '@/types/Notification';
@@ -8,44 +7,60 @@ import { formatNotificationMessage } from '@/utils/notificationFormatter';
 
 const {
   notifications,
-  preferences,
   fetchNotifications,
-  fetchPreferences,
   markAsRead,
   markAllAsRead,
-  updatePreferences,
 } = useNotifications();
 
 const isLoading = ref(true);
 
 onMounted(async () => {
   try {
-    await Promise.all([
-      fetchNotifications(),
-      fetchPreferences(),
-    ]);
+    await fetchNotifications();
   } finally {
     isLoading.value = false;
   }
 });
 
-const receiveEmailNotifications = computed({
-  get: () => preferences.value?.['document.updated.comment_added']?.email ?? false,
-  set: (value: boolean) => {
-    if (preferences.value) {
-      const updated = {
-        ...preferences.value,
-        'document.updated.comment_added': {
-          web: preferences.value['document.updated.comment_added']?.web ?? true,
-          email: value,
-        },
-      };
-      updatePreferences(updated);
-    }
-  },
-});
-
 const hasUnread = computed(() => notifications.value?.some((n) => !n.read) ?? false);
+
+interface NotificationGroup {
+  label: string;
+  notifications: Notification[];
+}
+
+const groupedNotifications = computed<NotificationGroup[]>(() => {
+  if (!notifications.value || notifications.value.length === 0) return [];
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+  const weekStart = new Date(todayStart.getTime() - 7 * 86400000);
+
+  const groups: Record<string, Notification[]> = {
+    Today: [],
+    Yesterday: [],
+    'This Week': [],
+    Earlier: [],
+  };
+
+  for (const notification of notifications.value) {
+    const date = new Date(notification.createdAt);
+    if (date >= todayStart) {
+      groups['Today'].push(notification);
+    } else if (date >= yesterdayStart) {
+      groups['Yesterday'].push(notification);
+    } else if (date >= weekStart) {
+      groups['This Week'].push(notification);
+    } else {
+      groups['Earlier'].push(notification);
+    }
+  }
+
+  return Object.entries(groups)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, notifications: items }));
+});
 
 function handleMarkAsRead(notification: Notification) {
   markAsRead(notification.id);
@@ -84,45 +99,46 @@ function getNotificationMessage(notification: Notification): string {
             size="small"
             @click="handleMarkAllAsRead"
           />
-          <div class="flex items-center gap-2">
-            <span class="font-medium text-sm leading-5 text-[var(--ui-input-label)]">Receive email notifications</span>
-            <ToggleSwitch v-model="receiveEmailNotifications" />
-          </div>
         </div>
       </div>
 
       <!-- Notifications List -->
       <div class="flex flex-col">
-        <div v-if="isLoading" class="flex items-center justify-center gap-2 p-8 text-[var(--text-secondary)] text-sm">
+        <div v-if="isLoading" class="notification-loading flex items-center justify-center gap-2 p-8 text-[var(--text-secondary)] text-sm">
           <i class="pi pi-spinner pi-spin"></i>
           <span>Loading notifications...</span>
         </div>
-        <div v-else-if="!notifications || notifications.length === 0" class="flex items-center justify-center gap-2 p-8 text-[var(--text-secondary)] text-sm">
+        <div v-else-if="!notifications || notifications.length === 0" class="notification-empty flex items-center justify-center gap-2 p-8 text-[var(--text-secondary)] text-sm">
           <span>No notifications</span>
         </div>
         <template v-else>
-          <div
-            v-for="notification in notifications"
-            :key="notification.id"
-            class="flex items-center border-t border-[var(--ui-button-outlined-stroke)] min-h-14 max-md:flex-col max-md:items-start"
-            :class="{ 'bg-[#eff6ff]': !notification.read }"
-          >
-            <div class="w-[180px] shrink-0 p-4 font-normal text-sm leading-5 text-[var(--ui-input-label)] max-md:w-full max-md:pb-0">
-              {{ formatDate(notification.createdAt) }}
+          <div v-for="group in groupedNotifications" :key="group.label" class="notification-group">
+            <div class="px-4 py-2 border-t border-[var(--surface-border)]">
+              <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">{{ group.label }}</span>
             </div>
-            <div class="flex-1 p-4 font-normal text-sm leading-5 text-[var(--ui-input-label)] max-md:w-full max-md:pt-2">
-              {{ getNotificationMessage(notification) }}
-            </div>
-            <div class="p-4 flex items-center min-w-12">
-              <Button
-                v-if="!notification.read"
-                icon="pi pi-check"
-                text
-                rounded
-                size="small"
-                aria-label="Mark as read"
-                @click="handleMarkAsRead(notification)"
-              />
+            <div
+              v-for="notification in group.notifications"
+              :key="notification.id"
+              class="notification-row flex items-center border-t border-[var(--surface-border)] min-h-14 max-md:flex-col max-md:items-start"
+              :class="{ 'notification-unread': !notification.read }"
+            >
+              <div class="notification-date w-[180px] shrink-0 p-4 font-normal text-sm leading-5 text-[var(--text-secondary)] max-md:w-full max-md:pb-0">
+                {{ formatDate(notification.createdAt) }}
+              </div>
+              <div class="notification-message flex-1 p-4 font-normal text-sm leading-5 text-[var(--text-color)] max-md:w-full max-md:pt-2">
+                {{ getNotificationMessage(notification) }}
+              </div>
+              <div class="notification-actions p-4 flex items-center min-w-12">
+                <Button
+                  v-if="!notification.read"
+                  icon="pi pi-check"
+                  text
+                  rounded
+                  size="small"
+                  aria-label="Mark as read"
+                  @click="handleMarkAsRead(notification)"
+                />
+              </div>
             </div>
           </div>
         </template>
@@ -135,3 +151,9 @@ function getNotificationMessage(notification: Notification): string {
     </div>
   </div>
 </template>
+
+<style scoped>
+.notification-unread {
+  background-color: color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+</style>

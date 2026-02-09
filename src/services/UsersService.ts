@@ -12,7 +12,7 @@ export interface TenantUser {
 
 export class UsersService extends ApiService<TenantUser> {
     async fetchTenantUsers(): Promise<TenantUser[]> {
-        const response = await this.apiClient.get<ApiResponse<TenantUser[]>>('/api/tenant/users');
+        const response = await this.apiClient.get<ApiResponse<TenantUser[]>>('/api/tenants/current/users');
         return response.data.data;
     }
 }

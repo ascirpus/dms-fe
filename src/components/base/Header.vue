@@ -127,7 +127,7 @@ const userMenuItems = computed(() => {
       {
         label: 'Profile',
         icon: 'pi pi-user',
-        command: () => router.push({ name: 'profile' })
+        command: () => router.push({ name: 'profile-general' })
       },
       { separator: true },
       {

@@ -11,6 +11,7 @@ describe('NotificationsService', () => {
     mockApiClient = {
       get: vi.fn(),
       post: vi.fn(),
+      put: vi.fn(),
     } as any;
     service = new NotificationsService(mockApiClient);
   });
@@ -87,33 +88,43 @@ describe('NotificationsService', () => {
   });
 
   describe('getPreferences', () => {
-    it('should fetch notification preferences', async () => {
-      const mockPreferences: NotificationPreferences = {
+    it('should fetch notification preferences from /api/me', async () => {
+      const mockOverrides: NotificationPreferences = {
         'document.added': { web: true, email: false },
       };
 
       vi.mocked(mockApiClient.get).mockResolvedValue({
-        data: { status: 'SUCCESS', data: mockPreferences },
+        data: { status: 'SUCCESS', data: { email: 'user@test.com', notificationOverrides: mockOverrides } },
       });
 
       const result = await service.getPreferences();
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/profile/notifications');
-      expect(result).toEqual(mockPreferences);
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/me');
+      expect(result).toEqual(mockOverrides);
+    });
+
+    it('should return empty object when notificationOverrides is not set', async () => {
+      vi.mocked(mockApiClient.get).mockResolvedValue({
+        data: { status: 'SUCCESS', data: { email: 'user@test.com' } },
+      });
+
+      const result = await service.getPreferences();
+
+      expect(result).toEqual({});
     });
   });
 
   describe('updatePreferences', () => {
-    it('should update notification preferences', async () => {
+    it('should update notification preferences via PUT /api/me', async () => {
       const preferences: NotificationPreferences = {
         'document.added': { web: true, email: true },
       };
 
-      vi.mocked(mockApiClient.post).mockResolvedValue({});
+      vi.mocked(mockApiClient.put).mockResolvedValue({});
 
       await service.updatePreferences(preferences);
 
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/profile/notifications', preferences);
+      expect(mockApiClient.put).toHaveBeenCalledWith('/api/me', { notificationOverrides: preferences });
     });
   });
 });

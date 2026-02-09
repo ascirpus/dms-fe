@@ -553,13 +553,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useAuth } from '@/composables/useAuth';
+import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Slider from 'primevue/slider';
 import Logo from '@/components/base/Logo.vue';
 import posthog from "posthog-js";
 
-const auth = useAuth();
+const router = useRouter();
 const isYearly = ref(true);
 
 const AVG_PDF_SIZE_MB = 2.5;
@@ -593,7 +593,7 @@ const recommendedTier = computed(() => {
 
 function handleGetStarted(plan?: string) {
   posthog.capture('landing_get_started_click', { plan: plan || 'unspecified' });
-  auth.login();
+  router.push({ name: 'register', query: plan ? { plan } : undefined });
 }
 
 function scrollToFeatures() {

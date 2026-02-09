@@ -1,6 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import { ApiService } from './ApiService';
 import type { Notification, NotificationPreferences, UnreadCount } from '@/types/Notification';
+import type { User } from '@/types';
 
 export class NotificationsService extends ApiService<Notification> {
   async list(limit: number = 20, offset: number = 0): Promise<Notification[]> {
@@ -27,13 +28,11 @@ export class NotificationsService extends ApiService<Notification> {
   }
 
   async getPreferences(): Promise<NotificationPreferences> {
-    const response = await this.apiClient.get<{ status: string; data: NotificationPreferences }>(
-      '/api/profile/notifications'
-    );
-    return response.data.data;
+    const response = await this.apiClient.get<{ status: string; data: User }>('/api/me');
+    return response.data.data.notificationOverrides ?? {};
   }
 
   async updatePreferences(preferences: NotificationPreferences): Promise<void> {
-    await this.apiClient.post('/api/profile/notifications', preferences);
+    await this.apiClient.put('/api/me', { notificationOverrides: preferences });
   }
 }

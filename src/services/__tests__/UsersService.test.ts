@@ -43,7 +43,7 @@ describe('UsersService', () => {
 
       const result = await service.fetchTenantUsers();
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/api/tenant/users');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/tenants/current/users');
       expect(result).toEqual(mockUsers);
     });
 

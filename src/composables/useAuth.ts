@@ -176,12 +176,12 @@ export function useAuth() {
         }
     }
 
-    function login() {
+    function login(redirectUri?: string) {
         authStore.cleanStorage();
         const kcInstance = kc.keycloak.value;
         if (kcInstance) {
             kcInstance.login({
-                redirectUri: window.location.origin + '/app/projects'
+                redirectUri: redirectUri ?? window.location.origin + '/app/projects'
             });
         }
     }
