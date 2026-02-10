@@ -44,8 +44,7 @@
   },
   "header": {
     "searchInProject": "In {project} suchen...",
-    "toggleTheme": "Design wechseln",
-    "iam": "IAM"
+    "toggleTheme": "Design wechseln"
   },
   "publicLayout": {
     "goToProjects": "Zu Projekten",

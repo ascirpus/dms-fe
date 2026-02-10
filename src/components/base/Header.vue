@@ -167,10 +167,6 @@ function toggleTheme() {
   auth.updateProfile({ themePreference: newTheme });
 }
 
-const goToAdmin = () => {
-  router.push({ name: 'admin' });
-};
-
 const goToNotifications = () => {
   router.push({ name: 'notifications' });
 };
@@ -236,15 +232,6 @@ const goToNotifications = () => {
 
       <!-- Right side actions -->
       <div class="flex items-center gap-4">
-        <!-- Admin link (IAM) - only show for admins -->
-        <Button
-          :label="t('header.iam')"
-          icon="pi pi-user"
-          text
-          class="!text-[var(--text-secondary)] font-medium hover:!text-[var(--text-color)]"
-          @click="goToAdmin"
-        />
-
         <!-- Notifications -->
         <div class="relative inline-flex">
           <Button

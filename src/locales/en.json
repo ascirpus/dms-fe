@@ -44,8 +44,7 @@
   },
   "header": {
     "searchInProject": "Search in {project}...",
-    "toggleTheme": "Toggle theme",
-    "iam": "IAM"
+    "toggleTheme": "Toggle theme"
   },
   "publicLayout": {
     "goToProjects": "Go to Projects",
