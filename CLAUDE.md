@@ -262,8 +262,22 @@ Testing setup:
 6. Create composable with state management
 7. Update/create UI components
 8. Write comprehensive tests for all layers
-9. **Document the feature in `docs/features/`** — describe what the component does, how users interact with it, and what functionality it provides. Update `FEATURES_STATUS.md` accordingly.
+9. **Document the feature in `dev-docs/features/`** — describe what the component does, how users interact with it, and what functionality it provides. Update `FEATURES_STATUS.md` accordingly.
 10. Verify the feature works end-to-end
+
+## Documentation (VitePress)
+
+User-facing documentation lives in `docs/` and is built with VitePress.
+
+```bash
+npm run docs:dev      # Preview docs locally at localhost:5173/docs/
+npm run docs:build    # Build for production
+npm run docs:preview  # Preview production build
+```
+
+**CRITICAL**: After any feature change, update the relevant markdown files in `docs/user-guide/` or `docs/admin-guide/`. VitePress reads these directly — no separate "publish" step needed beyond the standard build.
+
+Developer-facing feature docs (component behavior, routes, interactions) live in `dev-docs/features/`.
 
 **Critical: ASK, don't assume**
 - When enum values are not documented, ask for the actual values
