@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance } from 'axios';
 import { ApiService } from './ApiService';
 import type { ApiResponse } from '@/types/response';
-import type { TenantInvite, UserPendingInvite, CreateInviteRequest, JoinTenantRequest } from '@/types';
+import type { TenantInvite, UserPendingInvite, CreateInviteRequest, AcceptedInvite, JoinTenantRequest } from '@/types';
 
 const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
 
@@ -39,8 +39,11 @@ export class InviteService extends ApiService<TenantInvite> {
     return response.data.data;
   }
 
-  async acceptInvite(inviteId: string): Promise<void> {
-    await this.apiClient.post(`/api/tenants/invites/${inviteId}/accept`);
+  async acceptInvite(inviteId: string): Promise<AcceptedInvite> {
+    const response = await this.apiClient.post<ApiResponse<AcceptedInvite>>(
+      `/api/tenants/invites/${inviteId}/accept`,
+    );
+    return response.data.data;
   }
 
   async joinTenant(request: JoinTenantRequest): Promise<void> {

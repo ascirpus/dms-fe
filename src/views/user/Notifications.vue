@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Button from 'primevue/button';
 import { useNotifications } from '@/composables/useNotifications';
 import type { Notification } from '@/types/Notification';
 import { formatNotificationMessage } from '@/utils/notificationFormatter';
 
+const { t } = useI18n();
 const {
   notifications,
   fetchNotifications,
@@ -37,23 +39,28 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
   const yesterdayStart = new Date(todayStart.getTime() - 86400000);
   const weekStart = new Date(todayStart.getTime() - 7 * 86400000);
 
+  const todayLabel = t('notifications.today');
+  const yesterdayLabel = t('notifications.yesterday');
+  const thisWeekLabel = t('notifications.thisWeek');
+  const earlierLabel = t('notifications.earlier');
+
   const groups: Record<string, Notification[]> = {
-    Today: [],
-    Yesterday: [],
-    'This Week': [],
-    Earlier: [],
+    [todayLabel]: [],
+    [yesterdayLabel]: [],
+    [thisWeekLabel]: [],
+    [earlierLabel]: [],
   };
 
   for (const notification of notifications.value) {
     const date = new Date(notification.createdAt);
     if (date >= todayStart) {
-      groups['Today'].push(notification);
+      groups[todayLabel].push(notification);
     } else if (date >= yesterdayStart) {
-      groups['Yesterday'].push(notification);
+      groups[yesterdayLabel].push(notification);
     } else if (date >= weekStart) {
-      groups['This Week'].push(notification);
+      groups[thisWeekLabel].push(notification);
     } else {
-      groups['Earlier'].push(notification);
+      groups[earlierLabel].push(notification);
     }
   }
 
@@ -90,11 +97,11 @@ function getNotificationMessage(notification: Notification): string {
     <div class="max-w-[980px] mx-auto w-full flex flex-col bg-[var(--surface-card)] rounded-[10px]">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 gap-2 min-h-[65px] max-md:flex-col max-md:items-start max-md:gap-4">
-        <h1 class="font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">Notifications</h1>
+        <h1 class="font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ $t('notifications.title') }}</h1>
         <div class="flex items-center gap-4">
           <Button
             v-if="hasUnread"
-            label="Mark all as read"
+            :label="$t('notifications.markAllRead')"
             text
             size="small"
             @click="handleMarkAllAsRead"
@@ -106,10 +113,10 @@ function getNotificationMessage(notification: Notification): string {
       <div class="flex flex-col">
         <div v-if="isLoading" class="notification-loading flex items-center justify-center gap-2 p-8 text-[var(--text-secondary)] text-sm">
           <i class="pi pi-spinner pi-spin"></i>
-          <span>Loading notifications...</span>
+          <span>{{ $t('notifications.loadingNotifications') }}</span>
         </div>
         <div v-else-if="!notifications || notifications.length === 0" class="notification-empty flex items-center justify-center gap-2 p-8 text-[var(--text-secondary)] text-sm">
-          <span>No notifications</span>
+          <span>{{ $t('notifications.noNotifications') }}</span>
         </div>
         <template v-else>
           <div v-for="group in groupedNotifications" :key="group.label" class="notification-group">
@@ -135,7 +142,7 @@ function getNotificationMessage(notification: Notification): string {
                   text
                   rounded
                   size="small"
-                  aria-label="Mark as read"
+                  :aria-label="$t('notifications.markAsRead')"
                   @click="handleMarkAsRead(notification)"
                 />
               </div>
@@ -146,7 +153,7 @@ function getNotificationMessage(notification: Notification): string {
 
       <!-- Footer -->
       <div class="flex items-center justify-center p-4 min-h-[65px]">
-        <p class="font-semibold text-[21px] leading-[1.25] text-[var(--text-color)] text-center m-0 max-md:text-base">That's all your notifications for the last 30 days</p>
+        <p class="font-semibold text-[21px] leading-[1.25] text-[var(--text-color)] text-center m-0 max-md:text-base">{{ $t('notifications.allNotifications') }}</p>
       </div>
     </div>
   </div>

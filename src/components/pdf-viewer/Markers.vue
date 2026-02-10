@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, inject, type Ref, nextTick, watch, type ComponentPublicInstance } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { Comment, MarkerPosition, User } from '@/types';
 import type { TenantUser } from '@/services/UsersService';
 import { useComments } from '@/composables/useComments';
 import { useMainStore } from '@/stores/mainStore';
 import { getAvatarColor, getInitialsFromUser, getDisplayName } from '@/utils/avatar';
 import { Button } from 'primevue';
+
+const { t } = useI18n();
 
 interface Props {
   pageNumber: number;
@@ -361,7 +364,7 @@ onBeforeUnmount(() => {
             rounded
             size="small"
             severity="success"
-            aria-label="Resolve"
+            :aria-label="$t('pdfMarkers.resolve')"
             @click="resolveMarker(marker)"
           />
           <!-- TODO: re-enable when reply/share features are ready
@@ -403,7 +406,7 @@ onBeforeUnmount(() => {
           id="marker-comment-input"
           v-model="newMarkerComment"
           class="w-full border-none outline-none text-[13px] text-[var(--text-color)] bg-transparent py-1 px-0 placeholder:text-[var(--text-secondary)]"
-          placeholder="Add a comment..."
+          :placeholder="$t('pdfMarkers.addComment')"
           @input="handleCommentInput"
         />
         <!-- @mention dropdown -->

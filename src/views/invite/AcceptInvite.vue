@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { AxiosError } from 'axios';
 import { useAuth } from '@/composables/useAuth';
 import { useInvites } from '@/composables/useInvites';
@@ -11,6 +12,7 @@ import Button from 'primevue/button';
 import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuth();
@@ -41,9 +43,13 @@ onMounted(async () => {
 async function tryAcceptInvite() {
   state.value = 'accepting';
   try {
-    await acceptInvite(inviteId.value);
+    const result = await acceptInvite(inviteId.value);
     if (tenantId.value) {
       await switchWorkspace(tenantId.value);
+    }
+    const firstAssignment = result.projectAssignments?.[0];
+    if (firstAssignment) {
+      router.push({ name: 'project-details', params: { id: firstAssignment.projectId } });
     } else {
       router.push({ name: 'projects' });
     }
@@ -51,16 +57,16 @@ async function tryAcceptInvite() {
     if (err instanceof AxiosError && err.response) {
       const status = err.response.status;
       if (status === 404) {
-        errorMessage.value = 'This invite link is invalid or has already been used.';
+        errorMessage.value = t('invite.invalidInvite');
       } else if (status === 410) {
-        errorMessage.value = 'This invite has expired. Please ask the workspace admin for a new invite.';
+        errorMessage.value = t('invite.expiredInvite');
       } else if (status === 409) {
-        errorMessage.value = 'You are already a member of this workspace.';
+        errorMessage.value = t('invite.alreadyMember');
       } else {
-        errorMessage.value = err.response.data?.error?.message ?? 'Failed to accept invite.';
+        errorMessage.value = err.response.data?.error?.message ?? t('invite.failedToAccept');
       }
     } else {
-      errorMessage.value = 'Unable to connect to the server. Please try again.';
+      errorMessage.value = t('invite.serverError');
     }
     state.value = 'error';
   }
@@ -76,7 +82,7 @@ function showRegisterForm() {
 
 async function submitRegistration() {
   if (!email.value || !tenantId.value) {
-    errorMessage.value = 'Invalid invite link: missing required information.';
+    errorMessage.value = t('invite.invalidLink');
     state.value = 'error';
     return;
   }
@@ -95,12 +101,12 @@ async function submitRegistration() {
     if (err instanceof AxiosError && err.response) {
       const data = err.response.data;
       if (err.response.status === 409) {
-        errorMessage.value = 'An account with this email already exists. Please sign in instead.';
+        errorMessage.value = t('invite.accountExists');
       } else {
-        errorMessage.value = data?.error?.message ?? 'Registration failed. Please try again.';
+        errorMessage.value = data?.error?.message ?? t('invite.registrationFailed');
       }
     } else {
-      errorMessage.value = 'Unable to connect to the server. Please try again.';
+      errorMessage.value = t('invite.serverError');
     }
   } finally {
     isSubmitting.value = false;
@@ -121,7 +127,7 @@ function goToProjects() {
         <!-- Loading / Accepting -->
         <div v-if="state === 'loading' || state === 'accepting'" class="flex flex-col items-center gap-4 py-8">
           <ProgressSpinner style="width: 48px; height: 48px" />
-          <p class="text-[var(--text-secondary)] m-0">Accepting invite...</p>
+          <p class="text-[var(--text-secondary)] m-0">{{ $t('invite.acceptingInvite') }}</p>
         </div>
 
         <!-- Invite Prompt (unauthenticated) -->
@@ -129,20 +135,20 @@ function goToProjects() {
           <div class="flex flex-col items-center gap-2 text-center">
             <i class="pi pi-users text-4xl text-[var(--primary-color)]"></i>
             <h1 class="font-[Inter,sans-serif] font-semibold text-[28px] leading-[1.25] text-[var(--text-color)] m-0">
-              You've been invited to join
+              {{ $t('invite.youveBeenInvited') }}
             </h1>
             <p class="text-lg font-medium text-[var(--primary-color)] m-0">{{ workspaceName }}</p>
           </div>
 
           <div class="flex flex-col gap-3">
             <Button
-              label="Sign In to Accept"
+              :label="$t('invite.signInToAccept')"
               icon="pi pi-sign-in"
               class="w-full"
               @click="loginAndReturn"
             />
             <Button
-              label="Create Account"
+              :label="$t('invite.createAccount')"
               icon="pi pi-user-plus"
               severity="secondary"
               outlined
@@ -155,18 +161,18 @@ function goToProjects() {
         <!-- Registration Form -->
         <template v-else-if="state === 'register-form'">
           <h1 class="font-[Inter,sans-serif] font-semibold text-[28px] leading-[1.25] text-[var(--text-color)] m-0">
-            Create Account
+            {{ $t('invite.createAccount') }}
           </h1>
-          <p class="text-sm text-[var(--text-secondary)] m-0">
-            Join <strong>{{ workspaceName }}</strong> by creating your account.
-          </p>
+          <i18n-t keypath="invite.joinWorkspace" tag="p" class="text-sm text-[var(--text-secondary)] m-0">
+            <template #workspace><strong>{{ workspaceName }}</strong></template>
+          </i18n-t>
 
           <Message v-if="errorMessage" severity="error" :closable="false">
             {{ errorMessage }}
           </Message>
 
           <div class="flex flex-col gap-1.5">
-            <label for="regEmail" class="font-semibold text-sm text-[var(--text-color)]">Email Address</label>
+            <label for="regEmail" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('invite.emailAddress') }}</label>
             <InputText
               id="regEmail"
               :model-value="email"
@@ -178,24 +184,24 @@ function goToProjects() {
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
               <label for="regFirstName" class="font-semibold text-sm text-[var(--text-color)]">
-                First Name <span class="font-normal text-[var(--text-secondary)]">(optional)</span>
+                {{ $t('invite.firstName') }} <span class="font-normal text-[var(--text-secondary)]">({{ $t('common.optional') }})</span>
               </label>
               <InputText
                 id="regFirstName"
                 v-model="firstName"
-                placeholder="First name"
+                :placeholder="$t('invite.firstName')"
                 class="w-full"
                 @keypress.enter="submitRegistration"
               />
             </div>
             <div class="flex flex-col gap-1.5">
               <label for="regLastName" class="font-semibold text-sm text-[var(--text-color)]">
-                Last Name <span class="font-normal text-[var(--text-secondary)]">(optional)</span>
+                {{ $t('invite.lastName') }} <span class="font-normal text-[var(--text-secondary)]">({{ $t('common.optional') }})</span>
               </label>
               <InputText
                 id="regLastName"
                 v-model="lastName"
-                placeholder="Last name"
+                :placeholder="$t('invite.lastName')"
                 class="w-full"
                 @keypress.enter="submitRegistration"
               />
@@ -204,13 +210,13 @@ function goToProjects() {
 
           <div class="flex gap-3">
             <Button
-              label="Back"
+              :label="$t('common.back')"
               text
               severity="secondary"
               @click="state = 'invite-prompt'"
             />
             <Button
-              label="Create Account"
+              :label="$t('invite.createAccount')"
               icon="pi pi-user-plus"
               @click="submitRegistration"
               :loading="isSubmitting"
@@ -223,14 +229,14 @@ function goToProjects() {
           <div class="flex flex-col items-center gap-4 py-4">
             <i class="pi pi-check-circle text-5xl text-green-500"></i>
             <h1 class="font-[Inter,sans-serif] font-semibold text-[28px] leading-[1.25] text-[var(--text-color)] m-0 text-center">
-              Account Created
+              {{ $t('invite.accountCreated') }}
             </h1>
-            <p class="text-sm text-[var(--text-secondary)] m-0 text-center">
-              Check your email for a temporary password, then sign in to access <strong>{{ workspaceName }}</strong>.
-            </p>
+            <i18n-t keypath="invite.checkEmail" tag="p" class="text-sm text-[var(--text-secondary)] m-0 text-center">
+              <template #workspace><strong>{{ workspaceName }}</strong></template>
+            </i18n-t>
           </div>
           <Button
-            label="Sign In"
+            :label="$t('common.signIn')"
             icon="pi pi-sign-in"
             class="w-full"
             @click="loginAndReturn"
@@ -242,7 +248,7 @@ function goToProjects() {
           <div class="flex flex-col items-center gap-4 py-4">
             <i class="pi pi-exclamation-triangle text-5xl text-[var(--color-danger,#e74c3c)]"></i>
             <h1 class="font-[Inter,sans-serif] font-semibold text-[24px] leading-[1.25] text-[var(--text-color)] m-0 text-center">
-              Unable to Accept Invite
+              {{ $t('invite.unableToAccept') }}
             </h1>
             <p class="text-sm text-[var(--text-secondary)] m-0 text-center">
               {{ errorMessage }}
@@ -250,7 +256,7 @@ function goToProjects() {
           </div>
           <Button
             v-if="auth.isAuthenticated.value"
-            label="Go to Projects"
+            :label="$t('common.goToProjects')"
             icon="pi pi-arrow-right"
             iconPos="right"
             class="w-full"
@@ -258,7 +264,7 @@ function goToProjects() {
           />
           <Button
             v-else
-            label="Sign In"
+            :label="$t('common.signIn')"
             icon="pi pi-sign-in"
             class="w-full"
             @click="loginAndReturn"

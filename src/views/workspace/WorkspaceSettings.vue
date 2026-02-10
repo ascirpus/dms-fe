@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useWorkspace } from '@/composables/useWorkspace';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { currentWorkspaceName } = useWorkspace();
 
-const navItems = [
-  { label: 'Document Types', icon: 'pi pi-file', route: 'workspace-document-types' },
-  { label: 'Members', icon: 'pi pi-users', route: 'workspace-members' },
-];
+const navItems = computed(() => [
+  { label: t('workspaceSettings.documentTypes'), icon: 'pi pi-file', route: 'workspace-document-types' },
+  { label: t('workspaceSettings.members'), icon: 'pi pi-users', route: 'workspace-members' },
+]);
 
 function isActive(routeName: string) {
   return route.name === routeName;
@@ -24,7 +27,7 @@ function navigateTo(routeName: string) {
   <div class="flex flex-col h-full p-0">
     <div class="max-w-[1200px] mx-auto w-full flex flex-col md:px-0 px-3">
       <div class="p-4">
-        <h1 class="font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ currentWorkspaceName || 'Workspace' }} Settings</h1>
+        <h1 class="font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ $t('workspaceSettings.title', { workspace: currentWorkspaceName || t('workspaceSwitcher.workspace') }) }}</h1>
       </div>
 
       <div class="flex flex-col md:flex-row gap-6 p-4 pt-0">

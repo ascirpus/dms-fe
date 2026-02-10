@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useMainStore } from '@/stores/mainStore';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   size?: 'sm' | 'md' | 'lg'
@@ -41,11 +44,11 @@ const textWidthClass = computed(() => {
 
 <template>
   <div class="flex items-end gap-2">
-    <img src="/images/logo.svg" alt="CedarStack Logo" class="block h-auto" :class="iconWidthClass" />
+    <img src="/images/logo.svg" :alt="$t('logo.altText')" class="block h-auto" :class="iconWidthClass" />
     <img :src="logoTextSrc" alt="CedarStack" class="block h-auto" :class="textWidthClass" />
     <div v-if="showTagline" class="font-['Inter',sans-serif] font-medium text-sm leading-[1.4] text-[var(--text-color)] flex flex-col ml-2">
-      <span>Intelligent</span>
-      <span>Document Hub</span>
+      <span>{{ $t('logo.intelligent') }}</span>
+      <span>{{ $t('logo.documentHub') }}</span>
     </div>
   </div>
 </template>

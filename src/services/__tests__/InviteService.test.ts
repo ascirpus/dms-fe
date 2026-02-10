@@ -109,12 +109,16 @@ describe('InviteService', () => {
   });
 
   describe('acceptInvite', () => {
-    it('should accept an invite', async () => {
-      vi.mocked(mockApiClient.post).mockResolvedValue({});
+    it('should accept an invite and return accepted data', async () => {
+      const acceptedData = { projectAssignments: [{ projectId: 'proj-1', partyId: 'party-1' }] };
+      vi.mocked(mockApiClient.post).mockResolvedValue({
+        data: { status: 'SUCCESS', data: acceptedData },
+      });
 
-      await service.acceptInvite('inv-1');
+      const result = await service.acceptInvite('inv-1');
 
       expect(mockApiClient.post).toHaveBeenCalledWith('/api/tenants/invites/inv-1/accept');
+      expect(result).toEqual(acceptedData);
     });
   });
 

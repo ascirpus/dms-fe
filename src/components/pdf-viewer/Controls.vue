@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Button, Menu } from 'primevue';
+
+const { t } = useI18n();
 
 interface Props {
   currentPage: number;
@@ -53,23 +56,23 @@ const commentsMenu = ref();
 const versionMenu = ref();
 const moreMenu = ref();
 
-const commentsMenuItems = ref([
-  { label: 'Show All Comments', icon: 'pi pi-comments', command: () => emit('show-all-comments') },
-  { label: 'Show My Comments', icon: 'pi pi-user', command: () => emit('show-my-comments') },
+const commentsMenuItems = computed(() => [
+  { label: t('pdfControls.showAllComments'), icon: 'pi pi-comments', command: () => emit('show-all-comments') },
+  { label: t('pdfControls.showMyComments'), icon: 'pi pi-user', command: () => emit('show-my-comments') },
   { separator: true },
-  { label: 'Expand All Comments', icon: 'pi pi-angle-double-down', command: () => emit('expand-all-comments') },
-  { label: 'Collapse All Comments', icon: 'pi pi-angle-double-up', command: () => emit('collapse-all-comments') },
+  { label: t('pdfControls.expandAllComments'), icon: 'pi pi-angle-double-down', command: () => emit('expand-all-comments') },
+  { label: t('pdfControls.collapseAllComments'), icon: 'pi pi-angle-double-up', command: () => emit('collapse-all-comments') },
 ]);
 
-const versionMenuItems = ref([
-  { label: 'Show Version History', icon: 'pi pi-history', command: () => emit('show-version-history') },
-  { label: 'Confirm Version', icon: 'pi pi-check-circle', command: () => emit('confirm-version') },
+const versionMenuItems = computed(() => [
+  { label: t('pdfControls.showVersionHistory'), icon: 'pi pi-history', command: () => emit('show-version-history') },
+  { label: t('pdfControls.confirmVersion'), icon: 'pi pi-check-circle', command: () => emit('confirm-version') },
 ]);
 
-const moreMenuItems = ref([
-  { label: 'Download', icon: 'pi pi-download', command: () => emit('download') },
-  { label: 'Print', icon: 'pi pi-print', command: () => emit('print') },
-  { label: 'Share', icon: 'pi pi-share-alt', command: () => emit('share') },
+const moreMenuItems = computed(() => [
+  { label: t('pdfControls.download'), icon: 'pi pi-download', command: () => emit('download') },
+  { label: t('pdfControls.print'), icon: 'pi pi-print', command: () => emit('print') },
+  { label: t('pdfControls.share'), icon: 'pi pi-share-alt', command: () => emit('share') },
 ]);
 </script>
 
@@ -85,7 +88,7 @@ const moreMenuItems = ref([
         @click="previousPage"
         :disabled="currentPage <= 1"
       />
-      <span class="text-[13px] text-[var(--text-secondary)] min-w-[100px] text-center">Page {{ currentPage }} of {{ pageCount }}</span>
+      <span class="text-[13px] text-[var(--text-secondary)] min-w-[100px] text-center">{{ $t('pdfControls.pageOf', { current: currentPage, total: pageCount }) }}</span>
       <Button
         icon="pi pi-angle-right"
         text
@@ -105,23 +108,23 @@ const moreMenuItems = ref([
         text
         rounded
         size="small"
-        aria-label="Pan mode"
+        :aria-label="$t('pdfControls.panMode')"
         @click="emit('toggle-pan')"
       />
 
       <Button
-        v-tooltip.top="'Comment mode (C)'"
+        v-tooltip.top="$t('pdfControls.commentMode')"
         icon="pi pi-comment"
         text
         rounded
         size="small"
         :class="{ 'marker-active-btn': markerEnabled }"
-        aria-label="Add marker"
+        :aria-label="$t('pdfControls.addMarker')"
         @click="emit('toggle-marker')"
       />
 
       <Button
-        label="Comments"
+        :label="$t('pdfControls.comments')"
         icon="pi pi-chevron-down"
         iconPos="right"
         text
@@ -132,7 +135,7 @@ const moreMenuItems = ref([
 
       <template v-if="versioningEnabled">
         <Button
-          label="Version"
+          :label="$t('pdfControls.version')"
           icon="pi pi-chevron-down"
           iconPos="right"
           text
@@ -147,7 +150,7 @@ const moreMenuItems = ref([
         text
         rounded
         size="small"
-        aria-label="Document info"
+        :aria-label="$t('pdfControls.documentInfo')"
         @click="emit('show-document-info')"
       />
 
@@ -156,7 +159,7 @@ const moreMenuItems = ref([
         text
         rounded
         size="small"
-        aria-label="More options"
+        :aria-label="$t('pdfControls.moreOptions')"
         @click="(e: Event) => moreMenu.toggle(e)"
       />
       <Menu ref="moreMenu" :model="moreMenuItems" :popup="true" />

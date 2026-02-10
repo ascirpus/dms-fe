@@ -4,7 +4,7 @@
 
 This document tracks the implementation status of features between the backend (documented in `/evo/Work/dms/docs/FEATURES.md`) and the frontend application.
 
-For detailed UX documentation of each feature (what it does, how to interact with it), see [`docs/features/`](docs/features/).
+For detailed UX documentation of each feature (what it does, how to interact with it), see [`dev-docs/features/`](dev-docs/features/).
 
 ---
 

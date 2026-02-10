@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { Comment, User } from '@/types';
 import { useComments } from '@/composables/useComments';
 import { getAvatarColor, getInitialsFromUser, getDisplayName } from '@/utils/avatar';
@@ -16,6 +17,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['jump-to-marker']);
 
+const { t } = useI18n();
 const { addComment } = useComments();
 const comments = inject<Ref<Comment[]>>('comments')!;
 
@@ -77,7 +79,7 @@ const submitComment = async () => {
       <input
         v-model="newCommentText"
         class="flex-1 border-none outline-none text-[13px] text-[var(--text-color)] bg-transparent py-1.5 placeholder:text-[var(--text-secondary)]"
-        placeholder="Add a comment..."
+        :placeholder="$t('commentTable.addComment')"
         @keydown.enter="submitComment"
       />
       <Button
@@ -91,7 +93,7 @@ const submitComment = async () => {
     </div>
 
     <div v-if="sortedComments.length === 0" class="flex items-center justify-center p-8 text-[var(--text-secondary)] text-[13px] italic">
-      No comments yet
+      {{ $t('commentTable.noComments') }}
     </div>
 
     <div v-else class="flex-1 overflow-y-auto">
@@ -121,7 +123,7 @@ const submitComment = async () => {
             v-if="comment.marker"
             class="inline-block mt-1 text-[11px] text-[var(--primary-color)] bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] px-1.5 py-px rounded"
           >
-            Page {{ comment.marker.pageNumber }}
+            {{ $t('commentTable.page', { number: comment.marker.pageNumber }) }}
           </span>
         </div>
         <span v-if="comment.isResolved" class="flex items-center justify-center w-5 h-5 rounded-full bg-[#27ae60] text-white text-[10px] shrink-0 mt-0.5">

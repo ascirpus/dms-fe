@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import Logo from "@/components/base/Logo.vue";
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 
+const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 
@@ -50,7 +52,7 @@ const completeSetup = async () => {
     router.push({ name: 'login' });
   } catch (error) {
     console.error('Account setup error:', error);
-    errorMessage.value = 'Failed to complete account setup. Please try again.';
+    errorMessage.value = t('completeAccountSetup.failedToComplete');
   } finally {
     isLoading.value = false;
   }
@@ -65,7 +67,7 @@ const completeSetup = async () => {
         <Logo size="lg" :show-tagline="true" />
 
         <!-- Heading -->
-        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-slate-800 m-0">Complete Account Setup</h1>
+        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-slate-800 m-0">{{ $t('completeAccountSetup.title') }}</h1>
 
         <!-- Error message -->
         <Message v-if="errorMessage" severity="error" :closable="false">
@@ -74,51 +76,51 @@ const completeSetup = async () => {
 
         <!-- Username (read-only) -->
         <div class="flex flex-col gap-1.5">
-          <label class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Username</label>
+          <label class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('completeAccountSetup.username') }}</label>
           <p class="font-[Inter,sans-serif] font-normal text-sm leading-5 text-[var(--text-color)] m-0 py-2">{{ username }}</p>
         </div>
 
         <!-- Firstname -->
         <div class="flex flex-col gap-1.5">
-          <label for="firstName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Firstname</label>
+          <label for="firstName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('completeAccountSetup.firstname') }}</label>
           <InputText
             id="firstName"
             v-model="firstName"
-            placeholder="Prefilled by Invite"
+            :placeholder="$t('completeAccountSetup.prefilledByInvite')"
             class="w-full"
           />
         </div>
 
         <!-- Lastname -->
         <div class="flex flex-col gap-1.5">
-          <label for="lastName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Lastname</label>
+          <label for="lastName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('completeAccountSetup.lastname') }}</label>
           <InputText
             id="lastName"
             v-model="lastName"
-            placeholder="Prefilled by Invite"
+            :placeholder="$t('completeAccountSetup.prefilledByInvite')"
             class="w-full"
           />
         </div>
 
         <!-- Phone Number -->
         <div class="flex flex-col gap-1.5">
-          <label for="phoneNumber" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Phone Number</label>
+          <label for="phoneNumber" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('completeAccountSetup.phoneNumber') }}</label>
           <InputText
             id="phoneNumber"
             v-model="phoneNumber"
             type="tel"
-            placeholder="Your Phone Number"
+            :placeholder="$t('completeAccountSetup.phonePlaceholder')"
             class="w-full"
           />
         </div>
 
         <!-- Password -->
         <div class="flex flex-col gap-1.5">
-          <label for="password" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Password</label>
+          <label for="password" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('completeAccountSetup.password') }}</label>
           <Password
             id="password"
             v-model="password"
-            placeholder="Your Password"
+            :placeholder="$t('completeAccountSetup.passwordPlaceholder')"
             :feedback="false"
             toggleMask
             inputClass="w-full"
@@ -128,18 +130,18 @@ const completeSetup = async () => {
 
         <!-- Confirm Password -->
         <div class="flex flex-col gap-1.5">
-          <label for="confirmPassword" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Confirm Password</label>
+          <label for="confirmPassword" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('completeAccountSetup.confirmPassword') }}</label>
           <Password
             id="confirmPassword"
             v-model="confirmPassword"
-            placeholder="Confirm Your Password"
+            :placeholder="$t('completeAccountSetup.confirmPasswordPlaceholder')"
             :feedback="false"
             toggleMask
             inputClass="w-full"
             class="w-full"
             :invalid="!passwordsMatch"
           />
-          <small v-if="!passwordsMatch" class="text-[var(--color-danger)] font-[Inter,sans-serif] text-xs">Passwords do not match</small>
+          <small v-if="!passwordsMatch" class="text-[var(--color-danger)] font-[Inter,sans-serif] text-xs">{{ $t('completeAccountSetup.passwordsDoNotMatch') }}</small>
         </div>
 
         <!-- Submit -->
@@ -149,7 +151,7 @@ const completeSetup = async () => {
             @click="completeSetup"
             :disabled="!isValidForm || isLoading"
             :loading="isLoading"
-            label="Complete Setup"
+            :label="$t('completeAccountSetup.completeSetup')"
           />
         </div>
       </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useSearch } from '@/composables/useSearch';
 import { useDocumentTypes } from '@/composables/useDocumentTypes';
 import Button from 'primevue/button';
@@ -10,6 +11,7 @@ import InputText from 'primevue/inputtext';
 import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { documentTypes } = useDocumentTypes();
@@ -80,7 +82,7 @@ watch([queryParam, projectIdParam], doSearch);
         <InputIcon class="pi pi-search" />
         <InputText
           v-model="searchQuery"
-          placeholder="Search documents..."
+          :placeholder="$t('searchResults.searchDocuments')"
           class="w-full"
           @keydown="onSearchKeydown"
         />
@@ -89,10 +91,10 @@ watch([queryParam, projectIdParam], doSearch);
       <div v-if="projectIdParam" class="project-scope-badge flex items-center gap-3">
         <Tag severity="info" rounded>
           <i class="pi pi-folder"></i>
-          <span>Project scoped</span>
+          <span>{{ $t('searchResults.projectScoped') }}</span>
         </Tag>
         <Button
-          label="Search all projects"
+          :label="$t('searchResults.searchAllProjects')"
           text
           size="small"
           @click="clearProjectScope"
@@ -103,26 +105,26 @@ watch([queryParam, projectIdParam], doSearch);
     <!-- Loading state -->
     <div v-if="loading" class="flex items-center justify-center gap-3 p-12 text-[var(--text-secondary)]">
       <i class="pi pi-spin pi-spinner text-2xl"></i>
-      <span>Searching...</span>
+      <span>{{ $t('searchResults.searching') }}</span>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="queryParam && results.length === 0" class="flex flex-col items-center justify-center p-12 text-center">
       <i class="pi pi-search text-[48px] mb-4 text-[var(--text-secondary)]"></i>
-      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No results found</h3>
-      <p class="m-0 text-[var(--text-secondary)]">No documents matching "{{ queryParam }}" were found.</p>
+      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">{{ $t('searchResults.noResults') }}</h3>
+      <p class="m-0 text-[var(--text-secondary)]">{{ $t('searchResults.noDocsMatching', { query: queryParam }) }}</p>
     </div>
 
     <!-- No query state -->
     <div v-else-if="!queryParam" class="flex flex-col items-center justify-center p-12 text-center">
       <i class="pi pi-search text-[48px] mb-4 text-[var(--text-secondary)]"></i>
-      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">Search documents</h3>
-      <p class="m-0 text-[var(--text-secondary)]">Enter a search term to find documents across your projects.</p>
+      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">{{ $t('searchResults.searchDocsTitle') }}</h3>
+      <p class="m-0 text-[var(--text-secondary)]">{{ $t('searchResults.enterSearchTerm') }}</p>
     </div>
 
     <!-- Results list -->
     <div v-else class="flex flex-col">
-      <p class="text-sm text-[var(--text-secondary)] m-0 mb-4">{{ results.length }} result{{ results.length === 1 ? '' : 's' }} for "{{ queryParam }}"</p>
+      <p class="text-sm text-[var(--text-secondary)] m-0 mb-4">{{ $t('searchResults.resultCount', { count: results.length, query: queryParam }, results.length) }}</p>
 
       <div
         v-for="result in paginatedResults"

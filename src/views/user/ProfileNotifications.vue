@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useNotifications } from '@/composables/useNotifications';
 import type { NotificationPreferences } from '@/types/Notification';
 
 import ToggleSwitch from 'primevue/toggleswitch';
 import ProgressSpinner from 'primevue/progressspinner';
 
+const { t } = useI18n();
 const { fetchPreferences, updatePreferences } = useNotifications();
 
 const loading = ref(true);
@@ -22,49 +24,49 @@ interface EventGroup {
   events: EventDef[];
 }
 
-const eventGroups: EventGroup[] = [
+const eventGroups = computed<EventGroup[]>(() => [
   {
-    label: 'Project',
+    label: t('profileNotifications.groupProject'),
     events: [
-      { type: 'project.user_added', label: 'Added to project', description: 'When you are added as a member to a project' },
-      { type: 'project.user_removed', label: 'Removed from project', description: 'When you are removed from a project you were part of' },
+      { type: 'project.user_added', label: t('profileNotifications.projectUserAdded'), description: t('profileNotifications.projectUserAddedDesc') },
+      { type: 'project.user_removed', label: t('profileNotifications.projectUserRemoved'), description: t('profileNotifications.projectUserRemovedDesc') },
     ],
   },
   {
-    label: 'Documents',
+    label: t('profileNotifications.groupDocuments'),
     events: [
-      { type: 'document.added', label: 'Document added', description: 'When a new document is uploaded to a project you belong to' },
-      { type: 'document.removed', label: 'Document removed', description: 'When a document is deleted from a project you belong to' },
-      { type: 'document.approved', label: 'Document approved', description: 'When a document you submitted or are assigned to is approved' },
-      { type: 'document.rejected', label: 'Document rejected', description: 'When a document you submitted or are assigned to is rejected' },
+      { type: 'document.added', label: t('profileNotifications.documentAdded'), description: t('profileNotifications.documentAddedDesc') },
+      { type: 'document.removed', label: t('profileNotifications.documentRemoved'), description: t('profileNotifications.documentRemovedDesc') },
+      { type: 'document.approved', label: t('profileNotifications.documentApproved'), description: t('profileNotifications.documentApprovedDesc') },
+      { type: 'document.rejected', label: t('profileNotifications.documentRejected'), description: t('profileNotifications.documentRejectedDesc') },
     ],
   },
   {
-    label: 'Document Updates',
+    label: t('profileNotifications.groupUpdates'),
     events: [
-      { type: 'document.updated.version', label: 'Version updated', description: 'When a new version of a document is uploaded' },
-      { type: 'document.updated.comment_added', label: 'Comment added', description: 'When someone adds a comment to a document you are involved with' },
-      { type: 'document.updated.comment_resolved', label: 'Comment resolved', description: 'When a comment thread on a document is marked as resolved' },
+      { type: 'document.updated.version', label: t('profileNotifications.versionUpdated'), description: t('profileNotifications.versionUpdatedDesc') },
+      { type: 'document.updated.comment_added', label: t('profileNotifications.commentAdded'), description: t('profileNotifications.commentAddedDesc') },
+      { type: 'document.updated.comment_resolved', label: t('profileNotifications.commentResolved'), description: t('profileNotifications.commentResolvedDesc') },
     ],
   },
   {
-    label: 'Deadline Reminders',
+    label: t('profileNotifications.groupDeadlines'),
     events: [
-      { type: 'document.action_date_approaching', label: 'Action date approaching', description: 'Reminder before a document\'s required action date' },
-      { type: 'document.approval_deadline_approaching', label: 'Approval deadline approaching', description: 'Reminder before a document\'s approval deadline expires' },
-      { type: 'document.signature_deadline_approaching', label: 'Signature deadline approaching', description: 'Reminder before a document\'s signature deadline expires' },
+      { type: 'document.action_date_approaching', label: t('profileNotifications.actionDateApproaching'), description: t('profileNotifications.actionDateApproachingDesc') },
+      { type: 'document.approval_deadline_approaching', label: t('profileNotifications.approvalDeadlineApproaching'), description: t('profileNotifications.approvalDeadlineApproachingDesc') },
+      { type: 'document.signature_deadline_approaching', label: t('profileNotifications.signatureDeadlineApproaching'), description: t('profileNotifications.signatureDeadlineApproachingDesc') },
     ],
   },
-];
+]);
 
-const allEventTypes = eventGroups.flatMap(g => g.events.map(e => e.type));
+const allEventTypes = computed(() => eventGroups.value.flatMap(g => g.events.map(e => e.type)));
 
 function getChannel(eventType: string, channel: 'web' | 'email'): boolean {
   return preferences.value[eventType]?.[channel] ?? true;
 }
 
-const allWebEnabled = computed(() => allEventTypes.every(t => getChannel(t, 'web')));
-const allEmailEnabled = computed(() => allEventTypes.every(t => getChannel(t, 'email')));
+const allWebEnabled = computed(() => allEventTypes.value.every(et => getChannel(et, 'web')));
+const allEmailEnabled = computed(() => allEventTypes.value.every(et => getChannel(et, 'email')));
 
 async function toggleChannel(eventType: string, channel: 'web' | 'email') {
   const currentValue = getChannel(eventType, channel);
@@ -85,7 +87,7 @@ async function toggleChannel(eventType: string, channel: 'web' | 'email') {
 async function setAllChannel(channel: 'web' | 'email', value: boolean) {
   const previousValues: Record<string, boolean> = {};
 
-  for (const eventType of allEventTypes) {
+  for (const eventType of allEventTypes.value) {
     previousValues[eventType] = getChannel(eventType, channel);
     if (!preferences.value[eventType]) {
       preferences.value[eventType] = { web: true, email: true };
@@ -96,7 +98,7 @@ async function setAllChannel(channel: 'web' | 'email', value: boolean) {
   try {
     await updatePreferences({ ...preferences.value });
   } catch {
-    for (const eventType of allEventTypes) {
+    for (const eventType of allEventTypes.value) {
       preferences.value[eventType][channel] = previousValues[eventType];
     }
   }
@@ -114,7 +116,7 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Notifications</h2>
+    <h2 class="font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">{{ $t('profileNotifications.title') }}</h2>
 
     <div v-if="loading" class="flex items-center justify-center py-12">
       <ProgressSpinner style="width: 40px; height: 40px" />
@@ -124,7 +126,7 @@ onMounted(async () => {
       <div class="flex items-center gap-4 px-1">
         <span class="flex-1"></span>
         <div class="w-14 flex flex-col items-center gap-1">
-          <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Web</span>
+          <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">{{ $t('profileNotifications.web') }}</span>
           <ToggleSwitch
             data-testid="toggle-all-web"
             :modelValue="allWebEnabled"
@@ -132,7 +134,7 @@ onMounted(async () => {
           />
         </div>
         <div class="w-14 flex flex-col items-center gap-1">
-          <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Email</span>
+          <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">{{ $t('profileNotifications.email') }}</span>
           <ToggleSwitch
             data-testid="toggle-all-email"
             :modelValue="allEmailEnabled"

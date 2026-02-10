@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { useAuth } from '@/composables/useAuth';
 import { useBilling } from '@/composables/useBilling';
@@ -15,6 +16,7 @@ import Dialog from 'primevue/dialog';
 import SelectButton from 'primevue/selectbutton';
 import ProgressSpinner from 'primevue/progressspinner';
 
+const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
 const { apiClient } = useAuth();
@@ -45,19 +47,19 @@ const usageMetrics = computed(() => {
 
   return [
     {
-      label: 'Projects',
+      label: t('workspaceOverview.projects'),
       current: usage.value.projectsCount,
       max: tier.value.maxProjects,
       icon: 'pi-folder',
     },
     {
-      label: 'Documents',
+      label: t('workspaceOverview.documents'),
       current: usage.value.documentsCount,
       max: tier.value.maxDocumentsPerProject,
       icon: 'pi-file',
     },
     {
-      label: 'Storage',
+      label: t('workspaceOverview.storage'),
       current: usage.value.storageUsedMb,
       max: tier.value.maxStorageMb,
       icon: 'pi-database',
@@ -77,7 +79,7 @@ function getPercentage(current: number, max?: number): number {
 
 function formatUsageValue(current: number, max?: number, formatter?: (v: number) => string): string {
   const fmt = formatter ?? ((v: number) => v.toString());
-  if (max === undefined || max === 2147483647) return `${fmt(current)} / Unlimited`;
+  if (max === undefined || max === 2147483647) return `${fmt(current)} / ${t('common.unlimited')}`;
   return `${fmt(current)} / ${fmt(max)}`;
 }
 
@@ -130,10 +132,10 @@ function navigateToItem(item: CleanupItem) {
 
 const checkoutLoading = ref<string | null>(null);
 const selectedInterval = ref<BillingInterval>('YEARLY');
-const intervalOptions = [
-  { label: 'Monthly', value: 'MONTHLY' as BillingInterval },
-  { label: 'Yearly', value: 'YEARLY' as BillingInterval },
-];
+const intervalOptions = computed(() => [
+  { label: t('workspaceOverview.monthly'), value: 'MONTHLY' as BillingInterval },
+  { label: t('workspaceOverview.yearly'), value: 'YEARLY' as BillingInterval },
+]);
 
 function getPlanPrice(plan: BillingPlan, interval: BillingInterval): number {
   return plan.prices.find(p => p.interval === interval)?.priceInCents ?? 0;
@@ -163,7 +165,7 @@ async function onStartCheckout(planId: string) {
   try {
     await startCheckout(planId, selectedInterval.value);
   } catch {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not start checkout. Please try again.', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('workspaceOverview.couldNotCheckout'), life: 3000 });
   } finally {
     checkoutLoading.value = null;
   }
@@ -173,7 +175,7 @@ async function onManageSubscription() {
   try {
     await openBillingPortal();
   } catch {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not open billing portal. Please try again.', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('workspaceOverview.couldNotOpenPortal'), life: 3000 });
   }
 }
 
@@ -193,12 +195,12 @@ async function onConfirmCancel() {
     cancelledPeriodEnd.value = result.currentPeriodEnd;
     toast.add({
       severity: 'success',
-      summary: 'Subscription Cancelled',
-      detail: `Your subscription has been cancelled. You will continue to have access to your current plan benefits until ${formatDate(result.currentPeriodEnd)}.`,
+      summary: t('workspaceOverview.subscriptionCancelledToast'),
+      detail: t('workspaceOverview.cancelledToastDetail', { date: formatDate(result.currentPeriodEnd) }),
       life: 8000,
     });
   } catch {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Could not cancel subscription. Please try again.', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('workspaceOverview.couldNotCancel'), life: 3000 });
   } finally {
     cancelLoading.value = false;
   }
@@ -276,7 +278,7 @@ onMounted(async () => {
       <!-- Loading -->
       <div v-if="loading" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
         <ProgressSpinner style="width: 50px; height: 50px" />
-        <span>Loading workspace...</span>
+        <span>{{ $t('workspaceOverview.loadingWorkspace') }}</span>
       </div>
 
       <template v-else-if="currentWorkspace">
@@ -288,7 +290,7 @@ onMounted(async () => {
 
         <!-- Usage & Limits -->
         <div class="flex items-center justify-between p-4 gap-2">
-          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Usage &amp; Limits</h2>
+          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">{{ $t('workspaceOverview.usageLimits') }}</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 px-4 pb-4">
@@ -307,13 +309,13 @@ onMounted(async () => {
               :severity="getProgressSeverity(metric.current, metric.max)"
               class="usage-bar"
             />
-            <div v-else class="text-[13px] text-[var(--text-secondary)]">Unlimited</div>
+            <div v-else class="text-[13px] text-[var(--text-secondary)]">{{ $t('common.unlimited') }}</div>
           </div>
         </div>
 
         <!-- Features -->
         <div class="flex items-center justify-between p-4 gap-2">
-          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Features</h2>
+          <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">{{ $t('workspaceOverview.features') }}</h2>
         </div>
 
         <div class="flex flex-col gap-2 px-4 pb-4">
@@ -324,17 +326,17 @@ onMounted(async () => {
             <span class="text-sm font-medium text-[var(--text-color)]">{{ formatFeatureName(feature.feature) }}</span>
           </div>
           <div v-if="features.length === 0" class="text-[var(--text-secondary)] text-sm py-2.5 px-3.5">
-            No features configured for this tier.
+            {{ $t('workspaceOverview.noFeatures') }}
           </div>
         </div>
 
         <!-- Cleanup Suggestions -->
         <template v-if="anyUsageAbove80 && cleanupItems.length > 0">
           <div class="flex items-center justify-between p-4 gap-2">
-            <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">Cleanup Suggestions</h2>
+            <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">{{ $t('workspaceOverview.cleanupSuggestions') }}</h2>
           </div>
           <p class="text-[var(--text-secondary)] text-sm mx-4 mb-2 mt-0">
-            These items haven't been updated recently. Review them to free up space.
+            {{ $t('workspaceOverview.cleanupHint') }}
           </p>
 
           <div class="flex flex-col gap-1 px-4 pb-4">
@@ -358,24 +360,24 @@ onMounted(async () => {
         <!-- Billing -->
         <div class="flex items-center justify-between p-4 gap-2">
           <h2 class="font-[Inter,sans-serif] font-semibold text-2xl leading-[1.25] text-[var(--text-color)] m-0">
-            {{ isSubscribed ? 'Subscription' : 'Upgrade' }}
+            {{ isSubscribed ? $t('workspaceOverview.subscription') : $t('common.upgrade') }}
           </h2>
         </div>
 
         <!-- Subscribed: manage existing subscription -->
         <div v-if="isSubscribed" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
-          <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">{{ billingStatus?.currentPlan?.name ?? 'Active' }} Plan</h3>
+          <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">{{ $t('workspaceOverview.activePlan', { plan: billingStatus?.currentPlan?.name ?? 'Active' }) }}</h3>
           <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
-            Your subscription is active. Manage billing, update payment methods, or change your plan.
+            {{ $t('workspaceOverview.subscriptionActive') }}
           </p>
           <div class="flex gap-3">
             <Button
-              label="Manage Subscription"
+              :label="$t('workspaceOverview.manageSubscription')"
               icon="pi pi-credit-card"
               @click="onManageSubscription"
             />
             <Button
-              label="Cancel Subscription"
+              :label="$t('workspaceOverview.cancelSubscription')"
               icon="pi pi-times"
               severity="danger"
               text
@@ -388,14 +390,13 @@ onMounted(async () => {
         <div v-else-if="cancelledPeriodEnd || currentSubscription?.status === 'canceled'" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
           <div class="flex items-center gap-2 mb-2">
             <i class="pi pi-info-circle text-[var(--text-secondary)]"></i>
-            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">Subscription Cancelled</h3>
+            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">{{ $t('workspaceOverview.subscriptionCancelled') }}</h3>
           </div>
           <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
-            Your subscription has been cancelled. You will continue to receive your current plan benefits until
-            <strong class="text-[var(--text-color)]">{{ formatDate(cancelledPeriodEnd ?? currentSubscription?.currentPeriodEnd ?? '') }}</strong>.
+            {{ $t('workspaceOverview.cancelledAccess', { date: formatDate(cancelledPeriodEnd ?? currentSubscription?.currentPeriodEnd ?? '') }) }}
           </p>
           <Button
-            label="Resubscribe"
+            :label="$t('workspaceOverview.resubscribe')"
             icon="pi pi-refresh"
             @click="onManageSubscription"
           />
@@ -407,13 +408,13 @@ onMounted(async () => {
           <div v-if="isTopTier && !isHighestTier" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
             <div class="flex items-center gap-2.5 mb-2">
               <i class="pi pi-building text-lg text-[var(--primary-color)]"></i>
-              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">Need more?</h3>
+              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">{{ $t('workspaceOverview.needMore') }}</h3>
             </div>
             <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
-              Get unlimited storage, SSO, custom SLAs, and dedicated support with an Enterprise plan tailored to your organization.
+              {{ $t('workspaceOverview.enterpriseDesc') }}
             </p>
             <Button
-              label="Contact Sales"
+              :label="$t('workspaceOverview.contactSales')"
               icon="pi pi-envelope"
               as="a"
               href="mailto:sales@cedarstack.com"
@@ -424,10 +425,10 @@ onMounted(async () => {
           <div v-else-if="isHighestTier" class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
             <div class="flex items-center gap-2.5">
               <i class="pi pi-check-circle text-lg text-[#27ae60]"></i>
-              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">You're on our top-tier plan</h3>
+              <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">{{ $t('workspaceOverview.topTierPlan') }}</h3>
             </div>
             <p class="text-sm text-[var(--text-secondary)] mt-2 mb-0 leading-normal">
-              You have access to all features and the highest limits available. Contact support if you need anything.
+              {{ $t('workspaceOverview.topTierDesc') }}
             </p>
           </div>
 
@@ -447,13 +448,13 @@ onMounted(async () => {
                 <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">{{ nextUpgradePlan.name }}</h3>
                 <div class="text-2xl font-bold text-[var(--text-color)]">
                   {{ formatPrice(getPlanPrice(nextUpgradePlan, selectedInterval), nextUpgradePlan.currency) }}
-                  <span class="text-sm font-normal text-[var(--text-secondary)]">{{ selectedInterval === 'YEARLY' ? '/year' : '/month' }}</span>
+                  <span class="text-sm font-normal text-[var(--text-secondary)]">{{ selectedInterval === 'YEARLY' ? $t('workspaceOverview.perYear') : $t('workspaceOverview.perMonth') }}</span>
                 </div>
                 <span class="text-xs font-medium text-[#27ae60]" :class="{ 'invisible': selectedInterval !== 'YEARLY' }">
-                  2 months free
+                  {{ $t('workspaceOverview.twoMonthsFree') }}
                 </span>
                 <Button
-                  label="Upgrade"
+                  :label="$t('common.upgrade')"
                   icon="pi pi-arrow-up"
                   :loading="checkoutLoading === nextUpgradePlan.id"
                   @click="onStartCheckout(nextUpgradePlan.id)"
@@ -465,12 +466,12 @@ onMounted(async () => {
 
           <!-- Fallback -->
           <div v-else class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-6 mx-4 mb-4">
-            <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">Need more from your workspace?</h3>
+            <h3 class="text-lg font-semibold text-[var(--text-color)] mt-0 mb-2">{{ $t('workspaceOverview.needMoreWorkspace') }}</h3>
             <p class="text-sm text-[var(--text-secondary)] mt-0 mb-4 leading-normal">
-              Unlock higher limits, advanced features, and priority support by upgrading your plan.
+              {{ $t('workspaceOverview.upgradeDesc') }}
             </p>
             <Button
-              label="Manage Subscription"
+              :label="$t('workspaceOverview.manageSubscription')"
               icon="pi pi-credit-card"
               @click="onManageSubscription"
             />
@@ -478,21 +479,21 @@ onMounted(async () => {
         </template>
 
         <!-- Cancel confirmation dialog -->
-        <Dialog v-model:visible="showCancelDialog" header="Cancel Subscription" modal class="max-w-md">
+        <Dialog v-model:visible="showCancelDialog" :header="$t('workspaceOverview.cancelDialogHeader')" modal class="max-w-md">
           <div class="flex flex-col gap-4">
             <p class="text-sm text-[var(--text-secondary)] m-0 leading-normal">
-              Are you sure you want to cancel your subscription? You will continue to have access to your current plan benefits until the end of your billing period
+              {{ $t('workspaceOverview.cancelDialogMessage') }}
               <span v-if="currentSubscription?.currentPeriodEnd">
                 (<strong>{{ formatDate(currentSubscription.currentPeriodEnd) }}</strong>)
               </span>.
             </p>
             <p class="text-sm text-[var(--text-secondary)] m-0 leading-normal">
-              After that date, your workspace will be downgraded to the free tier.
+              {{ $t('workspaceOverview.cancelDialogDowngrade') }}
             </p>
           </div>
           <template #footer>
-            <Button label="Keep Subscription" text severity="secondary" @click="showCancelDialog = false" />
-            <Button label="Cancel Subscription" severity="danger" :loading="cancelLoading" @click="onConfirmCancel" />
+            <Button :label="$t('workspaceOverview.keepSubscription')" text severity="secondary" @click="showCancelDialog = false" />
+            <Button :label="$t('workspaceOverview.cancelSubscription')" severity="danger" :loading="cancelLoading" @click="onConfirmCancel" />
           </template>
         </Dialog>
       </template>

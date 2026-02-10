@@ -7,6 +7,7 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VuePdf from 'vue3-pdfjs'
 import App from './App.vue';
 import { createRouter } from './composables/useRoutes.js'
+import { i18n } from './plugins/i18n'
 
 // Import PrimeVue core
 import PrimeVue from 'primevue/config';
@@ -40,6 +41,8 @@ async function initializeApp() {
 
     // Pinia must be registered before keycloak so authStore is available
     app.use(pinia);
+
+    app.use(i18n);
 
     await vueKeycloak.install(app, keycloakConfig);
     app.use(createRouter(app));

@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { i18n } from '@/plugins/i18n';
 import ProjectList from '../ProjectList.vue';
 import { useProjects } from '@/composables/useProjects';
+import { useWorkspace } from '@/composables/useWorkspace';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import type { ProjectListItem } from '@/services/ProjectsService';
 
 vi.mock('@/composables/useProjects');
+vi.mock('@/composables/useWorkspace');
 vi.mock('vue-router');
 vi.mock('primevue/usetoast');
 vi.mock('primevue/useconfirm');
@@ -32,6 +35,11 @@ const globalStubs = {
   InputIcon: { template: '<span />' },
   IconField: { template: '<div><slot /></div>' },
   Paginator: { template: '<div />', props: ['first', 'rows', 'totalRecords'] },
+};
+
+const globalConfig = {
+  stubs: globalStubs,
+  plugins: [i18n],
 };
 
 describe('ProjectList.vue', () => {
@@ -79,6 +87,20 @@ describe('ProjectList.vue', () => {
     vi.mocked(useRouter).mockReturnValue(mockRouter);
     vi.mocked(useToast).mockReturnValue(mockToast);
     vi.mocked(useConfirm).mockReturnValue(mockConfirm);
+    vi.mocked(useWorkspace).mockReturnValue({
+      currentWorkspaceRole: ref('OWNER'),
+      currentWorkspaceName: ref('Acme Corp'),
+      currentWorkspace: ref(null),
+      userWorkspaces: ref([]),
+      workspacesLoaded: ref(true),
+      isSwitching: ref(false),
+      switchingToName: ref(''),
+      canCreateWorkspace: ref(false),
+      fetchWorkspaces: vi.fn(),
+      fetchCurrentWorkspace: vi.fn(),
+      createWorkspace: vi.fn(),
+      switchWorkspace: vi.fn(),
+    } as any);
   });
 
   describe('Initial Render', () => {
@@ -98,7 +120,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       expect(wrapper.vm.projects).toHaveLength(2);
@@ -120,7 +142,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       expect(wrapper.vm.loading).toBe(true);
@@ -144,7 +166,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       expect(wrapper.vm.error).toBe(mockError);
@@ -169,7 +191,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       expect(wrapper.vm.showNewProjectDialog).toBe(false);
@@ -198,7 +220,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       const newProject = {
@@ -240,7 +262,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       wrapper.vm.navigateToProject(mockProjects[0]);
@@ -270,7 +292,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       wrapper.vm.editRow(mockProjects[0]);
@@ -299,7 +321,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       wrapper.vm.confirmDeleteRow(mockProjects[0]);
@@ -330,7 +352,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       await wrapper.vm.handleDeleteProject('proj-1');
@@ -362,7 +384,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       await wrapper.vm.handleDeleteProject('proj-1');
@@ -393,10 +415,169 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       expect(wrapper.vm.filterText).toBe('');
+    });
+  });
+
+  describe('Role-Aware Empty States', () => {
+    it('should show Create Project button for OWNER role with no projects', () => {
+      vi.mocked(useProjects).mockReturnValue({
+        projects: ref([]),
+        loading: ref(false),
+        error: ref(null),
+        refetchProjects: vi.fn(),
+        getProjectUrl: vi.fn(),
+        createProject: vi.fn(),
+        deleteProject: vi.fn(),
+        fetchProjectById: vi.fn(),
+        resolveProject: vi.fn(),
+        resolveProjectId: vi.fn(),
+        useResolvedProjectId: vi.fn(),
+      } as any);
+
+      vi.mocked(useWorkspace).mockReturnValue({
+        currentWorkspaceRole: ref('OWNER'),
+        currentWorkspaceName: ref('Acme Corp'),
+        currentWorkspace: ref(null),
+        userWorkspaces: ref([]),
+        workspacesLoaded: ref(true),
+        isSwitching: ref(false),
+        switchingToName: ref(''),
+        canCreateWorkspace: ref(false),
+        fetchWorkspaces: vi.fn(),
+        fetchCurrentWorkspace: vi.fn(),
+        createWorkspace: vi.fn(),
+        switchWorkspace: vi.fn(),
+      } as any);
+
+      const wrapper = mount(ProjectList, {
+        global: globalConfig,
+      });
+
+      expect(wrapper.text()).toContain('No projects found');
+      expect(wrapper.text()).toContain('Create Project');
+    });
+
+    it('should show welcoming message for MEMBER role with no projects', () => {
+      vi.mocked(useProjects).mockReturnValue({
+        projects: ref([]),
+        loading: ref(false),
+        error: ref(null),
+        refetchProjects: vi.fn(),
+        getProjectUrl: vi.fn(),
+        createProject: vi.fn(),
+        deleteProject: vi.fn(),
+        fetchProjectById: vi.fn(),
+        resolveProject: vi.fn(),
+        resolveProjectId: vi.fn(),
+        useResolvedProjectId: vi.fn(),
+      } as any);
+
+      vi.mocked(useWorkspace).mockReturnValue({
+        currentWorkspaceRole: ref('MEMBER'),
+        currentWorkspaceName: ref('Acme Corp'),
+        currentWorkspace: ref(null),
+        userWorkspaces: ref([]),
+        workspacesLoaded: ref(true),
+        isSwitching: ref(false),
+        switchingToName: ref(''),
+        canCreateWorkspace: ref(false),
+        fetchWorkspaces: vi.fn(),
+        fetchCurrentWorkspace: vi.fn(),
+        createWorkspace: vi.fn(),
+        switchWorkspace: vi.fn(),
+      } as any);
+
+      const wrapper = mount(ProjectList, {
+        global: globalConfig,
+      });
+
+      expect(wrapper.text()).toContain('Welcome to Acme Corp');
+      expect(wrapper.text()).toContain('A project admin will grant you access to projects soon');
+      expect(wrapper.text()).not.toContain('Create Project');
+    });
+
+    it('should hide New Project button in toolbar for MEMBER role', () => {
+      vi.mocked(useProjects).mockReturnValue({
+        projects: ref(mockProjects),
+        loading: ref(false),
+        error: ref(null),
+        refetchProjects: vi.fn(),
+        getProjectUrl: vi.fn(),
+        createProject: vi.fn(),
+        deleteProject: vi.fn(),
+        fetchProjectById: vi.fn(),
+        resolveProject: vi.fn(),
+        resolveProjectId: vi.fn(),
+        useResolvedProjectId: vi.fn(),
+      } as any);
+
+      vi.mocked(useWorkspace).mockReturnValue({
+        currentWorkspaceRole: ref('MEMBER'),
+        currentWorkspaceName: ref('Acme Corp'),
+        currentWorkspace: ref(null),
+        userWorkspaces: ref([]),
+        workspacesLoaded: ref(true),
+        isSwitching: ref(false),
+        switchingToName: ref(''),
+        canCreateWorkspace: ref(false),
+        fetchWorkspaces: vi.fn(),
+        fetchCurrentWorkspace: vi.fn(),
+        createWorkspace: vi.fn(),
+        switchWorkspace: vi.fn(),
+      } as any);
+
+      const wrapper = mount(ProjectList, {
+        global: globalConfig,
+      });
+
+      const newProjectButton = wrapper.findAll('button').find(b =>
+        b.text().includes('New Project')
+      );
+      expect(newProjectButton).toBeUndefined();
+    });
+
+    it('should show New Project button for ADMIN role', () => {
+      vi.mocked(useProjects).mockReturnValue({
+        projects: ref(mockProjects),
+        loading: ref(false),
+        error: ref(null),
+        refetchProjects: vi.fn(),
+        getProjectUrl: vi.fn(),
+        createProject: vi.fn(),
+        deleteProject: vi.fn(),
+        fetchProjectById: vi.fn(),
+        resolveProject: vi.fn(),
+        resolveProjectId: vi.fn(),
+        useResolvedProjectId: vi.fn(),
+      } as any);
+
+      vi.mocked(useWorkspace).mockReturnValue({
+        currentWorkspaceRole: ref('ADMIN'),
+        currentWorkspaceName: ref('Acme Corp'),
+        currentWorkspace: ref(null),
+        userWorkspaces: ref([]),
+        workspacesLoaded: ref(true),
+        isSwitching: ref(false),
+        switchingToName: ref(''),
+        canCreateWorkspace: ref(false),
+        fetchWorkspaces: vi.fn(),
+        fetchCurrentWorkspace: vi.fn(),
+        createWorkspace: vi.fn(),
+        switchWorkspace: vi.fn(),
+      } as any);
+
+      const wrapper = mount(ProjectList, {
+        global: globalConfig,
+      });
+
+      const newProjectButton = wrapper.findAll('button').find(b =>
+        b.text().includes('New Project')
+      );
+      expect(newProjectButton).toBeDefined();
     });
   });
 
@@ -417,7 +598,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       wrapper.vm.filterText = 'Project 1';
@@ -443,7 +624,7 @@ describe('ProjectList.vue', () => {
       } as any);
 
       const wrapper = mount(ProjectList, {
-        global: { stubs: globalStubs },
+        global: globalConfig,
       });
 
       expect(wrapper.vm.filteredProjects).toHaveLength(2);

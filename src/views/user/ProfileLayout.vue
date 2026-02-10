@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { getDisplayName } from '@/utils/avatar';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuth();
@@ -13,11 +15,11 @@ const fullName = computed(() => {
   return getDisplayName(user ?? { email: '' });
 });
 
-const navItems = [
-  { label: 'General', icon: 'pi pi-user', route: 'profile-general' },
-  { label: 'Notifications', icon: 'pi pi-bell', route: 'profile-notifications' },
-  { label: 'Appearance', icon: 'pi pi-palette', route: 'profile-appearance' },
-];
+const navItems = computed(() => [
+  { label: t('profileLayout.general'), icon: 'pi pi-user', route: 'profile-general' },
+  { label: t('profileLayout.notifications'), icon: 'pi pi-bell', route: 'profile-notifications' },
+  { label: t('profileLayout.appearance'), icon: 'pi pi-palette', route: 'profile-appearance' },
+]);
 
 function isActive(routeName: string) {
   return route.name === routeName;

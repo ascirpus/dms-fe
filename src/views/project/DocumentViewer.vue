@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, provide, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { DocumentStatus, type Document } from '@/types/Document';
 import type { TenantUser } from '@/services/UsersService';
 
@@ -24,6 +25,7 @@ import { getAvatarColor, getInitialsFromUser } from '@/utils/avatar';
 const route = useRoute();
 const router = useRouter();
 const auth = useAuth();
+const { t } = useI18n();
 
 const { useResolvedProjectId, fetchProjectById, fetchProjectMembers, loading: projectsLoading } = useProjects();
 const { comments, fetchComments } = useComments();
@@ -149,7 +151,7 @@ async function fetchData() {
     await nextTick();
     navigateToLinkedComment();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Unknown error occurred';
+    error.value = err instanceof Error ? err.message : t('documentViewer.unknownError');
     console.error('Error fetching document:', err);
   } finally {
     loading.value = false;
@@ -334,15 +336,15 @@ async function uploadNewVersion() {
     <!-- Loading State -->
     <div v-if="loading" class="flex flex-col items-center justify-center flex-1 gap-4">
       <ProgressSpinner />
-      <p class="text-[var(--text-secondary)]">Loading document...</p>
+      <p class="text-[var(--text-secondary)]">{{ $t('documentViewer.loadingDocument') }}</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="flex flex-col items-center justify-center flex-1 gap-4">
       <i class="pi pi-exclamation-triangle text-[48px] text-red-500"></i>
-      <h3 class="m-0 text-[var(--text-color)]">Error loading document</h3>
+      <h3 class="m-0 text-[var(--text-color)]">{{ $t('documentViewer.errorLoading') }}</h3>
       <p class="text-[var(--text-secondary)] m-0">{{ error }}</p>
-      <Button icon="pi pi-refresh" label="Try Again" @click="fetchData" />
+      <Button icon="pi pi-refresh" :label="$t('common.tryAgain')" @click="fetchData" />
     </div>
 
     <!-- Document Content -->
@@ -351,7 +353,7 @@ async function uploadNewVersion() {
       <div class="mx-4 mt-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 shrink-0">
         <nav class="flex items-center gap-1.5 text-sm mb-3">
           <router-link :to="{ name: 'projects' }" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors no-underline">
-            Projects
+            {{ $t('projectDetail.projects') }}
           </router-link>
           <i class="pi pi-chevron-right text-[10px] text-[var(--text-secondary)] opacity-60"></i>
           <router-link :to="{ name: 'project-details', params: { id: projectSlug } }" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors no-underline">
@@ -364,14 +366,14 @@ async function uploadNewVersion() {
             <Button
               v-if="versioningEnabled"
               icon="pi pi-plus"
-              label="Add Version"
+              :label="$t('documentViewer.addVersion')"
               outlined
               size="small"
               @click="showAddVersionDialog = true"
             />
             <Button
               icon="pi pi-send"
-              label="Invite User"
+              :label="$t('documentViewer.inviteUser')"
               outlined
               size="small"
               severity="secondary"
@@ -424,7 +426,7 @@ async function uploadNewVersion() {
                 :class="{ '!text-[var(--primary-color)] !border-b-[var(--primary-color)]': activeTab === 'comments' }"
                 @click="activeTab = 'comments'"
               >
-                {{ versionCommentCount }} Comments
+                {{ $t('documentViewer.commentsCount', { count: versionCommentCount }) }}
               </button>
               <button
                 v-if="versioningEnabled"
@@ -432,7 +434,7 @@ async function uploadNewVersion() {
                 :class="{ '!text-[var(--primary-color)] !border-b-[var(--primary-color)]': activeTab === 'versions' }"
                 @click="activeTab = 'versions'"
               >
-                Version History
+                {{ $t('documentViewer.versionHistory') }}
               </button>
             </div>
             <Button
@@ -441,7 +443,7 @@ async function uploadNewVersion() {
               rounded
               size="small"
               @click="closeSidebar"
-              aria-label="Close sidebar"
+              :aria-label="$t('documentViewer.closeSidebar')"
             />
           </div>
 
@@ -474,7 +476,7 @@ async function uploadNewVersion() {
                   v{{ version.version }}
                 </span>
                 <div class="flex-1">
-                  <div class="text-sm font-semibold text-[var(--text-color)]">Version {{ version.version }}</div>
+                  <div class="text-sm font-semibold text-[var(--text-color)]">{{ $t('documentViewer.versionLabel', { version: version.version }) }}</div>
                   <div class="flex gap-2 items-center mt-0.5">
                     <span class="text-xs text-[var(--text-secondary)]">{{ formatDate(version.uploadedAt) }}</span>
                   </div>
@@ -491,7 +493,7 @@ async function uploadNewVersion() {
           icon="pi pi-comments"
           class="fixed right-6 top-1/2 -translate-y-1/2 z-10"
           @click="openSidebar"
-          aria-label="Open sidebar"
+          :aria-label="$t('documentViewer.openSidebar')"
         />
       </div>
     </template>
@@ -499,7 +501,7 @@ async function uploadNewVersion() {
     <!-- Document Info Dialog -->
     <Dialog
       v-model:visible="showDocumentInfoDialog"
-      header="Document Information"
+      :header="$t('documentViewer.documentInfoHeader')"
       modal
       :style="{ width: '640px' }"
     >
@@ -513,7 +515,7 @@ async function uploadNewVersion() {
                 class="w-full"
                 readonly
               />
-              <label for="docVersion">Version</label>
+              <label for="docVersion">{{ $t('documentViewer.version') }}</label>
             </FloatLabel>
           </div>
           <div class="flex-1">
@@ -524,7 +526,7 @@ async function uploadNewVersion() {
                 class="w-full"
                 readonly
               />
-              <label for="docAddedBy">Added By</label>
+              <label for="docAddedBy">{{ $t('documentViewer.addedBy') }}</label>
             </FloatLabel>
           </div>
         </div>
@@ -537,7 +539,7 @@ async function uploadNewVersion() {
                 class="w-full"
                 readonly
               />
-              <label for="docDateUploaded">Date Uploaded</label>
+              <label for="docDateUploaded">{{ $t('documentViewer.dateUploaded') }}</label>
             </FloatLabel>
           </div>
           <div class="flex-1">
@@ -548,7 +550,7 @@ async function uploadNewVersion() {
                 class="w-full"
                 readonly
               />
-              <label for="docStatus">Status</label>
+              <label for="docStatus">{{ $t('documentViewer.status') }}</label>
             </FloatLabel>
           </div>
         </div>
@@ -561,20 +563,20 @@ async function uploadNewVersion() {
                 class="w-full"
                 readonly
               />
-              <label for="docDescription">Description</label>
+              <label for="docDescription">{{ $t('documentViewer.description') }}</label>
             </FloatLabel>
           </div>
         </div>
       </div>
       <template #footer>
-        <Button label="Close" @click="showDocumentInfoDialog = false" />
+        <Button :label="$t('common.close')" @click="showDocumentInfoDialog = false" />
       </template>
     </Dialog>
 
     <!-- Add Version Dialog -->
     <Dialog
       v-model:visible="showAddVersionDialog"
-      header="Add New Version"
+      :header="$t('documentViewer.addNewVersion')"
       modal
       :style="{ width: '500px' }"
     >
@@ -583,7 +585,7 @@ async function uploadNewVersion() {
           mode="basic"
           accept=".pdf"
           :maxFileSize="104857600"
-          chooseLabel="Choose File"
+          :chooseLabel="$t('documentViewer.chooseFile')"
           :auto="false"
           @select="onFileSelect"
         />
@@ -593,9 +595,9 @@ async function uploadNewVersion() {
         </p>
       </div>
       <template #footer>
-        <Button label="Cancel" text @click="showAddVersionDialog = false" />
+        <Button :label="$t('common.cancel')" text @click="showAddVersionDialog = false" />
         <Button
-          label="Upload"
+          :label="$t('documentViewer.upload')"
           icon="pi pi-upload"
           :disabled="!uploadFile"
           :loading="uploading"
@@ -607,19 +609,19 @@ async function uploadNewVersion() {
     <!-- Invite User Dialog -->
     <Dialog
       v-model:visible="showInviteUserDialog"
-      header="Invite User"
+      :header="$t('documentViewer.inviteUserHeader')"
       modal
       :style="{ width: '450px' }"
     >
       <div class="py-4">
         <FloatLabel variant="on">
           <InputText id="inviteEmail" class="w-full" />
-          <label for="inviteEmail">Email Address</label>
+          <label for="inviteEmail">{{ $t('documentViewer.emailAddress') }}</label>
         </FloatLabel>
       </div>
       <template #footer>
-        <Button label="Cancel" text @click="showInviteUserDialog = false" />
-        <Button label="Send Invite" icon="pi pi-send" />
+        <Button :label="$t('common.cancel')" text @click="showInviteUserDialog = false" />
+        <Button :label="$t('documentViewer.sendInvite')" icon="pi pi-send" />
       </template>
     </Dialog>
   </div>

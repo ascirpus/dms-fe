@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useAuth } from '@/composables/useAuth';
 import type { Project } from '@/types/Project';
 import { DocumentStatus, type Document } from '@/types/Document';
-import type { ApiResponse } from '@/types/response';
 import { UsersService, type TenantUser } from '@/services/UsersService';
+import { useParties } from '@/composables/useParties';
+import type {
+  PartyMetaDTO,
+  PartyWithMembers,
+  PartyUserDTO,
+  PermissionAction,
+} from '@/types';
 
 // PrimeVue Components
 import Button from 'primevue/button';
@@ -47,7 +54,19 @@ const router = useRouter();
 const toast = useToast();
 const confirm = useConfirm();
 const auth = useAuth();
+const { t } = useI18n();
 const usersApi = new UsersService(auth.apiClient);
+const {
+  parties,
+  partyPermissions,
+  fetchParties: fetchPartiesFromComposable,
+  fetchPermissions: fetchPermissionsFromComposable,
+  createParty: createPartyViaComposable,
+  deleteParty: deletePartyViaComposable,
+  addMember: addMemberViaComposable,
+  removeMember: removeMemberViaComposable,
+  setPermissions: setPermissionsViaComposable,
+} = useParties();
 
 const { useResolvedProjectId, fetchProjectById, getProjectUrl, loading: projectsLoading } = useProjects();
 
@@ -90,8 +109,8 @@ function saveEditName() {
   editingName.value = false;
   toast.add({
     severity: 'info',
-    summary: 'Coming Soon',
-    detail: 'Project name editing will be available soon',
+    summary: t('projectDetail.comingSoon'),
+    detail: t('projectDetail.nameEditSoon'),
     life: 3000,
   });
 }
@@ -123,8 +142,8 @@ function saveEditDescription() {
   editingDescription.value = false;
   toast.add({
     severity: 'info',
-    summary: 'Coming Soon',
-    detail: 'Project description editing will be available soon',
+    summary: t('projectDetail.comingSoon'),
+    detail: t('projectDetail.descEditSoon'),
     life: 3000,
   });
 }
@@ -157,8 +176,8 @@ function saveEditDocTitle(doc: Document) {
     }
     toast.add({
       severity: 'success',
-      summary: 'Document Updated',
-      detail: 'Document name has been updated.',
+      summary: t('projectDetail.documentUpdated'),
+      detail: t('projectDetail.documentNameUpdated'),
       life: 3000,
     });
   }
@@ -200,12 +219,12 @@ const filters = ref({
   status: { value: null, matchMode: FilterMatchMode.EQUALS },
 });
 
-const statusOptions = [
-  { label: 'All', value: null },
-  { label: 'Pending', value: DocumentStatus.PENDING },
-  { label: 'Approved', value: DocumentStatus.APPROVED },
-  { label: 'Declined', value: DocumentStatus.DECLINED },
-];
+const statusOptions = computed(() => [
+  { label: t('projectDetail.statusAll'), value: null },
+  { label: t('projectDetail.statusPending'), value: DocumentStatus.PENDING },
+  { label: t('projectDetail.statusApproved'), value: DocumentStatus.APPROVED },
+  { label: t('projectDetail.statusDeclined'), value: DocumentStatus.DECLINED },
+]);
 
 // --- Pagination ---
 const first = ref(0);
@@ -281,7 +300,7 @@ async function fetchProject() {
   try {
     project.value = await fetchProjectById(projectId.value);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Unknown error occurred';
+    error.value = err instanceof Error ? err.message : t('projectDetail.unknownError');
     console.error('Error fetching project:', err);
   } finally {
     loading.value = false;
@@ -325,8 +344,8 @@ function navigateToDocument(doc: Document) {
 
 function confirmDeleteDocument(doc: Document) {
   confirm.require({
-    message: `Are you sure you want to delete "${doc.title}"?`,
-    header: 'Delete Document',
+    message: t('projectDetail.deleteDocumentConfirm', { name: doc.title }),
+    header: t('projectDetail.deleteDocument'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: () => deleteDocument(doc.id),
@@ -339,15 +358,15 @@ async function deleteDocument(documentId: string) {
     documents.value = documents.value.filter(d => d.id !== documentId);
     toast.add({
       severity: 'success',
-      summary: 'Document Deleted',
-      detail: 'Document has been deleted successfully.',
+      summary: t('projectDetail.documentDeleted'),
+      detail: t('projectDetail.documentDeletedDetail'),
       life: 3000
     });
   } catch (err) {
     toast.add({
       severity: 'error',
-      summary: 'Error',
-      detail: err instanceof Error ? err.message : 'Failed to delete document',
+      summary: t('common.error'),
+      detail: err instanceof Error ? err.message : t('projectDetail.failedToDelete'),
       life: 5000
     });
   }
@@ -378,8 +397,8 @@ async function handleUploadDocument() {
   if (!uploadForm.file || !uploadForm.title) {
     toast.add({
       severity: 'warn',
-      summary: 'Missing Information',
-      detail: 'Please select a file and enter a title.',
+      summary: t('projectDetail.missingInfo'),
+      detail: t('projectDetail.selectFileAndTitle'),
       life: 3000
     });
     return;
@@ -395,15 +414,15 @@ async function handleUploadDocument() {
     showUploadDialog.value = false;
     toast.add({
       severity: 'success',
-      summary: 'Document Uploaded',
-      detail: 'Document has been uploaded successfully.',
+      summary: t('projectDetail.documentUploaded'),
+      detail: t('projectDetail.documentUploadedDetail'),
       life: 3000
     });
   } catch (err) {
     toast.add({
       severity: 'error',
-      summary: 'Upload Failed',
-      detail: err instanceof Error ? err.message : 'Failed to upload document',
+      summary: t('projectDetail.uploadFailed'),
+      detail: err instanceof Error ? err.message : t('projectDetail.failedToUpload'),
       life: 5000
     });
   } finally {
@@ -413,45 +432,7 @@ async function handleUploadDocument() {
 
 // ===== SETTINGS DRAWER (Party Management) =====
 
-// Party types (inline, matching ProjectSettings.vue)
-interface UserDTO {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface PartyMetaDTO {
-  contactEmail?: string;
-  contactPhone?: string;
-  vatNumber?: string;
-  address?: string;
-}
-
-interface PartyDTO {
-  id: string;
-  name: string;
-  description?: string;
-  meta: PartyMetaDTO;
-  createdAt: string;
-}
-
-type PermissionAction = 'VIEW' | 'COMMENT' | 'DECIDE';
-
-interface PartyPermissionsDTO {
-  partyId: string;
-  permissions: Record<string, PermissionAction>;
-}
-
-interface PartyWithMembers {
-  party: PartyDTO;
-  members: UserDTO[];
-}
-
-interface ProjectPartyMembers {
-  projectId: string;
-  parties: PartyWithMembers[];
-}
+// Party types imported from @/types
 
 // Drawer state
 const showSettingsDrawer = ref(false);
@@ -459,10 +440,8 @@ const drawerView = ref<'list' | 'create' | 'edit'>('list');
 const drawerLoading = ref(false);
 const drawerLoaded = ref(false);
 
-// Party state
-const parties = ref<PartyWithMembers[]>([]);
+// Party state (parties & partyPermissions from useParties composable)
 const tenantUsers = ref<TenantUser[]>([]);
-const partyPermissions = ref<Map<string, Record<string, PermissionAction>>>(new Map());
 
 // Current user
 const currentUserId = computed(() => {
@@ -491,12 +470,12 @@ const availableUsers = computed(() => {
     .map(u => ({ ...u, displayName: getUserDisplayName(u) }));
 });
 
-const permissionOptions = [
-  { label: 'None', value: '' },
-  { label: 'View', value: 'VIEW' },
-  { label: 'Comment', value: 'COMMENT' },
-  { label: 'Decide', value: 'DECIDE' },
-];
+const permissionOptions = computed(() => [
+  { label: t('projectDetail.permNone'), value: '' },
+  { label: t('projectDetail.permView'), value: 'VIEW' },
+  { label: t('projectDetail.permComment'), value: 'COMMENT' },
+  { label: t('projectDetail.permDecide'), value: 'DECIDE' },
+]);
 
 // Open drawer
 function openSettingsDrawer() {
@@ -521,13 +500,9 @@ async function loadDrawerData() {
 async function fetchParties() {
   if (!projectId.value) return;
   try {
-    const response = await auth.apiClient.get<ApiResponse<ProjectPartyMembers>>(
-      `/api/projects/${projectId.value}/party`
-    );
-    parties.value = response.data.data.parties;
+    await fetchPartiesFromComposable(projectId.value);
   } catch (err) {
     console.error('Failed to fetch parties:', err);
-    parties.value = [];
   }
 }
 
@@ -543,14 +518,7 @@ async function fetchTenantUsers() {
 async function fetchPartyPermissions() {
   if (!projectId.value) return;
   try {
-    const response = await auth.apiClient.get<ApiResponse<PartyPermissionsDTO[]>>(
-      `/api/projects/${projectId.value}/party/permissions`
-    );
-    const map = new Map<string, Record<string, PermissionAction>>();
-    for (const pp of response.data.data) {
-      map.set(pp.partyId, pp.permissions);
-    }
-    partyPermissions.value = map;
+    await fetchPermissionsFromComposable(projectId.value);
   } catch (err) {
     console.error('Failed to fetch party permissions:', err);
   }
@@ -583,11 +551,11 @@ function getPermissionsByAction(partyId: string): PermissionGroup[] {
     .sort((a, b) => a.action.localeCompare(b.action));
 }
 
-const permissionActionMeta: Record<string, { icon: string; label: string }> = {
-  VIEW: { icon: 'pi pi-eye', label: 'View' },
-  DECIDE: { icon: 'pi pi-check-circle', label: 'Decide' },
-  COMMENT: { icon: 'pi pi-comment', label: 'Comment' },
-};
+const permissionActionMeta = computed<Record<string, { icon: string; label: string }>>(() => ({
+  VIEW: { icon: 'pi pi-eye', label: t('projectDetail.permView') },
+  DECIDE: { icon: 'pi pi-check-circle', label: t('projectDetail.permDecide') },
+  COMMENT: { icon: 'pi pi-comment', label: t('projectDetail.permComment') },
+}));
 
 const permissionPopover = ref<InstanceType<typeof Popover> | null>(null);
 const permissionPopoverData = ref<{ partyId: string; action: string; docTypes: PermissionGroupEntry[] } | null>(null);
@@ -608,16 +576,9 @@ async function removePermission(docTypeId: string) {
   const { partyId } = permissionPopoverData.value;
   if (!projectId.value) return;
 
-  const previousPerms = { ...(partyPermissions.value.get(partyId) || {}) };
-  const newPerms = { ...previousPerms };
+  const currentPerms = { ...(partyPermissions.value.get(partyId) || {}) };
+  const newPerms = { ...currentPerms };
   delete newPerms[docTypeId];
-
-  // Optimistic update
-  if (Object.keys(newPerms).length > 0) {
-    partyPermissions.value.set(partyId, newPerms);
-  } else {
-    partyPermissions.value.delete(partyId);
-  }
 
   // Update popover data
   permissionPopoverData.value.docTypes = permissionPopoverData.value.docTypes.filter(dt => dt.id !== docTypeId);
@@ -626,15 +587,10 @@ async function removePermission(docTypeId: string) {
   }
 
   try {
-    if (Object.keys(newPerms).length === 0) {
-      await auth.apiClient.delete(`/api/projects/${projectId.value}/party/${partyId}/permission`);
-    } else {
-      await auth.apiClient.post(`/api/projects/${projectId.value}/party/${partyId}/permission`, { permissions: newPerms });
-    }
+    await setPermissionsViaComposable(projectId.value, partyId, newPerms);
   } catch (err) {
     console.error('Failed to remove permission:', err);
-    partyPermissions.value.set(partyId, previousPerms);
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove permission', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('projectDetail.failedToRemovePerm'), life: 3000 });
   }
 }
 
@@ -660,21 +616,9 @@ async function addParty() {
   if (addPartyForm.contactPhone) meta.contactPhone = addPartyForm.contactPhone;
   if (addPartyForm.address) meta.address = addPartyForm.address;
 
-  const tempId = `temp-${Date.now()}`;
-  const optimisticParty: PartyWithMembers = {
-    party: { id: tempId, name: partyName, description: partyDescription || undefined, meta, createdAt: new Date().toISOString() },
-    members: [],
-  };
-
   const newPerms: Record<string, PermissionAction> = {};
   for (const [dtId, action] of Object.entries(addPartyPermissions.value)) {
     if (action) newPerms[dtId] = action;
-  }
-
-  // Optimistic: add party + permissions to local state
-  parties.value.push(optimisticParty);
-  if (Object.keys(newPerms).length > 0) {
-    partyPermissions.value.set(tempId, newPerms);
   }
 
   drawerView.value = 'list';
@@ -686,30 +630,21 @@ async function addParty() {
   addPartyForm.address = '';
   addPartyPermissions.value = {};
 
-  toast.add({ severity: 'success', summary: 'Party Created', detail: `Party "${partyName}" has been created`, life: 3000 });
-
   try {
-    const requestBody: Record<string, unknown> = { name: partyName, description: partyDescription };
-    if (Object.keys(meta).length > 0) requestBody.meta = meta;
-    const response = await auth.apiClient.post<ApiResponse<PartyDTO>>(
-      `/api/projects/${projectId.value}/party`,
-      requestBody
-    );
-    const realId = response.data.data.id;
-    const created = parties.value.find(p => p.party.id === tempId);
-    if (created) created.party.id = realId;
+    const requestData = {
+      name: partyName,
+      description: partyDescription || undefined,
+      meta: Object.keys(meta).length > 0 ? meta : undefined,
+    };
+    const created = await createPartyViaComposable(projectId.value, requestData);
+    toast.add({ severity: 'success', summary: t('projectDetail.partyCreated'), detail: t('projectDetail.partyCreatedDetail', { name: partyName }), life: 3000 });
 
-    // Migrate optimistic permissions to real ID
     if (Object.keys(newPerms).length > 0) {
-      partyPermissions.value.delete(tempId);
-      partyPermissions.value.set(realId, newPerms);
-      await auth.apiClient.post(`/api/projects/${projectId.value}/party/${realId}/permission`, { permissions: newPerms });
+      await setPermissionsViaComposable(projectId.value, created.id, newPerms);
     }
   } catch (err) {
     console.error('Failed to create party:', err);
-    parties.value = parties.value.filter(p => p.party.id !== tempId);
-    partyPermissions.value.delete(tempId);
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to create party', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('projectDetail.failedToCreateParty'), life: 3000 });
   }
 }
 
@@ -717,29 +652,23 @@ async function addParty() {
 function confirmDeleteParty(party: PartyWithMembers) {
   hidePermissionPopover();
   confirm.require({
-    message: `Are you sure you want to delete the party "${party.party.name}"?`,
-    header: 'Delete Party',
+    message: t('projectDetail.deletePartyConfirm', { name: party.party.name }),
+    header: t('projectDetail.deletePartyHeader'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
-    accept: () => deleteParty(party.party.id),
+    accept: () => deletePartyHandler(party.party.id),
   });
 }
 
-async function deleteParty(partyId: string) {
+async function deletePartyHandler(partyId: string) {
   if (!projectId.value) return;
-  const partyIndex = parties.value.findIndex(p => p.party.id === partyId);
-  if (partyIndex === -1) return;
-
-  const removedParty = parties.value[partyIndex];
-  parties.value.splice(partyIndex, 1);
-  toast.add({ severity: 'success', summary: 'Party Deleted', detail: 'Party has been deleted', life: 3000 });
 
   try {
-    await auth.apiClient.delete(`/api/projects/${projectId.value}/party/${partyId}`);
+    await deletePartyViaComposable(projectId.value, partyId);
+    toast.add({ severity: 'success', summary: t('projectDetail.partyDeleted'), detail: t('projectDetail.partyDeletedDetail'), life: 3000 });
   } catch (err) {
     console.error('Failed to delete party:', err);
-    parties.value.splice(partyIndex, 0, removedParty);
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete party', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('projectDetail.failedToDeleteParty'), life: 3000 });
   }
 }
 
@@ -800,12 +729,6 @@ async function saveEditParty() {
     if (action) newPerms[dtId] = action;
   }
 
-  if (Object.keys(newPerms).length > 0) {
-    partyPermissions.value.set(partyId, newPerms);
-  } else {
-    partyPermissions.value.delete(partyId);
-  }
-
   drawerView.value = 'list';
   editingParty.value = null;
 
@@ -813,27 +736,18 @@ async function saveEditParty() {
 
   if (permsChanged) {
     try {
-      if (Object.keys(newPerms).length === 0 && Object.keys(previousPerms).length > 0) {
-        await auth.apiClient.delete(`/api/projects/${projectId.value}/party/${partyId}/permission`);
-      } else if (Object.keys(newPerms).length > 0) {
-        await auth.apiClient.post(`/api/projects/${projectId.value}/party/${partyId}/permission`, { permissions: newPerms });
-      }
+      await setPermissionsViaComposable(projectId.value, partyId, newPerms);
     } catch (err) {
       console.error('Failed to save permissions:', err);
-      if (Object.keys(previousPerms).length > 0) {
-        partyPermissions.value.set(partyId, previousPerms);
-      } else {
-        partyPermissions.value.delete(partyId);
-      }
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save permissions', life: 3000 });
+      toast.add({ severity: 'error', summary: t('common.error'), detail: t('projectDetail.failedToSavePerms'), life: 3000 });
       return;
     }
   }
 
   toast.add({
     severity: 'success',
-    summary: 'Party Updated',
-    detail: permsChanged ? 'Party details and permissions have been updated' : 'Party details updated locally (backend sync coming soon)',
+    summary: t('projectDetail.partyUpdated'),
+    detail: permsChanged ? t('projectDetail.partyUpdatedPerms') : t('projectDetail.partyUpdatedLocal'),
     life: 3000,
   });
 }
@@ -854,71 +768,52 @@ async function addMemberToParty() {
   if (!projectId.value || !addMemberParty.value || !selectedUser.value) return;
 
   const user = selectedUser.value;
-  const party = parties.value.find(p => p.party.id === addMemberParty.value!.party.id);
-  if (!party) return;
+  const partyId = addMemberParty.value.party.id;
 
-  const newMember: UserDTO = {
+  const newMember: PartyUserDTO = {
     id: user.userId,
     email: user.email,
     firstName: user.firstName || '',
     lastName: user.lastName || '',
   };
 
-  party.members.push(newMember);
   showAddMemberDialog.value = false;
   selectedUser.value = null;
 
-  toast.add({ severity: 'success', summary: 'Member Added', detail: `${getUserDisplayName(user)} has been added`, life: 3000 });
-
   try {
-    await auth.apiClient.post(
-      `/api/projects/${projectId.value}/party/${party.party.id}/members`,
-      { user_id: user.userId }
-    );
+    await addMemberViaComposable(projectId.value, partyId, newMember);
+    toast.add({ severity: 'success', summary: t('projectDetail.memberAdded'), detail: t('projectDetail.memberAddedDetail', { name: getUserDisplayName(user) }), life: 3000 });
   } catch (err) {
     console.error('Failed to add member:', err);
-    party.members = party.members.filter(m => m.id !== newMember.id);
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to add member', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('projectDetail.failedToAddMember'), life: 3000 });
   }
 }
 
 // --- Remove member ---
-function confirmRemoveMember(partyId: string, member: UserDTO) {
+function confirmRemoveMember(partyId: string, member: PartyUserDTO) {
   hidePermissionPopover();
   if (member.id === currentUserId.value) {
-    toast.add({ severity: 'warn', summary: 'Cannot Remove', detail: 'You cannot remove yourself', life: 3000 });
+    toast.add({ severity: 'warn', summary: t('projectDetail.cannotRemoveSelf'), detail: t('projectDetail.cannotRemoveSelfDetail'), life: 3000 });
     return;
   }
   confirm.require({
-    message: `Are you sure you want to remove ${getUserDisplayName(member)}?`,
-    header: 'Remove Member',
+    message: t('projectDetail.removeMemberConfirm', { name: getUserDisplayName(member) }),
+    header: t('projectDetail.removeMemberHeader'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
-    accept: () => removeMember(partyId, member.id),
+    accept: () => removeMemberHandler(partyId, member.id),
   });
 }
 
-async function removeMember(partyId: string, memberId: string) {
+async function removeMemberHandler(partyId: string, memberId: string) {
   if (!projectId.value) return;
-  const party = parties.value.find(p => p.party.id === partyId);
-  if (!party) return;
-
-  const memberIndex = party.members.findIndex(m => m.id === memberId);
-  if (memberIndex === -1) return;
-
-  const removedMember = party.members[memberIndex];
-  party.members.splice(memberIndex, 1);
-  toast.add({ severity: 'success', summary: 'Member Removed', detail: 'Member has been removed', life: 3000 });
 
   try {
-    await auth.apiClient.delete(
-      `/api/projects/${projectId.value}/party/${partyId}/members`,
-      { data: { user_id: memberId } }
-    );
+    await removeMemberViaComposable(projectId.value, partyId, memberId);
+    toast.add({ severity: 'success', summary: t('projectDetail.memberRemoved'), detail: t('projectDetail.memberRemovedDetail'), life: 3000 });
   } catch (err) {
     console.error('Failed to remove member:', err);
-    party.members.splice(memberIndex, 0, removedMember);
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove member', life: 3000 });
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('projectDetail.failedToRemoveMember'), life: 3000 });
   }
 }
 </script>
@@ -933,9 +828,9 @@ async function removeMember(partyId: string, memberId: string) {
     <!-- Error State -->
     <div v-else-if="error" class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
       <i class="pi pi-exclamation-triangle text-[48px] mb-4 text-[var(--color-danger)]"></i>
-      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">Error loading project</h3>
+      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">{{ $t('projectDetail.errorLoading') }}</h3>
       <p class="m-0 mb-6">{{ error }}</p>
-      <Button icon="pi pi-refresh" label="Try Again" @click="fetchProject" />
+      <Button icon="pi pi-refresh" :label="$t('common.tryAgain')" @click="fetchProject" />
     </div>
 
     <!-- Project Content -->
@@ -944,7 +839,7 @@ async function removeMember(partyId: string, memberId: string) {
       <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5">
         <nav class="flex items-center gap-1.5 text-sm mb-3">
           <router-link :to="{ name: 'projects' }" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors no-underline">
-            Projects
+            {{ $t('projectDetail.projects') }}
           </router-link>
         </nav>
         <div class="flex justify-between items-start">
@@ -969,7 +864,7 @@ async function removeMember(partyId: string, memberId: string) {
                   rounded
                   size="small"
                   class="opacity-0 group-hover/name:opacity-100 transition-opacity shrink-0"
-                  aria-label="Edit project name"
+                  :aria-label="$t('projectDetail.editProjectName')"
                   @click="startEditName"
                 />
               </template>
@@ -988,14 +883,14 @@ async function removeMember(partyId: string, memberId: string) {
               </template>
               <template v-else>
                 <p v-if="project?.description" class="text-sm text-[var(--text-secondary)] m-0">{{ project.description }}</p>
-                <p v-else class="text-sm text-[var(--text-secondary)] m-0 italic">No description</p>
+                <p v-else class="text-sm text-[var(--text-secondary)] m-0 italic">{{ $t('projectDetail.noDescription') }}</p>
                 <Button
                   icon="pi pi-pencil"
                   text
                   rounded
                   size="small"
                   class="opacity-0 group-hover/desc:opacity-100 transition-opacity shrink-0"
-                  aria-label="Edit project description"
+                  :aria-label="$t('projectDetail.editProjectDescription')"
                   @click="startEditDescription"
                 />
               </template>
@@ -1004,7 +899,7 @@ async function removeMember(partyId: string, memberId: string) {
           <div class="shrink-0">
             <Button
               icon="pi pi-cog"
-              label="Settings"
+              :label="$t('common.settings')"
               outlined
               size="small"
               @click="openSettingsDrawer"
@@ -1020,7 +915,7 @@ async function removeMember(partyId: string, memberId: string) {
           <div class="flex items-center gap-3">
             <Button
               icon="pi pi-filter-slash"
-              label="Clear"
+              :label="$t('common.clear')"
               outlined
               size="small"
               @click="clearFilters"
@@ -1030,7 +925,7 @@ async function removeMember(partyId: string, memberId: string) {
               :options="statusOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="Status"
+              :placeholder="$t('projectDetail.status')"
               size="small"
               class="min-w-[120px]"
             />
@@ -1051,7 +946,7 @@ async function removeMember(partyId: string, memberId: string) {
           <div class="flex items-center gap-3 flex-wrap md:flex-nowrap">
             <Button
               icon="pi pi-upload"
-              label="Upload Document"
+              :label="$t('projectDetail.uploadDocument')"
               outlined
               size="small"
               @click="openUploadDialog"
@@ -1061,30 +956,30 @@ async function removeMember(partyId: string, memberId: string) {
               icon="pi pi-cog"
               outlined
               size="small"
-              aria-label="Settings"
+              :aria-label="$t('common.settings')"
               @click="toggleSettings"
             />
             <Popover ref="settingsPopover">
               <div class="min-w-[200px] bg-white rounded-xl">
-                <div class="py-3 px-4 font-semibold text-sm text-[var(--ui-input-label)]">Columns</div>
+                <div class="py-3 px-4 font-semibold text-sm text-[var(--ui-input-label)]">{{ $t('projectDetail.columns') }}</div>
                 <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
-                  <span class="flex-1">Document Type</span>
+                  <span class="flex-1">{{ $t('projectDetail.columnDocType') }}</span>
                   <ToggleSwitch v-model="columnSettings.documentType" />
                 </div>
                 <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
-                  <span class="flex-1">Document Name</span>
+                  <span class="flex-1">{{ $t('projectDetail.columnDocName') }}</span>
                   <ToggleSwitch v-model="columnSettings.documentName" disabled />
                 </div>
                 <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
-                  <span class="flex-1">Modified Date</span>
+                  <span class="flex-1">{{ $t('projectDetail.columnModifiedDate') }}</span>
                   <ToggleSwitch v-model="columnSettings.modifiedDate" />
                 </div>
                 <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
-                  <span class="flex-1">Status</span>
+                  <span class="flex-1">{{ $t('projectDetail.columnStatus') }}</span>
                   <ToggleSwitch v-model="columnSettings.status" />
                 </div>
                 <div class="flex items-center justify-between gap-2 py-3 px-4 text-sm text-[var(--ui-button-primary)]">
-                  <span class="flex-1">Version</span>
+                  <span class="flex-1">{{ $t('projectDetail.columnVersion') }}</span>
                   <ToggleSwitch v-model="columnSettings.version" />
                 </div>
               </div>
@@ -1094,7 +989,7 @@ async function removeMember(partyId: string, memberId: string) {
               <InputIcon class="pi pi-search" />
               <InputText
                 v-model="globalFilter"
-                placeholder="Search"
+                :placeholder="$t('common.search')"
                 size="small"
                 @input="filters.global.value = globalFilter"
               />
@@ -1106,9 +1001,9 @@ async function removeMember(partyId: string, memberId: string) {
         <div v-if="viewMode === 'tiles'" class="flex-1">
           <div v-if="!paginatedDocuments.length" class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
             <i class="pi pi-file text-[48px] mb-4 text-[var(--text-muted)]"></i>
-            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No documents found</h3>
-            <p class="m-0 mb-6">Upload a document to get started.</p>
-            <Button icon="pi pi-upload" label="Upload Document" @click="openUploadDialog" />
+            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">{{ $t('projectDetail.noDocuments') }}</h3>
+            <p class="m-0 mb-6">{{ $t('projectDetail.uploadToStart') }}</p>
+            <Button icon="pi pi-upload" :label="$t('projectDetail.uploadDocument')" @click="openUploadDialog" />
           </div>
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
             <DocumentCard
@@ -1151,7 +1046,7 @@ async function removeMember(partyId: string, memberId: string) {
 
           <Column
             v-if="columnSettings.documentType"
-            header="Type"
+            :header="$t('projectDetail.type')"
             style="width: 60px"
           >
             <template #body="{ data }">
@@ -1162,7 +1057,7 @@ async function removeMember(partyId: string, memberId: string) {
           <Column
             v-if="columnSettings.documentName"
             field="title"
-            header="Document Name"
+            :header="$t('projectDetail.columnDocName')"
             sortable
             style="min-width: 250px"
           >
@@ -1185,7 +1080,7 @@ async function removeMember(partyId: string, memberId: string) {
 
           <Column
             v-if="columnSettings.modifiedDate"
-            header="Modified Date"
+            :header="$t('projectDetail.columnModifiedDate')"
             sortable
             sortField="currentVersion.uploadedAt"
             style="min-width: 140px"
@@ -1198,7 +1093,7 @@ async function removeMember(partyId: string, memberId: string) {
           <Column
             v-if="columnSettings.status"
             field="status"
-            header="Status"
+            :header="$t('projectDetail.columnStatus')"
             sortable
             style="min-width: 120px"
           >
@@ -1209,7 +1104,7 @@ async function removeMember(partyId: string, memberId: string) {
 
           <Column
             v-if="columnSettings.version"
-            header="Version"
+            :header="$t('projectDetail.columnVersion')"
             sortable
             sortField="currentVersion.version"
             style="min-width: 100px"
@@ -1227,7 +1122,7 @@ async function removeMember(partyId: string, memberId: string) {
                   text
                   rounded
                   size="small"
-                  aria-label="Edit"
+                  :aria-label="$t('common.edit')"
                   @click.stop="startEditDocTitle(data)"
                 />
                 <Button
@@ -1236,7 +1131,7 @@ async function removeMember(partyId: string, memberId: string) {
                   rounded
                   size="small"
                   severity="danger"
-                  aria-label="Delete"
+                  :aria-label="$t('common.delete')"
                   @click.stop="confirmDeleteDocument(data)"
                 />
               </div>
@@ -1261,7 +1156,7 @@ async function removeMember(partyId: string, memberId: string) {
     <!-- Upload Document Dialog -->
     <Dialog
       v-model:visible="showUploadDialog"
-      header="Upload Document"
+      :header="$t('projectDetail.uploadDocument')"
       modal
       :style="{ width: '500px' }"
     >
@@ -1271,12 +1166,12 @@ async function removeMember(partyId: string, memberId: string) {
             mode="basic"
             accept=".pdf"
             :maxFileSize="50000000"
-            chooseLabel="Select PDF"
+            :chooseLabel="$t('projectDetail.selectPdf')"
             class="w-full"
             @select="onFileSelect"
           />
           <small v-if="uploadForm.file" class="block mt-2 text-[var(--text-secondary)]">
-            Selected: {{ uploadForm.file.name }}
+            {{ $t('projectDetail.selected', { name: uploadForm.file.name }) }}
           </small>
         </div>
 
@@ -1287,7 +1182,7 @@ async function removeMember(partyId: string, memberId: string) {
               v-model="uploadForm.title"
               class="w-full"
             />
-            <label for="uploadTitle">Document Title</label>
+            <label for="uploadTitle">{{ $t('projectDetail.documentTitle') }}</label>
           </FloatLabel>
         </div>
 
@@ -1301,7 +1196,7 @@ async function removeMember(partyId: string, memberId: string) {
               optionValue="value"
               class="w-full"
             />
-            <label for="uploadType">Document Type</label>
+            <label for="uploadType">{{ $t('projectDetail.documentType') }}</label>
           </FloatLabel>
         </div>
       </div>
@@ -1309,14 +1204,14 @@ async function removeMember(partyId: string, memberId: string) {
       <template #footer>
         <div class="flex justify-end gap-4">
           <Button
-            label="Cancel"
+            :label="$t('common.cancel')"
             text
             severity="secondary"
             @click="showUploadDialog = false"
             :disabled="uploading"
           />
           <Button
-            label="Upload"
+            :label="$t('projectDetail.upload')"
             icon="pi pi-upload"
             @click="handleUploadDocument"
             :loading="uploading"
@@ -1330,7 +1225,7 @@ async function removeMember(partyId: string, memberId: string) {
     <Drawer
       v-model:visible="showSettingsDrawer"
       position="right"
-      :header="drawerView === 'list' ? 'Project Settings' : drawerView === 'create' ? 'New Party' : 'Edit Party'"
+      :header="drawerView === 'list' ? $t('projectDetail.projectSettings') : drawerView === 'create' ? $t('projectDetail.newParty') : $t('projectDetail.editParty')"
       class="!w-[480px]"
     >
       <div v-if="drawerLoading" class="flex items-center justify-center p-12">
@@ -1340,10 +1235,10 @@ async function removeMember(partyId: string, memberId: string) {
       <!-- ===== List View ===== -->
       <template v-else-if="drawerView === 'list'">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-base font-semibold text-[var(--text-color)] m-0">Parties</h3>
+          <h3 class="text-base font-semibold text-[var(--text-color)] m-0">{{ $t('projectDetail.parties') }}</h3>
           <Button
             icon="pi pi-plus"
-            label="New Party"
+            :label="$t('projectDetail.newParty')"
             size="small"
             outlined
             @click="drawerView = 'create'"
@@ -1352,7 +1247,7 @@ async function removeMember(partyId: string, memberId: string) {
 
         <div v-if="parties.length === 0" class="text-center py-8 text-[var(--text-secondary)]">
           <i class="pi pi-users text-3xl mb-3 block"></i>
-          <p class="m-0">No parties yet. Create one to get started.</p>
+          <p class="m-0">{{ $t('projectDetail.noPartiesYet') }}</p>
         </div>
 
         <Accordion v-else :multiple="true" class="parties-accordion">
@@ -1362,7 +1257,7 @@ async function removeMember(partyId: string, memberId: string) {
                 <div class="flex items-center gap-2">
                   <span class="font-semibold text-sm">{{ pw.party.name }}</span>
                   <span class="text-xs text-[var(--text-secondary)] bg-[var(--surface-ground)] rounded-full px-2 py-0.5">
-                    {{ pw.members.length }} member{{ pw.members.length !== 1 ? 's' : '' }}
+                    {{ t('projectDetail.member', { count: pw.members.length }, pw.members.length) }}
                   </span>
                 </div>
                 <div class="flex items-center gap-0.5" @click.stop>
@@ -1373,7 +1268,7 @@ async function removeMember(partyId: string, memberId: string) {
                     size="small"
                     severity="secondary"
                     @click="openEditPartyDialog(pw)"
-                    aria-label="Edit party"
+                    :aria-label="$t('projectDetail.editParty')"
                   />
                   <Button
                     icon="pi pi-trash"
@@ -1382,7 +1277,7 @@ async function removeMember(partyId: string, memberId: string) {
                     size="small"
                     severity="danger"
                     @click="confirmDeleteParty(pw)"
-                    aria-label="Delete party"
+                    :aria-label="$t('projectDetail.deleteParty')"
                   />
                 </div>
               </div>
@@ -1399,6 +1294,7 @@ async function removeMember(partyId: string, memberId: string) {
                   >
                     <i :class="permissionActionMeta[group.action]?.icon || 'pi pi-lock'" class="text-[11px]" />
                     {{ permissionActionMeta[group.action]?.label || group.action }}
+
                     <span class="opacity-40">·</span>
                     <span class="opacity-60">{{ group.docTypes.length }}</span>
                     <i class="pi pi-chevron-down text-[9px] opacity-40" />
@@ -1421,7 +1317,7 @@ async function removeMember(partyId: string, memberId: string) {
                       <div class="flex flex-col min-w-0">
                         <span class="text-sm font-medium text-[var(--text-color)] truncate">
                           {{ getUserDisplayName(member) }}
-                          <span v-if="member.id === currentUserId" class="text-xs text-[var(--text-secondary)]">(You)</span>
+                          <span v-if="member.id === currentUserId" class="text-xs text-[var(--text-secondary)]">({{ $t('common.you') }})</span>
                         </span>
                         <span class="text-xs text-[var(--text-secondary)] truncate">{{ member.email }}</span>
                       </div>
@@ -1434,15 +1330,15 @@ async function removeMember(partyId: string, memberId: string) {
                       size="small"
                       severity="secondary"
                       @click="confirmRemoveMember(pw.party.id, member)"
-                      aria-label="Remove member"
+                      :aria-label="$t('projectDetail.removeMember')"
                     />
                   </div>
                 </div>
-                <p v-else class="text-sm text-[var(--text-secondary)] m-0">No members yet.</p>
+                <p v-else class="text-sm text-[var(--text-secondary)] m-0">{{ $t('projectDetail.noMembersYet') }}</p>
 
                 <!-- Metadata -->
                 <div v-if="hasPartyMeta(pw.party.meta)" class="flex flex-col gap-1 pt-2 border-t border-[var(--surface-border)]">
-                  <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-1">Details</span>
+                  <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-1">{{ $t('projectDetail.details') }}</span>
                   <span v-if="pw.party.meta.vatNumber" class="text-xs text-[var(--text-secondary)] flex items-center gap-1.5">
                     <i class="pi pi-building text-[11px] w-3.5 text-center" /> {{ pw.party.meta.vatNumber }}
                   </span>
@@ -1460,7 +1356,7 @@ async function removeMember(partyId: string, memberId: string) {
                 <!-- Add member button -->
                 <Button
                   icon="pi pi-user-plus"
-                  label="Add Member"
+                  :label="$t('projectDetail.addMember')"
                   size="small"
                   text
                   class="self-start mt-1"
@@ -1476,44 +1372,44 @@ async function removeMember(partyId: string, memberId: string) {
       <template v-else-if="drawerView === 'create'">
         <button class="flex items-center gap-1 text-sm text-[var(--text-secondary)] hover:text-[var(--text-color)] transition-colors mb-4 cursor-pointer bg-transparent border-0 p-0" @click="drawerView = 'list'">
           <i class="pi pi-arrow-left text-xs" />
-          Back to parties
+          {{ $t('projectDetail.backToParties') }}
         </button>
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <label for="partyName" class="font-semibold text-sm text-[var(--text-color)]">Party Name</label>
-            <InputText id="partyName" v-model="addPartyForm.name" class="w-full" placeholder="e.g., Legal Team, Finance" />
+            <label for="partyName" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.partyName') }}</label>
+            <InputText id="partyName" v-model="addPartyForm.name" class="w-full" :placeholder="$t('projectDetail.partyNamePlaceholder')" />
           </div>
           <div class="flex flex-col gap-2">
-            <label for="partyDescription" class="font-semibold text-sm text-[var(--text-color)]">Description (optional)</label>
-            <InputText id="partyDescription" v-model="addPartyForm.description" class="w-full" placeholder="Brief description" />
+            <label for="partyDescription" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.descriptionOptional') }}</label>
+            <InputText id="partyDescription" v-model="addPartyForm.description" class="w-full" :placeholder="$t('projectDetail.briefDescription')" />
           </div>
-          <div class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Metadata (optional)</div>
+          <div class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">{{ $t('projectDetail.metadataOptional') }}</div>
           <div class="flex flex-col gap-2">
-            <label for="addPartyVat" class="font-semibold text-sm text-[var(--text-color)]">VAT Number</label>
-            <InputText id="addPartyVat" v-model="addPartyForm.vatNumber" class="w-full" placeholder="VAT number" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="addPartyEmail" class="font-semibold text-sm text-[var(--text-color)]">Contact Email</label>
-            <InputText id="addPartyEmail" v-model="addPartyForm.contactEmail" class="w-full" placeholder="contact@example.com" />
+            <label for="addPartyVat" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.vatNumber') }}</label>
+            <InputText id="addPartyVat" v-model="addPartyForm.vatNumber" class="w-full" :placeholder="$t('projectDetail.vatPlaceholder')" />
           </div>
           <div class="flex flex-col gap-2">
-            <label for="addPartyPhone" class="font-semibold text-sm text-[var(--text-color)]">Contact Phone</label>
-            <InputText id="addPartyPhone" v-model="addPartyForm.contactPhone" class="w-full" placeholder="+1 234 567 890" />
+            <label for="addPartyEmail" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.contactEmail') }}</label>
+            <InputText id="addPartyEmail" v-model="addPartyForm.contactEmail" class="w-full" :placeholder="$t('projectDetail.contactEmailPlaceholder')" />
           </div>
           <div class="flex flex-col gap-2">
-            <label for="addPartyAddress" class="font-semibold text-sm text-[var(--text-color)]">Address</label>
-            <InputText id="addPartyAddress" v-model="addPartyForm.address" class="w-full" placeholder="Street, City, Country" />
+            <label for="addPartyPhone" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.contactPhone') }}</label>
+            <InputText id="addPartyPhone" v-model="addPartyForm.contactPhone" class="w-full" :placeholder="$t('projectDetail.contactPhonePlaceholder')" />
           </div>
-          <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Document Permissions</div>
+          <div class="flex flex-col gap-2">
+            <label for="addPartyAddress" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.address') }}</label>
+            <InputText id="addPartyAddress" v-model="addPartyForm.address" class="w-full" :placeholder="$t('projectDetail.addressPlaceholder')" />
+          </div>
+          <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">{{ $t('projectDetail.documentPermissions') }}</div>
           <div v-if="documentTypes && documentTypes.length > 0" class="flex flex-col gap-2">
             <div v-for="dt in documentTypes" :key="dt.id" class="flex items-center justify-between gap-3">
               <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ dt.name }}</span>
-              <Select v-model="addPartyPermissions[dt.id]" :options="permissionOptions" optionLabel="label" optionValue="value" placeholder="None" class="w-[140px] shrink-0" />
+              <Select v-model="addPartyPermissions[dt.id]" :options="permissionOptions" optionLabel="label" optionValue="value" :placeholder="$t('projectDetail.permNone')" class="w-[140px] shrink-0" />
             </div>
           </div>
           <div class="flex justify-end gap-2 mt-2">
-            <Button label="Cancel" text severity="secondary" @click="drawerView = 'list'" />
-            <Button label="Create Party" icon="pi pi-check" :disabled="!addPartyForm.name.trim()" @click="addParty" />
+            <Button :label="$t('common.cancel')" text severity="secondary" @click="drawerView = 'list'" />
+            <Button :label="$t('projectDetail.createParty')" icon="pi pi-check" :disabled="!addPartyForm.name.trim()" @click="addParty" />
           </div>
         </div>
       </template>
@@ -1522,44 +1418,44 @@ async function removeMember(partyId: string, memberId: string) {
       <template v-else-if="drawerView === 'edit'">
         <button class="flex items-center gap-1 text-sm text-[var(--text-secondary)] hover:text-[var(--text-color)] transition-colors mb-4 cursor-pointer bg-transparent border-0 p-0" @click="drawerView = 'list'">
           <i class="pi pi-arrow-left text-xs" />
-          Back to parties
+          {{ $t('projectDetail.backToParties') }}
         </button>
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <label for="editPartyName" class="font-semibold text-sm text-[var(--text-color)]">Party Name</label>
+            <label for="editPartyName" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.partyName') }}</label>
             <InputText id="editPartyName" v-model="editPartyForm.name" class="w-full" />
           </div>
           <div class="flex flex-col gap-2">
-            <label for="editPartyDescription" class="font-semibold text-sm text-[var(--text-color)]">Description</label>
-            <InputText id="editPartyDescription" v-model="editPartyForm.description" class="w-full" placeholder="Brief description" />
+            <label for="editPartyDescription" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.description') }}</label>
+            <InputText id="editPartyDescription" v-model="editPartyForm.description" class="w-full" :placeholder="$t('projectDetail.briefDescription')" />
           </div>
-          <div class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Metadata</div>
+          <div class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">{{ $t('projectDetail.metadata') }}</div>
           <div class="flex flex-col gap-2">
-            <label for="editPartyVat" class="font-semibold text-sm text-[var(--text-color)]">VAT Number</label>
-            <InputText id="editPartyVat" v-model="editPartyForm.vatNumber" class="w-full" placeholder="VAT number" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="editPartyEmail" class="font-semibold text-sm text-[var(--text-color)]">Contact Email</label>
-            <InputText id="editPartyEmail" v-model="editPartyForm.contactEmail" class="w-full" placeholder="contact@example.com" />
+            <label for="editPartyVat" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.vatNumber') }}</label>
+            <InputText id="editPartyVat" v-model="editPartyForm.vatNumber" class="w-full" :placeholder="$t('projectDetail.vatPlaceholder')" />
           </div>
           <div class="flex flex-col gap-2">
-            <label for="editPartyPhone" class="font-semibold text-sm text-[var(--text-color)]">Contact Phone</label>
-            <InputText id="editPartyPhone" v-model="editPartyForm.contactPhone" class="w-full" placeholder="+1 234 567 890" />
+            <label for="editPartyEmail" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.contactEmail') }}</label>
+            <InputText id="editPartyEmail" v-model="editPartyForm.contactEmail" class="w-full" :placeholder="$t('projectDetail.contactEmailPlaceholder')" />
           </div>
           <div class="flex flex-col gap-2">
-            <label for="editPartyAddress" class="font-semibold text-sm text-[var(--text-color)]">Address</label>
-            <InputText id="editPartyAddress" v-model="editPartyForm.address" class="w-full" placeholder="Street, City, Country" />
+            <label for="editPartyPhone" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.contactPhone') }}</label>
+            <InputText id="editPartyPhone" v-model="editPartyForm.contactPhone" class="w-full" :placeholder="$t('projectDetail.contactPhonePlaceholder')" />
           </div>
-          <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">Document Permissions</div>
+          <div class="flex flex-col gap-2">
+            <label for="editPartyAddress" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.address') }}</label>
+            <InputText id="editPartyAddress" v-model="editPartyForm.address" class="w-full" :placeholder="$t('projectDetail.addressPlaceholder')" />
+          </div>
+          <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">{{ $t('projectDetail.documentPermissions') }}</div>
           <div v-if="documentTypes && documentTypes.length > 0" class="flex flex-col gap-2">
             <div v-for="dt in documentTypes" :key="dt.id" class="flex items-center justify-between gap-3">
               <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ dt.name }}</span>
-              <Select v-model="editPartyPermissions[dt.id]" :options="permissionOptions" optionLabel="label" optionValue="value" placeholder="None" class="w-[140px] shrink-0" />
+              <Select v-model="editPartyPermissions[dt.id]" :options="permissionOptions" optionLabel="label" optionValue="value" :placeholder="$t('projectDetail.permNone')" class="w-[140px] shrink-0" />
             </div>
           </div>
           <div class="flex justify-end gap-2 mt-2">
-            <Button label="Cancel" text severity="secondary" @click="drawerView = 'list'" />
-            <Button label="Save" icon="pi pi-check" :disabled="!editPartyForm.name.trim()" @click="saveEditParty" />
+            <Button :label="$t('common.cancel')" text severity="secondary" @click="drawerView = 'list'" />
+            <Button :label="$t('common.save')" icon="pi pi-check" :disabled="!editPartyForm.name.trim()" @click="saveEditParty" />
           </div>
         </div>
       </template>
@@ -1577,7 +1473,7 @@ async function removeMember(partyId: string, memberId: string) {
           <button
             class="text-[var(--text-secondary)] hover:text-[#e74c3c] transition-colors p-0.5 cursor-pointer"
             @click="removePermission(dt.id)"
-            aria-label="Remove permission"
+            :aria-label="$t('projectDetail.removePermission')"
           >
             <i class="pi pi-times text-[10px]" />
           </button>
@@ -1588,28 +1484,28 @@ async function removeMember(partyId: string, memberId: string) {
     <!-- Add Member Dialog -->
     <Dialog
       v-model:visible="showAddMemberDialog"
-      header="Add Member"
+      :header="$t('projectDetail.addMemberHeader')"
       modal
       :style="{ width: '400px' }"
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <label for="selectUser" class="font-semibold text-sm text-[var(--text-color)]">User</label>
+          <label for="selectUser" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('projectDetail.user') }}</label>
           <Select
             id="selectUser"
             v-model="selectedUser"
             :options="availableUsers"
             optionLabel="displayName"
-            placeholder="Select a user"
+            :placeholder="$t('projectDetail.selectUser')"
             class="w-full"
             filter
           />
         </div>
       </div>
       <template #footer>
-        <Button label="Cancel" text @click="showAddMemberDialog = false" />
+        <Button :label="$t('common.cancel')" text @click="showAddMemberDialog = false" />
         <Button
-          label="Add Member"
+          :label="$t('projectDetail.addMember')"
           icon="pi pi-user-plus"
           :disabled="!selectedUser"
           @click="addMemberToParty"

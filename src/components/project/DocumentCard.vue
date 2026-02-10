@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { DocumentStatus, type Document } from '@/types/Document';
 import { sanitizeIcon } from '@/utils/documentTypeIcons';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   document: Document;
@@ -96,7 +99,7 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
           text
           rounded
           size="small"
-          aria-label="Edit"
+          :aria-label="$t('common.edit')"
           @click.stop="startEdit"
         />
         <Button
@@ -105,7 +108,7 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
           rounded
           size="small"
           severity="danger"
-          aria-label="Delete"
+          :aria-label="$t('common.delete')"
           @click.stop="$emit('delete', document)"
         />
       </div>

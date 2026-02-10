@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { AxiosError } from 'axios';
 import Logo from '@/components/base/Logo.vue';
 import InputText from 'primevue/inputtext';
@@ -28,6 +29,7 @@ declare global {
   }
 }
 
+const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const service = new RegistrationService();
@@ -113,12 +115,12 @@ const submitRegistration = async () => {
     if (error instanceof AxiosError && error.response) {
       const data = error.response.data as RegistrationErrorResponse;
       if (error.response.status === 409 && data?.error?.code === 'USER_ALREADY_EXISTS') {
-        errorMessage.value = 'An account with this email already exists. Please sign in instead.';
+        errorMessage.value = t('register.accountExists');
       } else {
-        errorMessage.value = data?.error?.message || 'Registration failed. Please try again.';
+        errorMessage.value = data?.error?.message || t('register.registrationFailed');
       }
     } else {
-      errorMessage.value = 'Unable to connect to the server. Please check your connection and try again.';
+      errorMessage.value = t('register.serverError');
     }
   } finally {
     isLoading.value = false;
@@ -142,7 +144,7 @@ const goToLogin = () => {
       <div class="flex flex-col gap-6 w-full max-w-[426px]">
         <Logo size="lg" :show-tagline="true" />
 
-        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">Create Account</h1>
+        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-[var(--text-color)] m-0">{{ $t('register.createAccount') }}</h1>
 
         <template v-if="!isSubmitted">
           <Message v-if="errorMessage" severity="error" :closable="false">
@@ -150,24 +152,24 @@ const goToLogin = () => {
           </Message>
 
           <div class="flex flex-col gap-1.5">
-            <label for="email" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Email Address</label>
+            <label for="email" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('register.emailAddress') }}</label>
             <InputText
               id="email"
               v-model="email"
               type="email"
-              placeholder="you@company.com"
+              :placeholder="$t('register.emailPlaceholder')"
               class="w-full"
               @keypress="handleKeyPress"
             />
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label for="tenantName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Workspace Name</label>
+            <label for="tenantName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('register.workspaceName') }}</label>
             <InputText
               id="tenantName"
               v-model="tenantName"
               type="text"
-              placeholder="Your company or team name"
+              :placeholder="$t('register.workspacePlaceholder')"
               class="w-full"
               @keypress="handleKeyPress"
             />
@@ -177,29 +179,29 @@ const goToLogin = () => {
               @click="tenantName = generateWorkspaceName()"
             >
               <i class="pi pi-sparkles text-xs"></i>
-              Suggest a name
+              {{ $t('register.suggestName') }}
             </button>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <label for="firstName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">First Name <span class="font-normal text-[var(--text-secondary)]">(optional)</span></label>
+              <label for="firstName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('register.firstName') }} <span class="font-normal text-[var(--text-secondary)]">({{ $t('common.optional') }})</span></label>
               <InputText
                 id="firstName"
                 v-model="firstName"
                 type="text"
-                placeholder="First name"
+                :placeholder="$t('register.firstNamePlaceholder')"
                 class="w-full"
                 @keypress="handleKeyPress"
               />
             </div>
             <div class="flex flex-col gap-1.5">
-              <label for="lastName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Last Name <span class="font-normal text-[var(--text-secondary)]">(optional)</span></label>
+              <label for="lastName" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('register.lastName') }} <span class="font-normal text-[var(--text-secondary)]">({{ $t('common.optional') }})</span></label>
               <InputText
                 id="lastName"
                 v-model="lastName"
                 type="text"
-                placeholder="Last name"
+                :placeholder="$t('register.lastNamePlaceholder')"
                 class="w-full"
                 @keypress="handleKeyPress"
               />
@@ -214,12 +216,12 @@ const goToLogin = () => {
               @click="submitRegistration"
               :disabled="!canSubmit || isLoading"
               :loading="isLoading"
-              label="Create Account"
+              :label="$t('register.createAccount')"
             />
             <Button
               type="button"
               @click="goToLogin"
-              label="Already have an account?"
+              :label="$t('register.alreadyHaveAccount')"
               link
             />
           </div>
@@ -228,16 +230,16 @@ const goToLogin = () => {
         <template v-else>
           <div class="flex flex-col items-center gap-4 py-4">
             <i class="pi pi-envelope text-4xl text-[var(--primary-color)]"></i>
-            <p class="font-[Inter,sans-serif] font-medium text-sm leading-[1.5] text-[var(--text-color)] m-0 text-center">
-              We've sent a verification link to <strong>{{ email }}</strong>. Please check your inbox to complete your registration.
-            </p>
+            <i18n-t keypath="register.verificationSent" tag="p" class="font-[Inter,sans-serif] font-medium text-sm leading-[1.5] text-[var(--text-color)] m-0 text-center">
+              <template #email><strong>{{ email }}</strong></template>
+            </i18n-t>
           </div>
 
           <div class="flex justify-between items-center max-[540px]:flex-col max-[540px]:gap-3 max-[540px]:items-start">
             <Button
               type="button"
               @click="goToLogin"
-              label="Continue to Sign In"
+              :label="$t('register.continueToSignIn')"
             />
           </div>
         </template>

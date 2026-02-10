@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import Logo from "@/components/base/Logo.vue";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 
+const { t } = useI18n();
 const router = useRouter();
 
 // Form state
@@ -55,17 +57,17 @@ const backToLogin = () => {
         <Logo size="lg" :show-tagline="true" />
 
         <!-- Heading -->
-        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-slate-800 m-0">Password Recovery</h1>
+        <h1 class="font-[Inter,sans-serif] font-semibold text-[32px] leading-[1.25] text-slate-800 m-0">{{ $t('passwordRecovery.title') }}</h1>
 
         <!-- Form State: Email Input -->
         <template v-if="!isSubmitted">
           <div class="flex flex-col gap-1.5">
-            <label for="email" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Your Email Address</label>
+            <label for="email" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('passwordRecovery.emailLabel') }}</label>
             <InputText
               id="email"
               v-model="email"
               type="email"
-              placeholder="Email Address"
+              :placeholder="$t('passwordRecovery.emailPlaceholder')"
               class="w-full"
               @keypress="handleKeyPress"
             />
@@ -77,12 +79,12 @@ const backToLogin = () => {
               @click="submitRecovery"
               :disabled="!isValidEmail || isLoading"
               :loading="isLoading"
-              label="Continue"
+              :label="$t('passwordRecovery.continue')"
             />
             <Button
               type="button"
               @click="backToLogin"
-              label="Back to sign in"
+              :label="$t('passwordRecovery.backToSignIn')"
               link
             />
           </div>
@@ -91,14 +93,14 @@ const backToLogin = () => {
         <!-- Confirmation State: Email Sent -->
         <template v-else>
           <p class="font-[Inter,sans-serif] font-medium text-sm leading-[1.5] text-[var(--text-color)] m-0">
-            We've sent a password reset link to your email. Please check your inbox (and spam folder just in case).
+            {{ $t('passwordRecovery.confirmationMessage') }}
           </p>
 
           <div class="flex justify-between items-center max-[540px]:flex-col max-[540px]:gap-3 max-[540px]:items-start">
             <Button
               type="button"
               @click="backToLogin"
-              label="Continue"
+              :label="$t('passwordRecovery.continue')"
             />
           </div>
         </template>

@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import { useMutation, useQueryClient } from 'vue-query';
 import { useAuth } from './useAuth';
 import { InviteService } from '@/services/InviteService';
-import type { TenantInvite, UserPendingInvite, CreateInviteRequest, JoinTenantRequest, TenantRole } from '@/types';
+import type { TenantInvite, UserPendingInvite, CreateInviteRequest, AcceptedInvite, JoinTenantRequest } from '@/types';
 
 export function useInvites() {
   const { apiClient } = useAuth();
@@ -57,22 +57,22 @@ export function useInvites() {
 
   const acceptInviteMutation = useMutation({
     mutationFn: (inviteId: string) => inviteService.acceptInvite(inviteId),
-    onSuccess: (_data, inviteId: string) => {
+    onSuccess: (_data: AcceptedInvite, inviteId: string) => {
       userPendingInvites.value = userPendingInvites.value.filter(i => i.inviteId !== inviteId);
       queryClient.invalidateQueries(['user-pending-invites']);
       queryClient.invalidateQueries(['userTenants']);
     },
   });
 
-  async function createInvite(email: string, role?: TenantRole): Promise<TenantInvite> {
-    return createInviteMutation.mutateAsync({ email, role });
+  async function createInvite(request: CreateInviteRequest): Promise<TenantInvite> {
+    return createInviteMutation.mutateAsync(request);
   }
 
   function cancelInvite(inviteId: string) {
     return cancelInviteMutation.mutateAsync(inviteId);
   }
 
-  function acceptInvite(inviteId: string) {
+  function acceptInvite(inviteId: string): Promise<AcceptedInvite> {
     return acceptInviteMutation.mutateAsync(inviteId);
   }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { useDocumentTypes } from '@/composables/useDocumentTypes';
@@ -20,6 +21,7 @@ import IconPicker from '@/components/base/IconPicker.vue';
 
 const permissionInfoPopover = ref();
 
+const { t } = useI18n();
 const toast = useToast();
 const confirm = useConfirm();
 
@@ -33,14 +35,14 @@ const {
   deleteDocumentType,
 } = useDocumentTypes();
 
-const permissionOptions = [
-  { label: 'View', value: 1 },
-  { label: 'Comment', value: 3 },
-  { label: 'Decide', value: 7 },
-];
+const permissionOptions = computed(() => [
+  { label: t('workspaceDocTypes.permView'), value: 1 },
+  { label: t('workspaceDocTypes.permComment'), value: 3 },
+  { label: t('workspaceDocTypes.permDecide'), value: 7 },
+]);
 
 function getPermissionLabel(value: number): string {
-  return permissionOptions.find(o => o.value === value)?.label ?? `Custom (${value})`;
+  return permissionOptions.value.find(o => o.value === value)?.label ?? `Custom (${value})`;
 }
 
 const showDialog = ref(false);
@@ -54,7 +56,7 @@ const dialogForm = reactive({
   defaultPermissions: 1,
 });
 
-const dialogTitle = computed(() => editing.value ? 'Edit Document Type' : 'Add Document Type');
+const dialogTitle = computed(() => t(editing.value ? 'workspaceDocTypes.editDialog' : 'workspaceDocTypes.addDialog'));
 
 watch(() => dialogForm.requiresApproval, (enabled) => {
   if (enabled && dialogForm.defaultApprovalThreshold < 1) {
@@ -88,8 +90,8 @@ async function saveDocumentType() {
   if (!dialogForm.name.trim()) {
     toast.add({
       severity: 'warn',
-      summary: 'Validation',
-      detail: 'Name is required',
+      summary: t('workspaceDocTypes.validation'),
+      detail: t('workspaceDocTypes.nameRequired'),
       life: 3000,
     });
     return;
@@ -108,8 +110,8 @@ async function saveDocumentType() {
       await updateDocumentType(editing.value.id, data);
       toast.add({
         severity: 'success',
-        summary: 'Updated',
-        detail: `Document type "${dialogForm.name}" has been updated`,
+        summary: t('workspaceDocTypes.updated'),
+        detail: t('workspaceDocTypes.updatedDetail', { name: dialogForm.name }),
         life: 3000,
       });
     } else {
@@ -124,8 +126,8 @@ async function saveDocumentType() {
       await createDocumentType(data);
       toast.add({
         severity: 'success',
-        summary: 'Created',
-        detail: `Document type "${dialogForm.name}" has been created`,
+        summary: t('workspaceDocTypes.created'),
+        detail: t('workspaceDocTypes.createdDetail', { name: dialogForm.name }),
         life: 3000,
       });
     }
@@ -133,8 +135,8 @@ async function saveDocumentType() {
   } catch (err) {
     toast.add({
       severity: 'error',
-      summary: 'Error',
-      detail: err instanceof Error ? err.message : 'Failed to save document type',
+      summary: t('common.error'),
+      detail: err instanceof Error ? err.message : t('workspaceDocTypes.failedToSave'),
       life: 5000,
     });
   }
@@ -142,8 +144,8 @@ async function saveDocumentType() {
 
 function confirmDelete(dt: DocumentTypeDTO) {
   confirm.require({
-    message: `Are you sure you want to delete "${dt.name}"?`,
-    header: 'Delete Document Type',
+    message: t('workspaceDocTypes.deleteConfirm', { name: dt.name }),
+    header: t('workspaceDocTypes.deleteHeader'),
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: () => handleDelete(dt),
@@ -155,17 +157,17 @@ async function handleDelete(dt: DocumentTypeDTO) {
     await deleteDocumentType(dt.id);
     toast.add({
       severity: 'success',
-      summary: 'Deleted',
-      detail: `Document type "${dt.name}" has been deleted`,
+      summary: t('common.deleted'),
+      detail: t('workspaceDocTypes.deletedDetail', { name: dt.name }),
       life: 3000,
     });
   } catch (err: any) {
     const detail = err?.response?.status === 400
-      ? 'Cannot delete: documents are using this type'
-      : err instanceof Error ? err.message : 'Failed to delete document type';
+      ? t('workspaceDocTypes.cannotDelete')
+      : err instanceof Error ? err.message : t('workspaceDocTypes.failedToDelete');
     toast.add({
       severity: 'error',
-      summary: 'Error',
+      summary: t('common.error'),
       detail,
       life: 5000,
     });
@@ -178,7 +180,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
     <div class="flex items-center justify-end mb-4">
       <Button
         icon="pi pi-plus"
-        label="Add Document Type"
+        :label="$t('workspaceDocTypes.addDocumentType')"
         size="small"
         @click="openAddDialog"
       />
@@ -187,15 +189,15 @@ async function handleDelete(dt: DocumentTypeDTO) {
     <!-- Loading -->
     <div v-if="loading" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
       <ProgressSpinner style="width: 50px; height: 50px" />
-      <span>Loading document types...</span>
+      <span>{{ $t('workspaceDocTypes.loadingDocTypes') }}</span>
     </div>
 
     <!-- Error -->
     <div v-else-if="error" class="flex flex-col items-center justify-center gap-4 p-16 text-[var(--text-secondary)]">
       <i class="pi pi-exclamation-triangle text-5xl !text-[var(--color-danger,#e74c3c)]"></i>
-      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">Error loading document types</h3>
-      <p class="m-0">{{ error instanceof Error ? error.message : 'An unexpected error occurred' }}</p>
-      <Button icon="pi pi-refresh" label="Try Again" @click="refetch" />
+      <h3 class="text-lg font-semibold text-[var(--text-color)] m-0">{{ $t('workspaceDocTypes.errorLoading') }}</h3>
+      <p class="m-0">{{ error instanceof Error ? error.message : $t('workspaceDocTypes.unexpectedError') }}</p>
+      <Button icon="pi pi-refresh" :label="$t('common.tryAgain')" @click="refetch" />
     </div>
 
     <!-- Table -->
@@ -209,17 +211,17 @@ async function handleDelete(dt: DocumentTypeDTO) {
         <template #empty>
           <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
             <i class="pi pi-file text-5xl mb-4 text-[var(--text-muted)]"></i>
-            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">No document types</h3>
-            <p class="m-0 mb-6">Create a document type to get started.</p>
+            <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">{{ $t('workspaceDocTypes.noDocTypes') }}</h3>
+            <p class="m-0 mb-6">{{ $t('workspaceDocTypes.createToStart') }}</p>
             <Button
               icon="pi pi-plus"
-              label="Add Document Type"
+              :label="$t('workspaceDocTypes.addDocumentType')"
               @click="openAddDialog"
             />
           </div>
         </template>
 
-        <Column field="name" header="Name" sortable style="min-width: 200px">
+        <Column field="name" :header="$t('workspaceDocTypes.columnName')" sortable style="min-width: 200px">
           <template #body="{ data }">
             <span class="inline-flex items-center gap-2 font-medium text-[var(--primary-color)]">
               <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="text-base text-[var(--text-secondary)]"></i>
@@ -228,20 +230,20 @@ async function handleDelete(dt: DocumentTypeDTO) {
           </template>
         </Column>
 
-        <Column field="requiresApproval" header="Requires Approval" style="min-width: 140px">
+        <Column field="requiresApproval" :header="$t('workspaceDocTypes.columnRequiresApproval')" style="min-width: 140px">
           <template #body="{ data }">
             <i :class="data.requiresApproval ? 'pi pi-check text-green-600' : 'pi pi-minus text-gray-400'"></i>
           </template>
         </Column>
 
-        <Column field="defaultApprovalThreshold" header="Threshold" style="min-width: 100px">
+        <Column field="defaultApprovalThreshold" :header="$t('workspaceDocTypes.columnThreshold')" style="min-width: 100px">
           <template #body="{ data }">
             <span v-if="data.requiresApproval">{{ data.defaultApprovalThreshold }}</span>
             <span v-else class="text-gray-400">&mdash;</span>
           </template>
         </Column>
 
-        <Column field="requiresSignature" header="Requires Signature" style="min-width: 140px">
+        <Column field="requiresSignature" :header="$t('workspaceDocTypes.columnRequiresSignature')" style="min-width: 140px">
           <template #body="{ data }">
             <i :class="data.requiresSignature ? 'pi pi-check text-green-600' : 'pi pi-minus text-gray-400'"></i>
           </template>
@@ -250,7 +252,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
         <Column field="defaultPermissions" style="min-width: 160px">
           <template #header>
             <span class="inline-flex items-center gap-1.5">
-              Required Permission
+              {{ $t('workspaceDocTypes.columnRequiredPermission') }}
               <i
                 class="pi pi-info-circle text-xs text-[var(--text-secondary)] cursor-pointer hover:text-[var(--primary-color)]"
                 @click.stop="permissionInfoPopover.toggle($event)"
@@ -258,7 +260,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
             </span>
             <Popover ref="permissionInfoPopover">
               <div class="max-w-[260px] text-[13px] leading-normal text-[var(--text-color)]">
-                The minimum party permission level required to access documents of this type.
+                {{ $t('workspaceDocTypes.permissionInfo') }}
               </div>
             </Popover>
           </template>
@@ -276,7 +278,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
                 rounded
                 size="small"
                 @click="openEditDialog(data)"
-                aria-label="Edit"
+                :aria-label="$t('common.edit')"
               />
               <Button
                 icon="pi pi-trash"
@@ -285,7 +287,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
                 size="small"
                 severity="danger"
                 @click="confirmDelete(data)"
-                aria-label="Delete"
+                :aria-label="$t('common.delete')"
               />
             </div>
           </template>
@@ -302,27 +304,27 @@ async function handleDelete(dt: DocumentTypeDTO) {
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-sm text-[var(--text-color)]">Icon</label>
+          <label class="font-semibold text-sm text-[var(--text-color)]">{{ $t('workspaceDocTypes.icon') }}</label>
           <IconPicker v-model="dialogForm.icon" />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label for="dtName" class="font-semibold text-sm text-[var(--text-color)]">Name</label>
+          <label for="dtName" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('workspaceDocTypes.name') }}</label>
           <InputText
             id="dtName"
             v-model="dialogForm.name"
             class="w-full"
-            placeholder="e.g., Invoice, Contract"
+            :placeholder="$t('workspaceDocTypes.namePlaceholder')"
           />
         </div>
 
         <div class="flex items-center justify-between gap-2">
-          <label class="font-semibold text-sm text-[var(--text-color)]">Requires Approval</label>
+          <label class="font-semibold text-sm text-[var(--text-color)]">{{ $t('workspaceDocTypes.requiresApproval') }}</label>
           <ToggleSwitch v-model="dialogForm.requiresApproval" />
         </div>
 
         <div v-if="dialogForm.requiresApproval" class="flex flex-col gap-2">
-          <label for="dtThreshold" class="font-semibold text-sm text-[var(--text-color)]">Approval Threshold</label>
+          <label for="dtThreshold" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('workspaceDocTypes.approvalThreshold') }}</label>
           <InputNumber
             id="dtThreshold"
             v-model="dialogForm.defaultApprovalThreshold"
@@ -333,12 +335,12 @@ async function handleDelete(dt: DocumentTypeDTO) {
         </div>
 
         <div class="flex items-center justify-between gap-2">
-          <label class="font-semibold text-sm text-[var(--text-color)]">Requires Signature</label>
+          <label class="font-semibold text-sm text-[var(--text-color)]">{{ $t('workspaceDocTypes.requiresSignature') }}</label>
           <ToggleSwitch v-model="dialogForm.requiresSignature" />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label for="dtPermissions" class="font-semibold text-sm text-[var(--text-color)]">Required Permission</label>
+          <label for="dtPermissions" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('workspaceDocTypes.requiredPermission') }}</label>
           <Select
             id="dtPermissions"
             v-model="dialogForm.defaultPermissions"
@@ -347,20 +349,20 @@ async function handleDelete(dt: DocumentTypeDTO) {
             optionValue="value"
             class="w-full"
           />
-          <small class="text-[var(--text-secondary)] text-xs leading-[1.4]">Minimum party permission level required to access documents of this type.</small>
+          <small class="text-[var(--text-secondary)] text-xs leading-[1.4]">{{ $t('workspaceDocTypes.permissionHint') }}</small>
         </div>
       </div>
 
       <template #footer>
         <div class="flex justify-end gap-4">
           <Button
-            label="Cancel"
+            :label="$t('common.cancel')"
             text
             severity="secondary"
             @click="showDialog = false"
           />
           <Button
-            :label="editing ? 'Save' : 'Create'"
+            :label="editing ? $t('common.save') : $t('common.create')"
             icon="pi pi-check"
             @click="saveDocumentType"
             :disabled="!dialogForm.name.trim()"

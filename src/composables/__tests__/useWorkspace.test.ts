@@ -151,6 +151,26 @@ describe('useWorkspace', () => {
     expect(mockRouterPush).toHaveBeenCalledWith({ name: 'projects' });
   });
 
+  it('should set isSwitching and switchingToName during workspace switch', async () => {
+    const newTenant = makeTenant({ id: 'tenant-2', name: 'Beta Inc' });
+    mockQueryClient.fetchQuery.mockResolvedValue(newTenant);
+    mockApiClient.put.mockResolvedValue({});
+
+    const { switchWorkspace, isSwitching, switchingToName, userWorkspaces } = useWorkspace();
+    userWorkspaces.value = [
+      { tenantId: 'tenant-2', name: 'Beta Inc', role: 'MEMBER', createdAt: '2024-02-01' },
+    ];
+
+    expect(isSwitching.value).toBe(false);
+
+    const promise = switchWorkspace('tenant-2');
+    expect(isSwitching.value).toBe(true);
+    expect(switchingToName.value).toBe('Beta Inc');
+
+    await promise;
+    expect(isSwitching.value).toBe(false);
+  });
+
   it('should return null for currentWorkspaceRole when no matching workspace', () => {
     vi.mocked(useAuth).mockReturnValue({
       apiClient: mockApiClient,

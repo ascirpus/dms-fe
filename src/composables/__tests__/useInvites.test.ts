@@ -112,11 +112,37 @@ describe('useInvites', () => {
       });
 
       const { createInvite, pendingInvites } = useInvites();
-      const result = await createInvite('user@test.com', 'MEMBER');
+      const result = await createInvite({ email: 'user@test.com', role: 'MEMBER' });
 
       expect(result).toEqual(mockInvite);
       expect(pendingInvites.value).toContainEqual(mockInvite);
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith(['tenant-invites']);
+    });
+
+    it('should create an invite with project assignments', async () => {
+      const inviteWithAssignments = {
+        ...mockInvite,
+        projectAssignments: [{ projectId: 'proj-1', partyId: 'party-1' }],
+      };
+      mockApiClient.post.mockResolvedValue({
+        data: { status: 'SUCCESS', data: inviteWithAssignments },
+      });
+
+      const { createInvite, pendingInvites } = useInvites();
+      const result = await createInvite({
+        email: 'user@test.com',
+        role: 'MEMBER',
+        projectAssignments: [{ projectId: 'proj-1', partyId: 'party-1' }],
+      });
+
+      expect(result).toEqual(inviteWithAssignments);
+      expect(result.projectAssignments).toHaveLength(1);
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/api/tenants/current/invites',
+        expect.objectContaining({
+          projectAssignments: [{ projectId: 'proj-1', partyId: 'party-1' }],
+        }),
+      );
     });
   });
 
@@ -148,19 +174,38 @@ describe('useInvites', () => {
   });
 
   describe('acceptInvite', () => {
-    it('should accept invite and invalidate queries', async () => {
-      mockApiClient.post.mockResolvedValue({});
+    it('should accept invite, remove from list, and invalidate queries', async () => {
+      const acceptedResponse = { projectAssignments: [] };
+      mockApiClient.post.mockResolvedValue({
+        data: { status: 'SUCCESS', data: acceptedResponse },
+      });
       mockQueryClient.fetchQuery.mockResolvedValue([mockUserInvite]);
 
       const { fetchUserPendingInvites, acceptInvite, userPendingInvites } = useInvites();
       await fetchUserPendingInvites();
       expect(userPendingInvites.value).toHaveLength(1);
 
-      await acceptInvite('inv-1');
+      const result = await acceptInvite('inv-1');
 
+      expect(result).toEqual(acceptedResponse);
       expect(userPendingInvites.value).toHaveLength(0);
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith(['user-pending-invites']);
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith(['userTenants']);
+    });
+
+    it('should return project assignments from accepted invite', async () => {
+      const acceptedResponse = {
+        projectAssignments: [{ projectId: 'proj-1', partyId: 'party-1' }],
+      };
+      mockApiClient.post.mockResolvedValue({
+        data: { status: 'SUCCESS', data: acceptedResponse },
+      });
+
+      const { acceptInvite } = useInvites();
+      const result = await acceptInvite('inv-1');
+
+      expect(result.projectAssignments).toHaveLength(1);
+      expect(result.projectAssignments[0].projectId).toBe('proj-1');
     });
   });
 

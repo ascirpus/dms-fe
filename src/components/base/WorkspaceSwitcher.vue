@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { useAuth } from '@/composables/useAuth';
 import Popover from 'primevue/popover';
 
+const { t } = useI18n();
 const router = useRouter();
 const { getCurrentTenantId } = useAuth();
 const {
@@ -60,7 +62,7 @@ onMounted(() => {
     class="group flex items-center gap-1.5 py-1 px-2.5 border border-transparent rounded-md bg-transparent cursor-pointer transition-colors text-[var(--text-secondary)] hover:bg-[var(--surface-ground)] hover:border-[var(--surface-border)] hover:text-[var(--text-color)]"
     @click="toggle"
   >
-    <span class="font-['Inter',sans-serif] font-medium text-[13px] leading-5 whitespace-nowrap max-w-[180px] overflow-hidden text-ellipsis">{{ currentWorkspaceName || 'Workspace' }}</span>
+    <span class="font-['Inter',sans-serif] font-medium text-[13px] leading-5 whitespace-nowrap max-w-[180px] overflow-hidden text-ellipsis">{{ currentWorkspaceName || t('workspaceSwitcher.workspace') }}</span>
     <i class="pi pi-chevron-down text-[9px] text-[var(--text-secondary)] transition-colors group-hover:text-[var(--text-color)]"></i>
   </button>
 
@@ -88,7 +90,7 @@ onMounted(() => {
         @click="onAddWorkspace"
       >
         <i class="pi pi-plus text-xs w-4 text-center"></i>
-        <span>New Workspace</span>
+        <span>{{ $t('workspaceSwitcher.newWorkspace') }}</span>
       </div>
 
       <div class="h-px bg-[var(--surface-border)] my-1.5"></div>
@@ -99,14 +101,14 @@ onMounted(() => {
         @click="navigateTo('workspace-settings')"
       >
         <i class="pi pi-cog text-sm"></i>
-        <span>Workspace Settings</span>
+        <span>{{ $t('workspaceSwitcher.workspaceSettings') }}</span>
       </div>
       <div
         class="flex items-center gap-2.5 py-2.5 px-3.5 text-sm text-[var(--text-secondary)] cursor-pointer rounded-md transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-color)]"
         @click="navigateTo('workspace-overview')"
       >
         <i class="pi pi-chart-bar text-sm"></i>
-        <span>Usage &amp; Limits</span>
+        <span>{{ $t('workspaceSwitcher.usageLimits') }}</span>
       </div>
     </div>
   </Popover>

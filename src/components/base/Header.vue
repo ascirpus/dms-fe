@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuth } from '@/composables/useAuth';
 import { useNotifications } from '@/composables/useNotifications';
 import { useSearch } from '@/composables/useSearch';
@@ -17,6 +18,7 @@ import InputText from 'primevue/inputtext';
 import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
 
+const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const auth = useAuth();
@@ -52,9 +54,9 @@ const { query: searchQuery, results: searchResults, loading: searchLoading, clea
 
 const searchPlaceholder = computed(() => {
   if (currentProjectName.value) {
-    return `Search in ${currentProjectName.value}...`;
+    return t('header.searchInProject', { project: currentProjectName.value });
   }
-  return 'Search documents...';
+  return t('common.searchDocuments');
 });
 
 // Dropdown visibility
@@ -125,13 +127,13 @@ const userMenuItems = computed(() => {
   if (isAuthenticated.value) {
     return [
       {
-        label: 'Profile',
+        label: t('common.profile'),
         icon: 'pi pi-user',
         command: () => router.push({ name: 'profile-general' })
       },
       { separator: true },
       {
-        label: 'Sign Out',
+        label: t('common.signOut'),
         icon: 'pi pi-sign-out',
         command: () => auth.logout()
       }
@@ -139,7 +141,7 @@ const userMenuItems = computed(() => {
   }
   return [
     {
-      label: 'Sign In',
+      label: t('common.signIn'),
       icon: 'pi pi-sign-in',
       command: () => router.push({ name: 'login' })
     }
@@ -205,7 +207,7 @@ const goToNotifications = () => {
         <div v-if="showDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-lg shadow-[0_4px_16px_rgba(0,0,0,0.12)] z-[1000] overflow-hidden">
           <div v-if="searchLoading" class="flex items-center gap-2 py-3 px-4 text-[var(--text-secondary)] text-[13px]">
             <i class="pi pi-spin pi-spinner"></i>
-            <span>Searching...</span>
+            <span>{{ $t('common.searching') }}</span>
           </div>
           <template v-else>
             <div
@@ -226,7 +228,7 @@ const goToNotifications = () => {
               tabindex="0"
               @mousedown.prevent="navigateToSearchResults"
             >
-              View all results
+              {{ $t('common.viewAllResults') }}
             </div>
           </template>
         </div>
@@ -236,7 +238,7 @@ const goToNotifications = () => {
       <div class="flex items-center gap-4">
         <!-- Admin link (IAM) - only show for admins -->
         <Button
-          label="IAM"
+          :label="t('header.iam')"
           icon="pi pi-user"
           text
           class="!text-[var(--text-secondary)] font-medium hover:!text-[var(--text-color)]"
@@ -250,7 +252,7 @@ const goToNotifications = () => {
             text
             rounded
             class="!text-[var(--text-secondary)] hover:!text-[var(--text-color)]"
-            aria-label="Notifications"
+            :aria-label="$t('common.notifications')"
             @click="goToNotifications"
           />
           <Badge
@@ -267,7 +269,7 @@ const goToNotifications = () => {
           text
           rounded
           class="!text-[var(--text-secondary)] hover:!text-[var(--text-color)]"
-          aria-label="Toggle theme"
+          :aria-label="$t('header.toggleTheme')"
           @click="toggleTheme"
         />
 

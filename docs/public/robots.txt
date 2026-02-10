@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /docs/
+
+Sitemap: https://www.cedar-stack.com/docs/sitemap.xml

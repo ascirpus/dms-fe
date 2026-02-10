@@ -9,6 +9,8 @@ import { useRouter } from 'vue-router';
 const currentWorkspace = ref<Tenant | null>(null);
 const userWorkspaces = ref<UserTenantSummary[]>([]);
 const workspacesLoaded = ref(false);
+const isSwitching = ref(false);
+const switchingToName = ref('');
 
 export function useWorkspace() {
     const { apiClient, getCurrentTenantId } = useAuth();
@@ -69,21 +71,30 @@ export function useWorkspace() {
     }
 
     async function switchWorkspace(tenantId: string): Promise<void> {
+        const targetName = userWorkspaces.value.find(w => w.tenantId === tenantId)?.name ?? '';
+        switchingToName.value = targetName;
+        isSwitching.value = true;
+
         authStore.setTenantId(tenantId);
         queryClient.clear();
 
-        tenantService.selectTenant(tenantId).catch(err => {
+        try {
+            await tenantService.selectTenant(tenantId);
+        } catch (err) {
             console.warn('[dms-fe] Failed to notify backend of workspace switch:', err);
-        });
+        }
 
         await fetchCurrentWorkspace();
-        router.push({ name: 'projects' });
+        await router.push({ name: 'projects' });
+        isSwitching.value = false;
     }
 
     return {
         currentWorkspace,
         userWorkspaces,
         workspacesLoaded,
+        isSwitching,
+        switchingToName,
         currentWorkspaceName,
         currentWorkspaceRole,
         canCreateWorkspace,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, maxLength, email } from '@vuelidate/validators';
 import { useAuth } from '@/composables/useAuth';
@@ -13,6 +14,8 @@ import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   visible: boolean;
@@ -209,12 +212,12 @@ async function submit() {
     <div class="flex flex-col gap-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <h2 class="font-semibold text-[21px] leading-5 text-[var(--ui-input-label)] m-0">New Project</h2>
+        <h2 class="font-semibold text-[21px] leading-5 text-[var(--ui-input-label)] m-0">{{ $t('newProjectDialog.title') }}</h2>
         <Button
           icon="pi pi-times"
           text
           rounded
-          aria-label="Close"
+          :aria-label="$t('common.close')"
           @click="closeDialog"
           class="text-[var(--text-secondary)]"
         />
@@ -224,11 +227,11 @@ async function submit() {
       <div class="flex flex-col gap-4">
         <!-- Project Title -->
         <div class="form-field flex flex-col gap-1.5">
-          <label for="projectTitle" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Project Title</label>
+          <label for="projectTitle" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('newProjectDialog.projectTitle') }}</label>
           <InputText
             id="projectTitle"
             v-model="form.name"
-            placeholder="Label"
+            :placeholder="$t('newProjectDialog.titlePlaceholder')"
             :class="{ 'p-invalid': v$.name.$invalid && v$.name.$dirty }"
           />
           <small class="p-error" v-if="v$.name.$invalid && v$.name.$dirty">
@@ -238,13 +241,13 @@ async function submit() {
 
         <!-- Users Select (only show if there are users to invite) -->
         <div v-if="hasUsersToInvite" class="form-field flex flex-col gap-1.5">
-          <label for="users" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Users</label>
+          <label for="users" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('newProjectDialog.users') }}</label>
           <Select
             id="users"
             v-model="form.selectedUser"
             :options="filteredUsers"
             optionLabel="displayName"
-            placeholder="Select One or Many"
+            :placeholder="$t('newProjectDialog.selectUsers')"
             class="w-full"
             :loading="loadingUsers"
             @change="onUserSelect"
@@ -256,7 +259,7 @@ async function submit() {
                 <span :class="{ 'opacity-50': slotProps.option.isCurrent }">
                   {{ slotProps.option.displayName }}
                 </span>
-                <span v-if="slotProps.option.isCurrent" class="text-xs text-gray-500">(You)</span>
+                <span v-if="slotProps.option.isCurrent" class="text-xs text-gray-500">({{ $t('common.you') }})</span>
               </div>
             </template>
           </Select>
@@ -277,7 +280,7 @@ async function submit() {
               rounded
               size="small"
               severity="secondary"
-              aria-label="Remove user"
+              :aria-label="$t('newProjectDialog.removeUser')"
               @click="removeUser(user.userId)"
               class="text-[var(--text-secondary)] hover:text-[var(--color-danger)]"
             />
@@ -286,11 +289,11 @@ async function submit() {
 
         <!-- Invite by Email -->
         <div class="form-field flex flex-col gap-1.5">
-          <label for="inviteEmail" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">Invite by Email</label>
+          <label for="inviteEmail" class="font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('newProjectDialog.inviteByEmail') }}</label>
           <InputText
             id="inviteEmail"
             v-model="form.currentEmail"
-            placeholder="user@company.com"
+            :placeholder="$t('newProjectDialog.emailPlaceholder')"
             @keyup.enter="addEmail"
           />
         </div>
@@ -309,7 +312,7 @@ async function submit() {
               rounded
               size="small"
               severity="secondary"
-              aria-label="Remove email"
+              :aria-label="$t('newProjectDialog.removeEmail')"
               @click="removeEmail(emailAddr)"
               class="text-[var(--text-secondary)] hover:text-[var(--color-danger)]"
             />
@@ -319,7 +322,7 @@ async function submit() {
         <!-- Add Another Email Button -->
         <Button
           v-if="form.currentEmail || form.inviteEmails.length > 0"
-          label="Specify Another Email"
+          :label="$t('newProjectDialog.specifyAnotherEmail')"
           text
           size="small"
           class="self-start text-[var(--ui-button-secondary)] bg-[var(--ui-button-subtle)] px-2.5 py-1.5 text-sm"
@@ -330,12 +333,12 @@ async function submit() {
       <!-- Footer -->
       <div class="flex justify-end gap-4">
         <Button
-          label="Cancel"
+          :label="$t('common.cancel')"
           class="bg-[var(--ui-button-subtle)] text-[var(--ui-button-secondary)] border-none h-[39px] px-2.5 py-1.5 font-medium text-base hover:bg-[#e8ecf1]"
           @click="closeDialog"
         />
         <Button
-          label="Submit"
+          :label="$t('common.submit')"
           :class="[
             'bg-[var(--ui-button-tertiary)] text-white border-none h-[39px] px-2.5 py-1.5 font-medium text-base hover:enabled:bg-[var(--ui-button-primary)]',
             { '!bg-[var(--ui-button-primary)]': hasFormData }

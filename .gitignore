@@ -26,5 +26,9 @@ dist-ssr
 
 public/pdfs/*
 
+# VitePress
+docs/.vitepress/cache
+docs/.vitepress/dist
+
 # Deploy
 deploy.conf
