@@ -68,7 +68,7 @@ The project header (name, description) and a table of documents within the proje
 |--------|-----------|-------------|
 | Document Name | Always visible | Document title (clickable) |
 | Modified Date | Toggleable | Last modification date |
-| Status | Toggleable | Status tag: Pending (blue), Approved (green), Declined (red) |
+| Status | Toggleable | Status tag: "Pending" / "{signed}/{total} Signatures" (warn), "Approved" (success), "Declined" (danger) |
 | Version | Toggleable | Current version number |
 
 ### User Interactions

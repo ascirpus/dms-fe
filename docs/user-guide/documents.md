@@ -61,9 +61,12 @@ Documents that require approval have a status:
 
 | Status | Meaning | Display |
 |--------|---------|---------|
-| Pending | Awaiting approvals | Blue tag |
-| Approved | Reached the required approval threshold | Green tag |
-| Declined | Someone with Decide permission declined it | Red tag |
+| Pending | Awaiting approvals | Yellow/warn tag showing "Pending" |
+| Pending (with signatures) | Awaiting signatures | Yellow/warn tag showing "{signed}/{total} Signatures" (e.g. "2/5 Signatures") |
+| Approved | Reached the required approval threshold | Green tag showing "Approved" |
+| Declined | Someone with Decide permission declined it | Red tag showing "Declined" |
+
+When a pending document has assigned signatures, the status tag shows signature progress (e.g. "2/5 Signatures") instead of "Pending", giving an at-a-glance view of how many signatures have been collected.
 
 Documents without approval requirements have no status tag.
 

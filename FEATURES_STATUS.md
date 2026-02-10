@@ -86,6 +86,7 @@ For detailed UX documentation of each feature (what it does, how to interact wit
 
 | Feature | Backend Status | Frontend Status | Notes |
 |---------|----------------|-----------------|-------|
+| Signature Progress Display | ✅ Live | 🔶 Code Only | Pending docs with signatures show "{signed}/{total} Signatures" in project list/card views. No tests. |
 | Signature Requests | ✅ Live | ❌ Not Implemented | No UI for assigning signers |
 | Voluntary Signatures | ✅ Live | ❌ Not Implemented | No "sign document" button |
 | Signature Tracking | ✅ Live | ❌ Not Implemented | No signature history view |

@@ -42,6 +42,10 @@ Admins (users with Manage Documents capability) can assign required signers:
 
 Assigned users will receive a notification that their signature is required.
 
+## Signature Progress in Document Lists
+
+When a document has assigned signatures and is in the **Pending** status, the status tag in the project document list and card view shows signature progress instead of "Pending" — for example, **"2/5 Signatures"**. This gives you an at-a-glance view of how many signatures have been collected without opening the document.
+
 ## Signature Status
 
 The signature panel on a document shows:
