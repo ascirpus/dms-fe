@@ -197,7 +197,8 @@
     "permComment": "Kommentieren",
     "permDecide": "Entscheiden",
     "removePermission": "Berechtigung entfernen",
-    "unknownError": "Unbekannter Fehler aufgetreten"
+    "unknownError": "Unbekannter Fehler aufgetreten",
+    "signaturesProgress": "{signed}/{total} Unterschriften"
   },
   "workspaceMembers": {
     "inviteMember": "Mitglied einladen",

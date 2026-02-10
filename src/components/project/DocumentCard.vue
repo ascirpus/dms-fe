@@ -65,6 +65,19 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
       return 'secondary';
   }
 }
+
+function getStatusLabel(doc: Document): string {
+  if (doc.status === DocumentStatus.PENDING && doc.signatures?.length) {
+    const signed = doc.signatures.filter(s => s.signedAt).length;
+    const total = doc.signatures.length;
+    return t('projectDetail.signaturesProgress', { signed, total });
+  }
+  switch (doc.status) {
+    case DocumentStatus.APPROVED: return t('projectDetail.statusApproved');
+    case DocumentStatus.DECLINED: return t('projectDetail.statusDeclined');
+    default: return t('projectDetail.statusPending');
+  }
+}
 </script>
 
 <template>
@@ -121,7 +134,7 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
 
     <!-- Footer -->
     <div class="flex items-center gap-3 text-xs">
-      <Tag :value="document.status" :severity="getStatusSeverity(document.status)" />
+      <Tag :value="getStatusLabel(document)" :severity="getStatusSeverity(document.status)" />
       <span v-if="document.currentVersion" class="text-[var(--text-secondary)] font-medium">
         v{{ document.currentVersion.version }}
       </span>

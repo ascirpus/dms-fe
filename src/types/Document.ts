@@ -21,6 +21,13 @@ export interface FileVersion {
     uploadedAt: string;
 }
 
+export interface Signature {
+    user: { id: string; email: string; firstName?: string; lastName?: string };
+    required: boolean;
+    assignedAt: string;
+    signedAt: string | null;
+}
+
 export interface Document {
     id: string;
     title: string;
@@ -29,4 +36,5 @@ export interface Document {
     status: DocumentStatus;
     currentVersion?: CurrentFile;
     versions: FileVersion[];
+    signatures?: Signature[];
 }

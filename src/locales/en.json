@@ -197,7 +197,8 @@
     "permComment": "Comment",
     "permDecide": "Decide",
     "removePermission": "Remove permission",
-    "unknownError": "Unknown error occurred"
+    "unknownError": "Unknown error occurred",
+    "signaturesProgress": "{signed}/{total} Signatures"
   },
   "workspaceMembers": {
     "inviteMember": "Invite Member",

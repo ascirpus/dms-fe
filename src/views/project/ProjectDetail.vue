@@ -325,6 +325,19 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
   }
 }
 
+function getStatusLabel(doc: Document): string {
+  if (doc.status === DocumentStatus.PENDING && doc.signatures?.length) {
+    const signed = doc.signatures.filter(s => s.signedAt).length;
+    const total = doc.signatures.length;
+    return t('projectDetail.signaturesProgress', { signed, total });
+  }
+  switch (doc.status) {
+    case DocumentStatus.APPROVED: return t('projectDetail.statusApproved');
+    case DocumentStatus.DECLINED: return t('projectDetail.statusDeclined');
+    default: return t('projectDetail.statusPending');
+  }
+}
+
 function toggleSettings(event: Event) {
   settingsPopover.value.toggle(event);
 }
@@ -1098,7 +1111,7 @@ async function removeMemberHandler(partyId: string, memberId: string) {
             style="min-width: 120px"
           >
             <template #body="{ data }">
-              <Tag :value="data.status" :severity="getStatusSeverity(data.status)" />
+              <Tag :value="getStatusLabel(data)" :severity="getStatusSeverity(data.status)" />
             </template>
           </Column>
 
