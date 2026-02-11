@@ -16,6 +16,8 @@ Every new workspace starts with 5 built-in document types:
 
 You can rename or modify these defaults and create additional types. Each type can be assigned a custom icon from the built-in icon picker (36 icons available including document, finance, and organization icons).
 
+Each document type is also automatically assigned a unique color based on its position in your workspace. This color appears on the type's icon everywhere it is shown — document cards, the documents table, party permission lists, and search results — so you can quickly tell types apart at a glance, even if multiple types share the same icon.
+
 ## Managing Document Types
 
 *Requires: Manage Settings capability (Admin or Owner)*

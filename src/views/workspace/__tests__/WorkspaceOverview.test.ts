@@ -22,6 +22,8 @@ function makeTenant(overrides: Partial<Tenant> = {}): Tenant {
       maxProjects: 10,
       maxDocumentsPerProject: 50,
       maxStorageMb: 1024,
+      maxDocumentSizeMb: 50,
+      maxUsersPerProject: 20,
       maxTenants: 5,
       features: [
         { feature: 'DOCUMENT_VERSIONING', enabled: true, config: {} },

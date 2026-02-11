@@ -421,10 +421,10 @@ onBeforeUnmount(() => {
               class="flex items-center justify-center w-6 h-6 min-w-6 rounded-full text-white text-[9px] font-semibold"
               :style="{ backgroundColor: getAvatarColor(member.email) }"
             >
-              {{ (member.firstName?.[0] ?? '') + (member.lastName?.[0] ?? '') }}
+              {{ getInitialsFromUser(member) }}
             </span>
             <span class="text-[13px] font-medium text-[var(--text-color)]">
-              {{ member.firstName }} {{ member.lastName }}
+              {{ getDisplayName(member) }}
             </span>
             <span class="text-[11px] text-[var(--text-secondary)] ml-auto">{{ member.email }}</span>
           </div>

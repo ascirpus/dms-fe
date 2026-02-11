@@ -21,11 +21,15 @@ import { useProjects, useProjectDocuments } from '@/composables/useProjects';
 import { useTenantFeatures } from '@/composables/useTenantFeatures';
 import { DocumentsService } from '@/services/DocumentsService';
 import { getAvatarColor, getInitialsFromUser } from '@/utils/avatar';
+import { getApiError, getApiErrorMessage } from '@/utils/apiError';
+
+import { useToast } from 'primevue/usetoast';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuth();
 const { t } = useI18n();
+const toast = useToast();
 
 const { useResolvedProjectId, fetchProjectById, fetchProjectMembers, loading: projectsLoading } = useProjects();
 const { comments, fetchComments } = useComments();
@@ -105,6 +109,8 @@ const showDocumentInfoDialog = ref(false);
 // Upload state
 const uploading = ref(false);
 const uploadFile = ref<File | null>(null);
+const uploadPassword = ref('');
+const showPasswordField = ref(false);
 
 // Wait for project ID to resolve and documents to load before fetching data
 watch(
@@ -297,6 +303,8 @@ function onShare() {
 
 function onFileSelect(event: { files: File[] }) {
   uploadFile.value = event.files?.[0] ?? null;
+  uploadPassword.value = '';
+  showPasswordField.value = false;
 }
 
 async function uploadNewVersion() {
@@ -305,14 +313,17 @@ async function uploadNewVersion() {
   uploading.value = true;
 
   try {
+    const metadata: { title: string; document_type_id: string; password?: string } = {
+      title: document.value.title,
+      document_type_id: document.value.documentType?.id ?? '',
+    };
+    if (uploadPassword.value) metadata.password = uploadPassword.value;
+
     await documentsService.uploadVersion(
       projectId.value,
       document.value.id,
       uploadFile.value,
-      {
-        title: document.value.title,
-        document_type_id: document.value.documentType?.id ?? '',
-      },
+      metadata,
     );
 
     // Re-fetch document to get updated version data (backend returns Unit)
@@ -323,8 +334,33 @@ async function uploadNewVersion() {
 
     showAddVersionDialog.value = false;
     uploadFile.value = null;
+    uploadPassword.value = '';
+    showPasswordField.value = false;
   } catch (err) {
-    console.error('Error uploading version:', err);
+    const apiError = getApiError(err);
+    if (apiError?.code === 'PASSWORD_PROTECTED_PDF') {
+      showPasswordField.value = true;
+      toast.add({
+        severity: 'info',
+        summary: t('documentViewer.passwordProtected'),
+        detail: t('documentViewer.enterPassword'),
+        life: 5000,
+      });
+    } else if (apiError?.code === 'INVALID_PDF_PASSWORD') {
+      toast.add({
+        severity: 'error',
+        summary: t('documentViewer.passwordProtected'),
+        detail: t('documentViewer.incorrectPassword'),
+        life: 5000,
+      });
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: t('common.error'),
+        detail: getApiErrorMessage(err, t('documentViewer.unknownError')),
+        life: 5000,
+      });
+    }
   } finally {
     uploading.value = false;
   }
@@ -593,6 +629,21 @@ async function uploadNewVersion() {
           <i class="pi pi-file-pdf"></i>
           {{ uploadFile.name }}
         </p>
+        <div v-if="showPasswordField" class="flex flex-col gap-1">
+          <FloatLabel variant="on">
+            <InputText
+              id="versionPassword"
+              v-model="uploadPassword"
+              type="password"
+              class="w-full"
+              :placeholder="$t('documentViewer.pdfPasswordPlaceholder')"
+            />
+            <label for="versionPassword">{{ $t('documentViewer.pdfPassword') }}</label>
+          </FloatLabel>
+          <small class="text-[var(--text-secondary)]">
+            {{ $t('documentViewer.enterPassword') }}
+          </small>
+        </div>
       </div>
       <template #footer>
         <Button :label="$t('common.cancel')" text @click="showAddVersionDialog = false" />

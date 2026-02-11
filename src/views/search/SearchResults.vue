@@ -10,11 +10,15 @@ import Paginator from 'primevue/paginator';
 import InputText from 'primevue/inputtext';
 import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
+import { sanitizeIcon, buildDocumentTypeColorMap } from '@/utils/documentTypeIcons';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { documentTypes } = useDocumentTypes();
+const docTypeColorMap = computed(() =>
+  buildDocumentTypeColorMap((documentTypes.value ?? []).map(dt => dt.id))
+);
 
 const queryParam = computed(() => (route.query.q as string) || '');
 const projectIdParam = computed(() => (route.query.projectId as string) || undefined);
@@ -34,8 +38,8 @@ function onPageChange(event: { first: number; rows: number }) {
   rows.value = event.rows;
 }
 
-function getDocumentTypeName(typeId: string): string | undefined {
-  return documentTypes.value?.find(dt => dt.id === typeId)?.name;
+function getDocumentType(typeId: string) {
+  return documentTypes.value?.find(dt => dt.id === typeId);
 }
 
 function navigateToDocument(projectId: string, documentId: string) {
@@ -138,8 +142,9 @@ watch([queryParam, projectIdParam], doSearch);
           <span class="flex items-center gap-1.5 ml-auto text-[13px] font-medium text-[var(--text-secondary)]"><i class="pi pi-folder text-xs"></i>{{ result.projectName }}</span>
         </div>
         <p v-if="result.snippet" class="result-snippet mt-2 ml-[22px] text-[13px] text-[var(--text-secondary)] leading-normal" v-html="result.snippet"></p>
-        <span v-if="getDocumentTypeName(result.documentTypeId)" class="inline-block mt-1.5 ml-[22px] py-0.5 px-2 text-[11px] text-[var(--text-secondary)] bg-[var(--surface-ground)] rounded-xl">
-          {{ getDocumentTypeName(result.documentTypeId) }}
+        <span v-if="getDocumentType(result.documentTypeId)" class="inline-flex items-center gap-1 mt-1.5 ml-[22px] py-0.5 px-2 text-[11px] text-[var(--text-secondary)] bg-[var(--surface-ground)] rounded-xl">
+          <i :class="'pi ' + sanitizeIcon(getDocumentType(result.documentTypeId)?.meta?.icon)" class="text-[10px]" :style="{ color: docTypeColorMap.get(result.documentTypeId) }" />
+          {{ getDocumentType(result.documentTypeId)?.name }}
         </span>
       </div>
 

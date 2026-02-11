@@ -15,7 +15,7 @@ export class DocumentsService extends ApiService<Document> {
     async uploadDocument(
         projectId: string,
         file: File,
-        metadata: { title: string; document_type_id: string; document_id?: string },
+        metadata: { title: string; document_type_id: string; document_id?: string; password?: string },
     ): Promise<Document> {
         const formData = new FormData();
         formData.append('file', file);
@@ -32,7 +32,7 @@ export class DocumentsService extends ApiService<Document> {
         projectId: string,
         documentId: string,
         file: File,
-        metadata: { title: string; document_type_id: string },
+        metadata: { title: string; document_type_id: string; password?: string },
     ): Promise<Document> {
         return this.uploadDocument(projectId, file, {
             ...metadata,

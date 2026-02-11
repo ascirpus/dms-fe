@@ -11,6 +11,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   document: Document;
+  typeColor?: string;
 }>();
 
 const emit = defineEmits<{
@@ -88,7 +89,7 @@ function getStatusLabel(doc: Document): string {
     <!-- Header -->
     <div class="flex items-start justify-between gap-2 mb-3">
       <div class="flex items-center gap-2 min-w-0 flex-1">
-        <i :class="'pi ' + sanitizeIcon(document.documentType?.meta?.icon)" class="text-lg text-[var(--text-secondary)] shrink-0"></i>
+        <i :class="'pi ' + sanitizeIcon(document.documentType?.meta?.icon)" class="text-lg shrink-0" :style="typeColor ? { color: typeColor } : undefined"></i>
         <template v-if="editing">
           <InputText
             ref="editInput"

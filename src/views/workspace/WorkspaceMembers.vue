@@ -6,6 +6,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useInvites } from '@/composables/useInvites';
 import { UsersService, type TenantUser } from '@/services/UsersService';
 import { useAuth } from '@/composables/useAuth';
+import { getDisplayName } from '@/utils/avatar';
 import type { TenantInvite } from '@/types';
 
 import Button from 'primevue/button';
@@ -121,7 +122,7 @@ function formatInviterName(invite: TenantInvite): string {
           <Column field="firstName" :header="$t('workspaceMembers.name')" sortable style="min-width: 200px">
             <template #body="{ data }">
               <span class="font-medium text-[var(--text-color)]">
-                {{ [data.firstName, data.lastName].filter(Boolean).join(' ') || '—' }}
+                {{ getDisplayName(data) }}
               </span>
             </template>
           </Column>

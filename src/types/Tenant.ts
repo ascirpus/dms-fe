@@ -10,11 +10,11 @@ export interface TenantTier {
     id: string;
     name: string;
     rank: number;
-    maxProjects?: number;
-    maxDocumentsPerProject?: number;
-    maxStorageMb?: number;
-    maxDocumentSizeMb?: number;
-    maxUsersPerProject?: number;
+    maxProjects: number;
+    maxDocumentsPerProject: number;
+    maxStorageMb: number;
+    maxDocumentSizeMb: number;
+    maxUsersPerProject: number;
     maxTenants: number;
     features: TenantFeature[];
 }

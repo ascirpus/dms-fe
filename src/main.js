@@ -7,7 +7,7 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VuePdf from 'vue3-pdfjs'
 import App from './App.vue';
 import { createRouter } from './composables/useRoutes.js'
-import { i18n } from './plugins/i18n'
+import { i18n, detectLocale } from './plugins/i18n'
 
 // Import PrimeVue core
 import PrimeVue from 'primevue/config';
@@ -22,6 +22,9 @@ import Tooltip from 'primevue/tooltip';
 import { vueKeycloak } from "@josempgon/vue-keycloak";
 import { initPostHog } from "./composables/usePostHog.js";
 
+const detectedLocale = detectLocale();
+const keycloakLocale = detectedLocale.split('-')[0];
+
 const keycloakConfig = {
     config: {
         url: import.meta.env.VITE_AUTH_PROVIDER,
@@ -30,7 +33,9 @@ const keycloakConfig = {
     },
     initOptions: {
         onLoad: "check-sso",
+        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
         checkLoginIframe: false,
+        locale: keycloakLocale,
     }
 }
 

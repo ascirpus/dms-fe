@@ -197,7 +197,12 @@
     "permDecide": "Entscheiden",
     "removePermission": "Berechtigung entfernen",
     "unknownError": "Unbekannter Fehler aufgetreten",
-    "signaturesProgress": "{signed}/{total} Unterschriften"
+    "signaturesProgress": "{signed}/{total} Unterschriften",
+    "passwordProtected": "Dieses PDF ist passwortgeschützt",
+    "enterPassword": "Geben Sie das PDF-Passwort ein, um es zu entsperren und hochzuladen.",
+    "pdfPassword": "PDF-Passwort",
+    "incorrectPassword": "Das Passwort ist falsch. Bitte versuchen Sie es erneut.",
+    "pdfPasswordPlaceholder": "PDF-Passwort eingeben"
   },
   "workspaceMembers": {
     "inviteMember": "Mitglied einladen",
@@ -493,7 +498,12 @@
     "upload": "Hochladen",
     "inviteUserHeader": "Benutzer einladen",
     "emailAddress": "E-Mail-Adresse",
-    "sendInvite": "Einladung senden"
+    "sendInvite": "Einladung senden",
+    "passwordProtected": "Dieses PDF ist passwortgeschützt",
+    "enterPassword": "Geben Sie das PDF-Passwort ein, um es zu entsperren und hochzuladen.",
+    "pdfPassword": "PDF-Passwort",
+    "incorrectPassword": "Das Passwort ist falsch. Bitte versuchen Sie es erneut.",
+    "pdfPasswordPlaceholder": "PDF-Passwort eingeben"
   },
   "commentTable": {
     "addComment": "Kommentar hinzufügen...",

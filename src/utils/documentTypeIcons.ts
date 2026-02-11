@@ -1,3 +1,21 @@
+const GOLDEN_ANGLE = 137.508;
+const SATURATION = 65;
+const LIGHTNESS = 48;
+
+function generateColor(index: number, total: number): string {
+  const hue = (index * GOLDEN_ANGLE) % 360;
+  return `hsl(${Math.round(hue)}, ${SATURATION}%, ${LIGHTNESS}%)`;
+}
+
+export function buildDocumentTypeColorMap(typeIds: string[]): Map<string, string> {
+  const sorted = [...typeIds].sort();
+  const map = new Map<string, string>();
+  sorted.forEach((id, i) => {
+    map.set(id, generateColor(i, sorted.length));
+  });
+  return map;
+}
+
 export const ALLOWED_ICONS: readonly string[] = [
   'pi-file', 'pi-file-pdf', 'pi-file-edit', 'pi-file-check', 'pi-file-excel', 'pi-file-word',
   'pi-file-import', 'pi-file-export', 'pi-folder', 'pi-folder-open',

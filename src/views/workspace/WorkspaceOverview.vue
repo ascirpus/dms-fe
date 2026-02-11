@@ -68,18 +68,24 @@ const usageMetrics = computed(() => {
   ];
 });
 
+const UNLIMITED = 2147483647;
+
 const anyUsageAbove80 = computed(() =>
-  usageMetrics.value.some(m => m.max !== undefined && getPercentage(m.current, m.max) > 80)
+  usageMetrics.value.some(m => !isUnlimited(m.max) && getPercentage(m.current, m.max) > 80)
 );
 
-function getPercentage(current: number, max?: number): number {
-  if (max === undefined || max === 0) return 0;
+function isUnlimited(max: number): boolean {
+  return max === UNLIMITED;
+}
+
+function getPercentage(current: number, max: number): number {
+  if (isUnlimited(max) || max === 0) return 0;
   return Math.min(100, Math.max(0, (current / max) * 100));
 }
 
-function formatUsageValue(current: number, max?: number, formatter?: (v: number) => string): string {
+function formatUsageValue(current: number, max: number, formatter?: (v: number) => string): string {
   const fmt = formatter ?? ((v: number) => v.toString());
-  if (max === undefined || max === 2147483647) return `${fmt(current)} / ${t('common.unlimited')}`;
+  if (isUnlimited(max)) return `${fmt(current)} / ${t('common.unlimited')}`;
   return `${fmt(current)} / ${fmt(max)}`;
 }
 
@@ -114,8 +120,8 @@ function formatFileSize(bytes: number): string {
   return `${bytes} B`;
 }
 
-function getProgressSeverity(current: number, max?: number): string | undefined {
-  if (max === undefined) return undefined;
+function getProgressSeverity(current: number, max: number): string | undefined {
+  if (isUnlimited(max)) return undefined;
   const pct = getPercentage(current, max);
   if (pct > 90) return 'danger';
   if (pct > 80) return 'warn';
@@ -303,7 +309,7 @@ onMounted(async () => {
               {{ formatUsageValue(metric.current, metric.max, metric.formatter) }}
             </div>
             <ProgressBar
-              v-if="metric.max !== undefined"
+              v-if="!isUnlimited(metric.max)"
               :value="getPercentage(metric.current, metric.max)"
               :showValue="false"
               :severity="getProgressSeverity(metric.current, metric.max)"

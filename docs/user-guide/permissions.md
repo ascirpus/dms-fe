@@ -66,7 +66,7 @@ Is user in the project?
 
 ### Party Permissions (Project Settings)
 
-Go to a project's **Settings** page to configure party permissions. You'll see a grid of parties vs. document types where you can set the permission level for each combination.
+Go to a project's **Settings** page to configure party permissions. Each document type is shown with its icon and a unique color so you can quickly identify types when assigning permissions.
 
 Example:
 

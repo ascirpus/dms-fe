@@ -197,7 +197,12 @@
     "permDecide": "Decide",
     "removePermission": "Remove permission",
     "unknownError": "Unknown error occurred",
-    "signaturesProgress": "{signed}/{total} Signatures"
+    "signaturesProgress": "{signed}/{total} Signatures",
+    "passwordProtected": "This PDF is password-protected",
+    "enterPassword": "Enter the PDF password to unlock and upload it.",
+    "pdfPassword": "PDF Password",
+    "incorrectPassword": "The password is incorrect. Please try again.",
+    "pdfPasswordPlaceholder": "Enter PDF password"
   },
   "workspaceMembers": {
     "inviteMember": "Invite Member",
@@ -493,7 +498,12 @@
     "upload": "Upload",
     "inviteUserHeader": "Invite User",
     "emailAddress": "Email Address",
-    "sendInvite": "Send Invite"
+    "sendInvite": "Send Invite",
+    "passwordProtected": "This PDF is password-protected",
+    "enterPassword": "Enter the PDF password to unlock and upload it.",
+    "pdfPassword": "PDF Password",
+    "incorrectPassword": "The password is incorrect. Please try again.",
+    "pdfPasswordPlaceholder": "Enter PDF password"
   },
   "commentTable": {
     "addComment": "Add a comment...",

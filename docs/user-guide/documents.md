@@ -17,6 +17,14 @@ From a project's detail page, click **Upload Document**. The upload dialog asks 
 
 After clicking **Upload**, the document appears in the project's document list.
 
+### Password-Protected PDFs
+
+If you upload a password-protected PDF, the system will detect it and ask you for the password. A password field will appear in the upload dialog with a message explaining what happened. Enter the correct password and click **Upload** again — the system will unlock the PDF and store the unprotected version so it can be previewed, searched, and annotated.
+
+If you enter the wrong password, you'll see an error and can try again. The password field stays visible until the upload succeeds or you select a different file.
+
+This also applies when uploading a new version in the Document Viewer.
+
 > **Limits:** Upload size and total storage depend on your plan:
 > - Free: 10 MB per file, 250 MB total
 > - Team: 100 MB per file, 10 GB total

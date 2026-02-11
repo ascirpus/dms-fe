@@ -166,12 +166,14 @@ export function useProjectDocuments(projectId: () => string | null) {
 
   // Upload document mutation
   const uploadDocumentMutation = useMutation({
-    mutationFn: (data: { file: File; title: string; documentType: string }) => {
+    mutationFn: (data: { file: File; title: string; documentType: string; password?: string }) => {
       if (!currentProjectId.value) throw new Error('No project selected');
-      return documentsApi.uploadDocument(currentProjectId.value, data.file, {
+      const metadata: { title: string; document_type_id: string; password?: string } = {
         title: data.title,
         document_type_id: data.documentType,
-      });
+      };
+      if (data.password) metadata.password = data.password;
+      return documentsApi.uploadDocument(currentProjectId.value, data.file, metadata);
     },
     onSuccess: (newDoc) => {
       queryClient.setQueryData<Document[]>(

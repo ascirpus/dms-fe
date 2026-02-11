@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { useDocumentTypes } from '@/composables/useDocumentTypes';
-import { sanitizeIcon } from '@/utils/documentTypeIcons';
+import { sanitizeIcon, buildDocumentTypeColorMap } from '@/utils/documentTypeIcons';
 import type { DocumentTypeDTO, CreateDocumentTypeRequest, UpdateDocumentTypeRequest } from '@/types/DocumentType';
 
 import Button from 'primevue/button';
@@ -34,6 +34,10 @@ const {
   updateDocumentType,
   deleteDocumentType,
 } = useDocumentTypes();
+
+const docTypeColorMap = computed(() =>
+  buildDocumentTypeColorMap((documentTypes.value ?? []).map(dt => dt.id))
+);
 
 const permissionOptions = computed(() => [
   { label: t('workspaceDocTypes.permView'), value: 1 },
@@ -224,7 +228,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
         <Column field="name" :header="$t('workspaceDocTypes.columnName')" sortable style="min-width: 200px">
           <template #body="{ data }">
             <span class="inline-flex items-center gap-2 font-medium text-[var(--primary-color)]">
-              <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="text-base text-[var(--text-secondary)]"></i>
+              <i :class="'pi ' + sanitizeIcon(data.meta?.icon)" class="text-base" :style="{ color: docTypeColorMap.get(data.id) }"></i>
               {{ data.name }}
             </span>
           </template>

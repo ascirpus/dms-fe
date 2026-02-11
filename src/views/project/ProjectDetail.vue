@@ -44,7 +44,8 @@ import AccordionContent from 'primevue/accordioncontent';
 
 import { useProjects, useProjectDocuments } from "@/composables/useProjects";
 import { useDocumentTypes } from "@/composables/useDocumentTypes";
-import { sanitizeIcon } from "@/utils/documentTypeIcons";
+import { sanitizeIcon, buildDocumentTypeColorMap } from "@/utils/documentTypeIcons";
+import { getApiError, getApiErrorMessage } from "@/utils/apiError";
 import { useMainStore } from "@/stores/mainStore";
 import DocumentCard from "@/components/project/DocumentCard.vue";
 import type { DocumentViewMode } from "@/types";
@@ -237,12 +238,17 @@ const uploadForm = reactive({
   title: '',
   documentType: '' as string,
   file: null as File | null,
+  password: '',
+  showPasswordField: false,
 });
 
 // --- Document types ---
 const { documentTypes } = useDocumentTypes();
 const documentTypeOptions = computed(() =>
   (documentTypes.value ?? []).map(dt => ({ label: dt.name, value: dt.id }))
+);
+const docTypeColorMap = computed(() =>
+  buildDocumentTypeColorMap((documentTypes.value ?? []).map(dt => dt.id))
 );
 
 // --- View mode ---
@@ -394,6 +400,8 @@ function openUploadDialog() {
   uploadForm.title = '';
   uploadForm.documentType = '';
   uploadForm.file = null;
+  uploadForm.password = '';
+  uploadForm.showPasswordField = false;
   showUploadDialog.value = true;
 }
 
@@ -403,6 +411,8 @@ function onFileSelect(event: { files: File[] }) {
     if (!uploadForm.title) {
       uploadForm.title = uploadForm.file.name.replace(/\.[^/.]+$/, '');
     }
+    uploadForm.password = '';
+    uploadForm.showPasswordField = false;
   }
 }
 
@@ -423,6 +433,7 @@ async function handleUploadDocument() {
       file: uploadForm.file,
       title: uploadForm.title,
       documentType: uploadForm.documentType,
+      password: uploadForm.password || undefined,
     });
     showUploadDialog.value = false;
     toast.add({
@@ -432,12 +443,30 @@ async function handleUploadDocument() {
       life: 3000
     });
   } catch (err) {
-    toast.add({
-      severity: 'error',
-      summary: t('projectDetail.uploadFailed'),
-      detail: err instanceof Error ? err.message : t('projectDetail.failedToUpload'),
-      life: 5000
-    });
+    const apiError = getApiError(err);
+    if (apiError?.code === 'PASSWORD_PROTECTED_PDF') {
+      uploadForm.showPasswordField = true;
+      toast.add({
+        severity: 'info',
+        summary: t('projectDetail.passwordProtected'),
+        detail: t('projectDetail.enterPassword'),
+        life: 5000,
+      });
+    } else if (apiError?.code === 'INVALID_PDF_PASSWORD') {
+      toast.add({
+        severity: 'error',
+        summary: t('projectDetail.passwordProtected'),
+        detail: t('projectDetail.incorrectPassword'),
+        life: 5000,
+      });
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: t('projectDetail.uploadFailed'),
+        detail: getApiErrorMessage(err, t('projectDetail.failedToUpload')),
+        life: 5000,
+      });
+    }
   } finally {
     uploading.value = false;
   }
@@ -547,7 +576,7 @@ function getPermissionCount(partyId: string): number {
   return perms ? Object.keys(perms).length : 0;
 }
 
-interface PermissionGroupEntry { id: string; name: string; }
+interface PermissionGroupEntry { id: string; name: string; icon: string; }
 interface PermissionGroup { action: PermissionAction; docTypes: PermissionGroupEntry[]; }
 
 function getPermissionsByAction(partyId: string): PermissionGroup[] {
@@ -555,9 +584,11 @@ function getPermissionsByAction(partyId: string): PermissionGroup[] {
   if (!perms) return [];
   const grouped = new Map<PermissionAction, PermissionGroupEntry[]>();
   for (const [dtId, action] of Object.entries(perms)) {
-    const name = documentTypes.value?.find(dt => dt.id === dtId)?.name || dtId;
+    const dt = documentTypes.value?.find(dt => dt.id === dtId);
+    const name = dt?.name || dtId;
+    const icon = sanitizeIcon(dt?.meta?.icon);
     if (!grouped.has(action)) grouped.set(action, []);
-    grouped.get(action)!.push({ id: dtId, name });
+    grouped.get(action)!.push({ id: dtId, name, icon });
   }
   return Array.from(grouped.entries())
     .map(([action, docTypes]) => ({ action, docTypes }))
@@ -1023,6 +1054,7 @@ async function removeMemberHandler(partyId: string, memberId: string) {
               v-for="doc in paginatedDocuments"
               :key="doc.id"
               :document="doc"
+              :type-color="docTypeColorMap.get(doc.documentType?.id)"
               @click="navigateToDocument"
               @save-title="onCardSaveTitle"
               @delete="confirmDeleteDocument"
@@ -1063,7 +1095,7 @@ async function removeMemberHandler(partyId: string, memberId: string) {
             style="width: 60px"
           >
             <template #body="{ data }">
-              <i :class="'pi ' + sanitizeIcon(data.documentType?.meta?.icon)" class="text-lg text-[var(--text-secondary)]"></i>
+              <i :class="'pi ' + sanitizeIcon(data.documentType?.meta?.icon)" class="text-lg" :style="{ color: docTypeColorMap.get(data.documentType?.id) }"></i>
             </template>
           </Column>
 
@@ -1211,6 +1243,22 @@ async function removeMemberHandler(partyId: string, memberId: string) {
             />
             <label for="uploadType">{{ $t('projectDetail.documentType') }}</label>
           </FloatLabel>
+        </div>
+
+        <div v-if="uploadForm.showPasswordField" class="form-field w-full">
+          <FloatLabel variant="on">
+            <InputText
+              id="uploadPassword"
+              v-model="uploadForm.password"
+              type="password"
+              class="w-full"
+              :placeholder="$t('projectDetail.pdfPasswordPlaceholder')"
+            />
+            <label for="uploadPassword">{{ $t('projectDetail.pdfPassword') }}</label>
+          </FloatLabel>
+          <small class="block mt-1 text-[var(--text-secondary)]">
+            {{ $t('projectDetail.enterPassword') }}
+          </small>
         </div>
       </div>
 
@@ -1416,7 +1464,10 @@ async function removeMemberHandler(partyId: string, memberId: string) {
           <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">{{ $t('projectDetail.documentPermissions') }}</div>
           <div v-if="documentTypes && documentTypes.length > 0" class="flex flex-col gap-2">
             <div v-for="dt in documentTypes" :key="dt.id" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ dt.name }}</span>
+              <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap inline-flex items-center gap-2">
+                <i :class="'pi ' + sanitizeIcon(dt.meta?.icon)" class="text-sm" :style="{ color: docTypeColorMap.get(dt.id) }" />
+                {{ dt.name }}
+              </span>
               <Select v-model="addPartyPermissions[dt.id]" :options="permissionOptions" optionLabel="label" optionValue="value" :placeholder="$t('projectDetail.permNone')" class="w-[140px] shrink-0" />
             </div>
           </div>
@@ -1462,7 +1513,10 @@ async function removeMemberHandler(partyId: string, memberId: string) {
           <div v-if="documentTypes && documentTypes.length > 0" class="font-semibold text-[13px] text-[var(--text-secondary)] uppercase tracking-wide mt-2 pb-1 border-b border-[var(--surface-border)]">{{ $t('projectDetail.documentPermissions') }}</div>
           <div v-if="documentTypes && documentTypes.length > 0" class="flex flex-col gap-2">
             <div v-for="dt in documentTypes" :key="dt.id" class="flex items-center justify-between gap-3">
-              <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ dt.name }}</span>
+              <span class="text-sm text-[var(--text-color)] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap inline-flex items-center gap-2">
+                <i :class="'pi ' + sanitizeIcon(dt.meta?.icon)" class="text-sm" :style="{ color: docTypeColorMap.get(dt.id) }" />
+                {{ dt.name }}
+              </span>
               <Select v-model="editPartyPermissions[dt.id]" :options="permissionOptions" optionLabel="label" optionValue="value" :placeholder="$t('projectDetail.permNone')" class="w-[140px] shrink-0" />
             </div>
           </div>
@@ -1482,7 +1536,10 @@ async function removeMemberHandler(partyId: string, memberId: string) {
           :key="dt.id"
           class="flex items-center justify-between gap-3 px-2 py-0.5 rounded hover:bg-[var(--surface-ground)]"
         >
-          <span class="text-sm text-[var(--text-color)]">{{ dt.name }}</span>
+          <span class="text-sm text-[var(--text-color)] inline-flex items-center gap-1.5">
+            <i :class="'pi ' + dt.icon" class="text-xs" :style="{ color: docTypeColorMap.get(dt.id) }" />
+            {{ dt.name }}
+          </span>
           <button
             class="text-[var(--text-secondary)] hover:text-[#e74c3c] transition-colors p-0.5 cursor-pointer"
             @click="removePermission(dt.id)"
