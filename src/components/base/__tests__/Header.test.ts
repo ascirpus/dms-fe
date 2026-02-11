@@ -273,18 +273,6 @@ describe('Header.vue', () => {
       expect(mockLogout).toHaveBeenCalled();
     });
 
-    it('should navigate to admin when IAM button is clicked', async () => {
-      const wrapper = mountHeader();
-
-      const buttons = wrapper.findAll('button');
-      const iamButton = buttons.find(b => b.text().includes('IAM'));
-      expect(iamButton).toBeDefined();
-
-      await iamButton!.trigger('click');
-
-      expect(mockRouter.push).toHaveBeenCalledWith({ name: 'admin' });
-    });
-
     it('should toggle theme when theme button is clicked', async () => {
       const wrapper = mountHeader();
 

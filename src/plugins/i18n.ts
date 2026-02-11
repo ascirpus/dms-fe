@@ -17,14 +17,21 @@ export const availableLocales: LocaleMeta[] = [
 
 const LOCALE_STORAGE_KEY = 'dms-locale';
 
+function getLocaleFromDomain(): SupportedLocale | null {
+  const hostname = window.location.hostname;
+  if (hostname.endsWith('cedarstack.ch')) return 'de-CH';
+  return null;
+}
+
 export function detectLocale(): SupportedLocale {
   const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
   if (stored === 'en' || stored === 'de-CH') return stored;
 
   const browserLang = navigator.language || (navigator as any).userLanguage || '';
+  if (browserLang.startsWith('en')) return 'en';
   if (browserLang.startsWith('de')) return 'de-CH';
 
-  return 'en';
+  return getLocaleFromDomain() ?? 'en';
 }
 
 export const i18n = createI18n({
