@@ -1,28 +1,29 @@
 # Signatures
 
-CedarStack supports document sign-offs, allowing you to formally acknowledge that you've reviewed a document. Signatures serve as a record of who reviewed what and when.
+CedarStack supports document signatures as a final seal after approval. Once signed, a document becomes immutable — no new versions can be uploaded.
 
 > **Note:** These are acknowledgment signatures, not legally binding digital signatures. Legal digital signature integration (e.g., eIDAS) is planned for a future release.
 
-## Types of Signatures
+## How Signatures Work
 
-### Required Signatures
+Signatures follow a clear pipeline: **Upload/Revise -> Approval Cycle -> Signature (seal) -> Immutable**.
 
-Admins can designate specific users who **must** sign a document. This is useful when certain stakeholders need to formally acknowledge a document, such as:
-
-- A project manager confirming a scope change
-- A department head acknowledging a compliance document
-- All parties confirming receipt of a contract
-
-### Voluntary Signatures
-
-Any user with **View** permission on a document can voluntarily sign it to record that they've reviewed it. This doesn't require admin assignment.
+1. A document type can be configured with **Requires Signature** enabled
+2. When a document of that type is uploaded, the signature requirement is snapshotted onto the document
+3. After the document reaches **Approved** status through the approval workflow, users with **Decide** permission can sign it
+4. Once signed, the document is locked — no new file versions can be uploaded
 
 ## Signing a Document
 
+To sign a document, you need:
+- **Decide** permission on the document (workspace admin role does not bypass this — you must have explicit Decide permission via party membership or a user override)
+- The document must be in **Approved** status
+- The document type must have **Requires Signature** enabled
+
 1. Open the document in the viewer
-2. Click **Sign**
-3. Your signature is recorded with:
+2. The **Document Action Bar** shows a **Sign Document** button (only visible when the document is approved and requires signature)
+3. Click **Sign Document** in the action bar
+4. Your signature is recorded with:
    - Your user ID
    - Timestamp
    - Content hash of the document at the time of signing
@@ -31,47 +32,44 @@ Any user with **View** permission on a document can voluntarily sign it to recor
 
 This metadata creates an audit trail proving when and how you signed.
 
-## Assigning Required Signers
+## Version Reset
 
-Admins (users with Manage Documents capability) can assign required signers:
+When a new file version is uploaded to a document:
+- All existing approvals **and signatures** are cleared
+- The approval cycle starts fresh
+- Signature requirements are re-snapshotted from the document type
 
-1. Open the document
-2. Go to the signature section
-3. Select the users who must sign
-4. Optionally set a **signature deadline**
+This means a signed document cannot have a new version uploaded — you must start fresh with a new document if you need a different version signed.
 
-Assigned users will receive a notification that their signature is required.
+## Viewing Signature Activity
 
-## Signature Progress in Document Lists
-
-When a document has assigned signatures and is in the **Pending** status, the status tag in the project document list and card view shows signature progress instead of "Pending" — for example, **"2/5 Signatures"**. This gives you an at-a-glance view of how many signatures have been collected without opening the document.
+Open a document and click the **Activity** tab in the sidebar to see signature activity. The timeline shows who has signed and when.
 
 ## Signature Status
 
-The signature panel on a document shows:
+The action bar and signature panel on a document show:
 
 | Field | Description |
 |-------|-------------|
-| Required Count | Number of users who must sign |
-| Signed Count | Number who have signed so far |
-| Pending Count | Required signatures still outstanding |
+| Signed Count | Number of users who have signed |
 | Deadline | When signatures must be completed (if set) |
 
-Each signature entry shows who signed and when.
+Each signature entry shows who signed, when, and the content hash at time of signing.
 
 ## Signature Deadlines
 
-When a deadline is set, the system sends reminder notifications at **7 days**, **3 days**, and **1 day** before the deadline to users who haven't signed yet.
+When a deadline is set, the system sends reminder notifications at **7 days**, **3 days**, and **1 day** before the deadline to users with Decide permission who haven't signed yet.
 
 ## Restrictions
 
 - Once a document has been signed, you cannot upload a new file version. This prevents the signed content from being changed after the fact.
+- Signed documents cannot be deleted. This protects the audit trail.
 - Each user can only sign a document once.
+- Signing requires the document to be **Approved** — you cannot sign a pending or declined document.
 
 ## Notifications
 
 | Event | Who is notified |
 |-------|-----------------|
-| Signature requested | Assigned users |
 | Document signed | Project members |
-| Signature deadline approaching (7, 3, 1 days) | Users who haven't signed yet |
+| Signature deadline approaching (7, 3, 1 days) | Users with Decide permission who haven't signed |

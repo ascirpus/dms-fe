@@ -1,4 +1,4 @@
-import type { Document } from "@/types";
+import type { Document, DocumentApproval, SignatureStatus } from "@/types";
 import { ApiService } from "@/services/ApiService.ts";
 import type { ApiResponse } from "@/types/response";
 
@@ -26,6 +26,32 @@ export class DocumentsService extends ApiService<Document> {
             formData,
         );
         return response.data.data;
+    }
+
+    async declineDocument(projectId: string, documentId: string, comment?: string): Promise<void> {
+        await this.apiClient.post(`/api/projects/${projectId}/documents/${documentId}/decline`, { comment });
+    }
+
+    async getApprovals(projectId: string, documentId: string): Promise<DocumentApproval[]> {
+        const response = await this.apiClient.get<ApiResponse<DocumentApproval[]>>(
+            `/api/projects/${projectId}/documents/${documentId}/approvals`,
+        );
+        return response.data.data;
+    }
+
+    async signDocument(projectId: string, documentId: string): Promise<void> {
+        await this.apiClient.post(`/api/projects/${projectId}/documents/${documentId}/sign`, {});
+    }
+
+    async getSignatureStatus(projectId: string, documentId: string): Promise<SignatureStatus> {
+        const response = await this.apiClient.get<ApiResponse<SignatureStatus>>(
+            `/api/projects/${projectId}/documents/${documentId}/signatures`,
+        );
+        return response.data.data;
+    }
+
+    async deleteDocument(projectId: string, documentId: string): Promise<void> {
+        await this.apiClient.delete(`/api/projects/${projectId}/documents/${documentId}`);
     }
 
     async uploadVersion(

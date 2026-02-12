@@ -93,12 +93,6 @@ Decline document
 ### GET `/api/projects/{projectId}/documents/{documentId}/files/{fileId}`
 Get file
 
-### POST `/api/projects/{projectId}/documents/{documentId}/require-signatures`
-Assign required signers
-**Request:** `RequireSignaturesRequest`
-**Response 200:** `ApiResponseUnit`
-**Response 403:** `ApiResponseUnit`
-
 ### PATCH `/api/projects/{projectId}/documents/{documentId}/required-approvals`
 Update required approvals
 **Request:** `UpdateRequiredApprovalsRequest`
@@ -107,8 +101,9 @@ Update required approvals
 **Response 403:** `ApiResponseUnit`
 
 ### POST `/api/projects/{projectId}/documents/{documentId}/sign`
-Sign document
+Sign document (requires DECIDE permission, document must be APPROVED)
 **Response 200:** `ApiResponseUnit`
+**Response 400:** `ApiResponseUnit` (document not approved or signature not required)
 **Response 403:** `ApiResponseUnit`
 
 ### GET `/api/projects/{projectId}/documents/{documentId}/signatures`
@@ -350,6 +345,8 @@ Delete user
 - `approvals`: DocumentApprovalDTO[] **(required)**
 - `signatures`: SignatureDTO[] **(required)**
 - `requiredApprovals`: integer (int32) **(required)**
+- `requiresSignature`: boolean **(required)**
+- `isSigned`: boolean **(required)**
 - `approvalDeadline`: string (date-time)
 - `signatureDeadline`: string (date-time)
 
@@ -493,17 +490,13 @@ Delete user
 - `permissions`: Map<string, "VIEW" | "COMMENT" | "DECIDE"> **(required)**
 
 ### SignatureDTO
-- `userId`: string **(required)**
-- `required`: boolean **(required)**
-- `assignedAt`: string (date-time) **(required)**
-- `signedAt`: string (date-time)
+- `user`: UserDTO **(required)**
+- `signedAt`: string (date-time) **(required)**
+- `contentHash`: string **(required)**
 
 ### SignatureStatusDTO
 - `signatures`: SignatureDTO[] **(required)**
-- `deadline`: string (date-time)
-- `requiredCount`: integer (int32) **(required)**
 - `signedCount`: integer (int32) **(required)**
-- `pendingCount`: integer (int32) **(required)**
 
 ### TenantDTO
 - `id`: string **(required)**

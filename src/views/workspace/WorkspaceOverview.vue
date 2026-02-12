@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { usePostHog } from '@/composables/usePostHog.js';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { useAuth } from '@/composables/useAuth';
 import { useBilling } from '@/composables/useBilling';
@@ -20,6 +21,7 @@ const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
 const { apiClient } = useAuth();
+const posthog = usePostHog();
 const { currentWorkspace, fetchCurrentWorkspace } = useWorkspace();
 const { billingStatus, plans, isSubscribed, currentSubscription, fetchBillingStatus, fetchPlans, startCheckout, openBillingPortal, cancelSubscription } = useBilling();
 
@@ -167,6 +169,7 @@ const nextUpgradePlan = computed(() => {
 });
 
 async function onStartCheckout(planId: string) {
+  posthog.capture('checkout_started', { plan_id: planId, interval: selectedInterval.value });
   checkoutLoading.value = planId;
   try {
     await startCheckout(planId, selectedInterval.value);
@@ -178,6 +181,7 @@ async function onStartCheckout(planId: string) {
 }
 
 async function onManageSubscription() {
+  posthog.capture('billing_portal_opened');
   try {
     await openBillingPortal();
   } catch {
@@ -194,6 +198,7 @@ function formatDate(dateStr: string): string {
 }
 
 async function onConfirmCancel() {
+  posthog.capture('subscription_cancel_requested');
   cancelLoading.value = true;
   try {
     const result = await cancelSubscription();

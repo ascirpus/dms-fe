@@ -175,14 +175,35 @@ export function useProjectDocuments(projectId: () => string | null) {
       if (data.password) metadata.password = data.password;
       return documentsApi.uploadDocument(currentProjectId.value, data.file, metadata);
     },
-    onSuccess: (newDoc) => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', currentProjectId.value, 'documents'],
+      });
+    },
+  });
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: (documentId: string) => {
+      if (!currentProjectId.value) throw new Error('No project selected');
+      return documentsApi.deleteDocument(currentProjectId.value, documentId);
+    },
+    onMutate: (documentId) => {
+      const previous = queryClient.getQueryData<Document[]>(
+        ['projects', currentProjectId.value, 'documents'],
+      );
       queryClient.setQueryData<Document[]>(
         ['projects', currentProjectId.value, 'documents'],
-        (old) => {
-          if (!old) return [newDoc];
-          return [newDoc, ...old];
-        }
+        (old) => old?.filter(d => d.id !== documentId) ?? [],
       );
+      return { previous };
+    },
+    onError: (_err, _documentId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ['projects', currentProjectId.value, 'documents'],
+          context.previous,
+        );
+      }
     },
   });
 
@@ -196,5 +217,6 @@ export function useProjectDocuments(projectId: () => string | null) {
     useResolvedDocumentId,
     getDocumentUrl,
     uploadDocument: uploadDocumentMutation.mutateAsync,
+    deleteDocument: deleteDocumentMutation.mutateAsync,
   };
 }

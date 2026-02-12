@@ -54,7 +54,7 @@ function formatDate(date: string): string {
   return `${day}.${month}.${year}`;
 }
 
-function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger" | "secondary" | undefined {
+function getStatusSeverity(status: DocumentStatus | null): "success" | "warn" | "danger" | "secondary" | undefined {
   switch (status) {
     case DocumentStatus.APPROVED:
       return 'success';
@@ -68,10 +68,8 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
 }
 
 function getStatusLabel(doc: Document): string {
-  if (doc.status === DocumentStatus.PENDING && doc.signatures?.length) {
-    const signed = doc.signatures.filter(s => s.signedAt).length;
-    const total = doc.signatures.length;
-    return t('projectDetail.signaturesProgress', { signed, total });
+  if (doc.isSigned) {
+    return t('projectDetail.statusSigned');
   }
   switch (doc.status) {
     case DocumentStatus.APPROVED: return t('projectDetail.statusApproved');

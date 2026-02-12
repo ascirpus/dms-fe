@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Local CLI deploy — builds, pushes to DOCR, then pulls + restarts
-# the frontend container on the Droplet via SSH.
+# Local CLI deploy — builds, pushes to the self-hosted registry (via SSH
+# tunnel), then pulls + restarts the frontend container on the Droplet.
 #
 # Prerequisites:
-#   - doctl authenticated (doctl auth init)
 #   - SSH key in agent (ssh-add)
 #   - deploy.conf with at least DROPLET_IP
 #
@@ -44,12 +43,10 @@ fi
 
 # ── Resolve config ────────────────────────────────────────────────────────
 
-REGISTRY="registry.digitalocean.com"
 IMAGE_NAME="dms-frontend"
 DROPLET_IP="${DROPLET_IP:?Set DROPLET_IP in $DEPLOY_CONF}"
 DROPLET_USER="${DROPLET_USER:-deploy}"
-DOCR_REGISTRY_NAME="${DOCR_REGISTRY_NAME:-$(doctl registry get --format Name --no-header)}"
-FULL_IMAGE="$REGISTRY/$DOCR_REGISTRY_NAME/$IMAGE_NAME"
+FULL_IMAGE="localhost:5000/$IMAGE_NAME"
 GIT_SHA="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
 GIT_BRANCH="$(git -C "$SCRIPT_DIR" branch --show-current 2>/dev/null || echo 'unknown')"
 
@@ -91,10 +88,14 @@ docker build \
     -t "$FULL_IMAGE:latest" \
     "$SCRIPT_DIR"
 
-# ── Push ─────────────────────────────────────────────────────────────────
+# ── SSH tunnel to registry ───────────────────────────────────────────────
 
-log "Authenticating with DOCR..."
-doctl registry login
+log "Opening SSH tunnel to registry on $DROPLET_IP..."
+ssh -fNL 5000:localhost:5000 -o StrictHostKeyChecking=accept-new "$DROPLET_USER@$DROPLET_IP"
+cleanup_tunnel() { pkill -f "ssh -fNL 5000:localhost:5000" 2>/dev/null || true; }
+trap cleanup_tunnel EXIT
+
+# ── Push ─────────────────────────────────────────────────────────────────
 
 log "Pushing image..."
 docker push "$FULL_IMAGE:$GIT_SHA"

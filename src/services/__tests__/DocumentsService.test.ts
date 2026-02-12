@@ -100,6 +100,78 @@ describe('DocumentsService', () => {
     });
   });
 
+  describe('declineDocument', () => {
+    it('should call decline endpoint with comment', async () => {
+      mockApiClient.post.mockResolvedValue({});
+
+      await service.declineDocument('proj-1', 'doc-1', 'Not acceptable');
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/api/projects/proj-1/documents/doc-1/decline',
+        { comment: 'Not acceptable' },
+      );
+    });
+
+    it('should call decline endpoint without comment', async () => {
+      mockApiClient.post.mockResolvedValue({});
+
+      await service.declineDocument('proj-1', 'doc-1');
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/api/projects/proj-1/documents/doc-1/decline',
+        { comment: undefined },
+      );
+    });
+  });
+
+  describe('getApprovals', () => {
+    it('should fetch and return approvals', async () => {
+      const mockApprovals = [
+        { id: 'a-1', user: { id: 'u-1', email: 'test@test.com' }, action: 'APPROVE', comment: null, createdAt: '2024-01-01' },
+      ];
+
+      mockApiClient.get.mockResolvedValue({
+        data: { status: 'SUCCESS', data: mockApprovals },
+      });
+
+      const result = await service.getApprovals('proj-1', 'doc-1');
+
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/projects/proj-1/documents/doc-1/approvals');
+      expect(result).toEqual(mockApprovals);
+    });
+  });
+
+  describe('signDocument', () => {
+    it('should call sign endpoint', async () => {
+      mockApiClient.post.mockResolvedValue({});
+
+      await service.signDocument('proj-1', 'doc-1');
+
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/api/projects/proj-1/documents/doc-1/sign',
+        {},
+      );
+    });
+  });
+
+  describe('getSignatureStatus', () => {
+    it('should fetch and return signature status', async () => {
+      const mockStatus = {
+        signatures: [],
+        signedCount: 0,
+      };
+
+      mockApiClient.get.mockResolvedValue({
+        data: { status: 'SUCCESS', data: mockStatus },
+      });
+
+      const result = await service.getSignatureStatus('proj-1', 'doc-1');
+
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/projects/proj-1/documents/doc-1/signatures');
+      expect(result).toEqual(mockStatus);
+    });
+  });
+
   describe('uploadVersion', () => {
     it('should upload to the same endpoint with document_id in metadata', async () => {
       const mockFile = new File(['content'], 'v2.pdf', { type: 'application/pdf' });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UsersService, type TenantUser } from '../UsersService';
+import { UsersService } from '../UsersService';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -14,37 +14,53 @@ describe('UsersService', () => {
   });
 
   describe('fetchTenantUsers', () => {
-    it('should fetch and return tenant users', async () => {
-      const mockUsers: TenantUser[] = [
-        {
-          userId: 'user-1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john@example.com',
-          role: 'ADMIN',
-          createdAt: '2024-01-15T10:30:00',
-        },
-        {
-          userId: 'user-2',
-          firstName: 'Jane',
-          lastName: 'Smith',
-          email: 'jane@example.com',
-          role: 'MEMBER',
-          createdAt: '2024-01-14T14:22:00',
-        },
-      ];
-
+    it('should fetch and map nested response to flat TenantUser', async () => {
       mockApiClient.get.mockResolvedValue({
         data: {
           status: 'SUCCESS',
-          data: mockUsers,
+          data: [
+            {
+              user: { id: 'user-1', email: 'john@example.com', firstName: 'John', lastName: 'Doe' },
+              role: 'ADMIN',
+              createdAt: '2024-01-15T10:30:00',
+            },
+            {
+              user: { id: 'user-2', email: 'jane@example.com', firstName: 'Jane', lastName: 'Smith' },
+              role: 'MEMBER',
+              createdAt: '2024-01-14T14:22:00',
+            },
+          ],
         },
       });
 
       const result = await service.fetchTenantUsers();
 
       expect(mockApiClient.get).toHaveBeenCalledWith('/api/tenants/current/users');
-      expect(result).toEqual(mockUsers);
+      expect(result).toEqual([
+        { userId: 'user-1', email: 'john@example.com', firstName: 'John', lastName: 'Doe', role: 'ADMIN', createdAt: '2024-01-15T10:30:00' },
+        { userId: 'user-2', email: 'jane@example.com', firstName: 'Jane', lastName: 'Smith', role: 'MEMBER', createdAt: '2024-01-14T14:22:00' },
+      ]);
+    });
+
+    it('should convert empty name strings to undefined', async () => {
+      mockApiClient.get.mockResolvedValue({
+        data: {
+          status: 'SUCCESS',
+          data: [
+            {
+              user: { id: 'user-1', email: 'noname@example.com', firstName: '', lastName: '' },
+              role: 'MEMBER',
+              createdAt: '2024-01-13T08:15:00',
+            },
+          ],
+        },
+      });
+
+      const result = await service.fetchTenantUsers();
+
+      expect(result[0].firstName).toBeUndefined();
+      expect(result[0].lastName).toBeUndefined();
+      expect(result[0].email).toBe('noname@example.com');
     });
 
     it('should handle empty user list', async () => {
@@ -67,35 +83,14 @@ describe('UsersService', () => {
     });
 
     it('should handle different user roles', async () => {
-      const mockUsers: TenantUser[] = [
-        {
-          userId: 'user-1',
-          firstName: 'Owner',
-          lastName: 'User',
-          email: 'owner@example.com',
-          role: 'OWNER',
-          createdAt: '2024-01-15T10:30:00',
-        },
-        {
-          userId: 'user-2',
-          firstName: 'Admin',
-          lastName: 'User',
-          email: 'admin@example.com',
-          role: 'ADMIN',
-          createdAt: '2024-01-14T14:22:00',
-        },
-        {
-          userId: 'user-3',
-          email: 'member@example.com',
-          role: 'MEMBER',
-          createdAt: '2024-01-13T08:15:00',
-        },
-      ];
-
       mockApiClient.get.mockResolvedValue({
         data: {
           status: 'SUCCESS',
-          data: mockUsers,
+          data: [
+            { user: { id: 'u1', email: 'owner@example.com', firstName: 'Owner', lastName: 'User' }, role: 'OWNER', createdAt: '2024-01-15T10:30:00' },
+            { user: { id: 'u2', email: 'admin@example.com', firstName: 'Admin', lastName: 'User' }, role: 'ADMIN', createdAt: '2024-01-14T14:22:00' },
+            { user: { id: 'u3', email: 'member@example.com', firstName: '', lastName: '' }, role: 'MEMBER', createdAt: '2024-01-13T08:15:00' },
+          ],
         },
       });
 

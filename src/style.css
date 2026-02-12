@@ -103,3 +103,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.p-toast {
+  z-index: 10000 !important;
+}

@@ -37,16 +37,19 @@ Click a document in the project list to open the **Document Viewer** (`/app/proj
 
 The viewer shows:
 - **PDF preview** - Inline rendering of the document
+- **Document Action Bar** - Shown between the header and PDF when the document has an approval workflow or signatures. Displays approval progress, signature progress, and action buttons (Approve, Decline, Sign Document). Shows status badges (Approved/Declined) when resolved.
 - **Document info** - Title, type, description, status, version
-- **Version history** - List of all file versions (if versioning is enabled)
-- **Comments panel** - Comments and annotations on the document
-- **Approval status** - Current approval/decline state and who has acted
-- **Signature status** - Who has signed and who still needs to
+- **Sidebar tabs:**
+  - **Comments** - Comments and annotations on the document
+  - **Versions** - List of all file versions (if versioning is enabled)
+  - **Activity** - Chronological timeline of approvals and signatures, including pending signers (only shown when the document has an approval workflow or signatures)
 
 ### Viewer Controls
 
 - **Zoom in/out** and page navigation
 - **Download** the file
+- **Print** the document
+- **Share** - Copy the document URL to clipboard
 - **Add Version** to upload a new version (Team+ plans)
 
 ## Document Versioning
@@ -109,3 +112,5 @@ Admins can customize these and create new types in [Workspace Settings](../admin
 Click the trash icon on a document in the project's document list. Confirm the deletion. This removes the document, all its versions, comments, approvals, and signatures.
 
 > **This action cannot be undone.**
+
+> **Restriction:** Documents that have been approved, declined, or signed cannot be deleted. This protects the audit trail of approval and signature workflows. For approved or declined documents, uploading a new version resets the status back to pending, which allows deletion again. Signed documents are permanently locked — they cannot receive new versions or be deleted.

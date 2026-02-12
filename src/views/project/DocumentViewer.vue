@@ -8,15 +8,20 @@ import type { TenantUser } from '@/services/UsersService';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Dialog from 'primevue/dialog';
+import Drawer from 'primevue/drawer';
 import InputText from 'primevue/inputtext';
 import FloatLabel from 'primevue/floatlabel';
 import FileUpload from 'primevue/fileupload';
 
 import PDFWrapper from '@/components/pdf-viewer/PDFWrapper.vue';
 import CommentTable from '@/components/pdf-viewer/CommentTable.vue';
+import DocumentActionBar from '@/components/pdf-viewer/DocumentActionBar.vue';
+import DeclineDialog from '@/components/pdf-viewer/DeclineDialog.vue';
+import ActivityTimeline from '@/components/pdf-viewer/ActivityTimeline.vue';
 
 import { useAuth } from '@/composables/useAuth';
 import { useComments } from '@/composables/useComments';
+import { useApprovals } from '@/composables/useApprovals';
 import { useProjects, useProjectDocuments } from '@/composables/useProjects';
 import { useTenantFeatures } from '@/composables/useTenantFeatures';
 import { DocumentsService } from '@/services/DocumentsService';
@@ -33,6 +38,7 @@ const toast = useToast();
 
 const { useResolvedProjectId, fetchProjectById, fetchProjectMembers, loading: projectsLoading } = useProjects();
 const { comments, fetchComments } = useComments();
+const { approvals, signatureStatus, fetchApprovals, fetchSignatureStatus, approveDocument, declineDocument, signDocument } = useApprovals();
 const { versioningEnabled, fetchTenant } = useTenantFeatures();
 const documentsService = new DocumentsService(auth.apiClient);
 
@@ -86,9 +92,15 @@ async function fetchPdfBlob(projectId: string, docId: string, fileId: string) {
   }
 }
 
-// Sidebar state
+// Sidebar state (inline sidebar for non-expanded mode)
 const sidebarOpen = ref(true);
-const activeTab = ref<'comments' | 'versions'>('comments');
+const activeTab = ref<'comments' | 'versions' | 'activity'>('comments');
+
+// Drawer state (for expanded mode only)
+const drawerOpen = ref(false);
+
+// Expand mode
+const expanded = ref(false);
 
 // Comment filter state
 const showAllComments = ref(false);
@@ -101,10 +113,30 @@ const versionCommentCount = computed(() =>
   comments.value.filter(c => c.fileId === activeFileId.value).length
 );
 
+const showActivityTab = computed(() =>
+  document.value?.documentType?.requiresApproval ||
+  document.value?.documentType?.requiresSignature ||
+  approvals.value.length > 0 ||
+  (signatureStatus.value?.signatures.length ?? 0) > 0
+);
+
+const activeTabLabel = computed(() => {
+  const { t } = useI18n();
+  switch (activeTab.value) {
+    case 'comments': return t('documentViewer.commentsCount', { count: versionCommentCount.value });
+    case 'versions': return t('documentViewer.versionHistory');
+    case 'activity': return t('documentViewer.activity');
+  }
+});
+
 // Dialogs
 const showAddVersionDialog = ref(false);
 const showInviteUserDialog = ref(false);
 const showDocumentInfoDialog = ref(false);
+const showDeclineDialog = ref(false);
+
+// Approval/signing loading state
+const actionLoading = ref(false);
 
 // Upload state
 const uploading = ref(false);
@@ -150,8 +182,12 @@ async function fetchData() {
     // Fetch the PDF through the authenticated client
     await fetchPdfBlob(projectId.value, fetchedDoc.id, activeFileId.value);
 
-    // Fetch comments
-    await fetchComments(projectId.value, documentId.value);
+    // Fetch comments, approvals, and signatures in parallel
+    await Promise.all([
+      fetchComments(projectId.value, documentId.value),
+      fetchApprovals(projectId.value, documentId.value).catch(() => {}),
+      fetchSignatureStatus(projectId.value, documentId.value).catch(() => {}),
+    ]);
 
     // Navigate to linked comment if URL has a hash
     await nextTick();
@@ -189,12 +225,46 @@ function formatDate(dateString: string | Date): string {
   return `${day}.${month}.${year} ${hour12}:${minutes} ${ampm}`;
 }
 
+function toggleExpand() {
+  expanded.value = !expanded.value;
+  if (expanded.value) {
+    drawerOpen.value = false;
+  }
+}
+
 function closeSidebar() {
   sidebarOpen.value = false;
 }
 
 function openSidebar() {
   sidebarOpen.value = true;
+}
+
+function openCommentDrawer() {
+  activeTab.value = 'comments';
+  if (expanded.value) {
+    drawerOpen.value = true;
+  } else {
+    sidebarOpen.value = true;
+  }
+}
+
+function openVersionDrawer() {
+  activeTab.value = 'versions';
+  if (expanded.value) {
+    drawerOpen.value = true;
+  } else {
+    sidebarOpen.value = true;
+  }
+}
+
+function openActivityDrawer() {
+  activeTab.value = 'activity';
+  if (expanded.value) {
+    drawerOpen.value = true;
+  } else {
+    sidebarOpen.value = true;
+  }
 }
 
 function onJumpToMarker(pageNumber: number, commentId?: string) {
@@ -209,8 +279,7 @@ function onJumpToMarker(pageNumber: number, commentId?: string) {
 }
 
 function onReplyToComment(_comment: any) {
-  sidebarOpen.value = true;
-  activeTab.value = 'comments';
+  openCommentDrawer();
 }
 
 function onShareComment(comment: any) {
@@ -264,17 +333,53 @@ function onCollapseAllComments() {
 }
 
 function onShowVersionHistory() {
-  sidebarOpen.value = true;
-  activeTab.value = 'versions';
+  openVersionDrawer();
 }
 
-async function onConfirmVersion() {
+async function onApprove() {
   if (!document.value) return;
+  actionLoading.value = true;
   try {
-    await documentsService.approveDocument(projectId.value, document.value.id);
-    document.value.status = DocumentStatus.APPROVED;
+    await approveDocument(projectId.value, document.value.id);
+    const refreshedDoc = await documentsService.fetchDocumentById(projectId.value, document.value.id);
+    document.value = refreshedDoc;
+    await fetchApprovals(projectId.value, document.value.id);
+    toast.add({ severity: 'success', summary: t('documentViewer.approved'), detail: t('documentViewer.approvedDetail'), life: 3000 });
   } catch (err) {
-    console.error('Error approving document:', err);
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('documentViewer.approvalFailed'), life: 5000 });
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function onDecline(comment: string | undefined) {
+  if (!document.value) return;
+  actionLoading.value = true;
+  try {
+    await declineDocument(projectId.value, document.value.id, comment);
+    const refreshedDoc = await documentsService.fetchDocumentById(projectId.value, document.value.id);
+    document.value = refreshedDoc;
+    await fetchApprovals(projectId.value, document.value.id);
+    showDeclineDialog.value = false;
+    toast.add({ severity: 'success', summary: t('documentViewer.declined'), detail: t('documentViewer.declinedDetail'), life: 3000 });
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('documentViewer.declineFailed'), life: 5000 });
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function onSign() {
+  if (!document.value) return;
+  actionLoading.value = true;
+  try {
+    await signDocument(projectId.value, document.value.id);
+    await fetchSignatureStatus(projectId.value, document.value.id);
+    toast.add({ severity: 'success', summary: t('documentViewer.signed'), detail: t('documentViewer.signedDetail'), life: 3000 });
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('common.error'), detail: t('documentViewer.signFailed'), life: 5000 });
+  } finally {
+    actionLoading.value = false;
   }
 }
 
@@ -386,7 +491,7 @@ async function uploadNewVersion() {
     <!-- Document Content -->
     <template v-else-if="document">
       <!-- Document Header -->
-      <div class="mx-4 mt-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 shrink-0">
+      <div v-show="!expanded" class="mx-4 mt-4 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-[10px] p-5 shrink-0 transition-all duration-300">
         <nav class="flex items-center gap-1.5 text-sm mb-3">
           <router-link :to="{ name: 'projects' }" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors no-underline">
             {{ $t('projectDetail.projects') }}
@@ -419,10 +524,22 @@ async function uploadNewVersion() {
         </div>
       </div>
 
+      <!-- Document Action Bar (approval/signature workflow) -->
+      <DocumentActionBar
+        v-if="!expanded"
+        :document="document"
+        :signature-status="signatureStatus"
+        :loading="actionLoading"
+        class="mt-4"
+        @approve="onApprove"
+        @decline="showDeclineDialog = true"
+        @sign="onSign"
+      />
+
       <!-- Main Content Area -->
-      <div class="flex flex-1 overflow-hidden p-4 gap-4 max-md:flex-col">
+      <div class="relative flex flex-1 overflow-hidden transition-all duration-300" :class="expanded ? '' : 'p-4 gap-4 max-md:flex-col'">
         <!-- PDF Viewer Area -->
-        <div class="pdf-viewer-container flex-1 flex flex-col bg-[var(--surface-card)] rounded-[10px] overflow-hidden">
+        <div class="pdf-viewer-container flex-1 flex flex-col bg-[var(--surface-card)] overflow-hidden" :class="expanded ? 'rounded-none' : 'rounded-[10px]'">
           <PDFWrapper
             v-if="pdfBlobUrl"
             ref="pdfWrapperRef"
@@ -443,35 +560,92 @@ async function uploadNewVersion() {
             @expand-all-comments="onExpandAllComments"
             @collapse-all-comments="onCollapseAllComments"
             @show-version-history="onShowVersionHistory"
-            @confirm-version="onConfirmVersion"
             @show-document-info="onShowDocumentInfo"
             @download="onDownload"
             @print="onPrint"
             @share="onShare"
             @reply-to-comment="onReplyToComment"
             @share-comment="onShareComment"
-          />
+          >
+            <template #top-actions>
+              <div class="flex items-center gap-1.5">
+                <template v-if="expanded">
+                  <Button
+                    icon="pi pi-comments"
+                    class="toolbar-bubble-btn"
+                    rounded
+                    size="small"
+                    @click="openCommentDrawer"
+                    :aria-label="$t('documentViewer.commentsCount', { count: versionCommentCount })"
+                  />
+                  <Button
+                    v-if="versioningEnabled"
+                    icon="pi pi-history"
+                    class="toolbar-bubble-btn"
+                    rounded
+                    size="small"
+                    @click="openVersionDrawer"
+                    :aria-label="$t('documentViewer.versionHistory')"
+                  />
+                  <Button
+                    v-if="showActivityTab"
+                    icon="pi pi-clock"
+                    class="toolbar-bubble-btn"
+                    rounded
+                    size="small"
+                    @click="openActivityDrawer"
+                    :aria-label="$t('documentViewer.activity')"
+                  />
+                </template>
+                <Button
+                  :icon="expanded ? 'pi pi-window-minimize' : 'pi pi-arrows-alt'"
+                  class="toolbar-bubble-btn"
+                  rounded
+                  size="small"
+                  @click="toggleExpand"
+                  :aria-label="$t(expanded ? 'documentViewer.collapseView' : 'documentViewer.expandView')"
+                  v-tooltip.bottom="$t(expanded ? 'documentViewer.collapseView' : 'documentViewer.expandView')"
+                />
+              </div>
+            </template>
+          </PDFWrapper>
         </div>
 
-        <!-- Right Sidebar -->
-        <div v-if="sidebarOpen" class="w-80 bg-[var(--surface-card)] rounded-[10px] flex flex-col overflow-hidden shrink-0 max-md:w-full max-md:max-h-[300px]">
-          <div class="flex items-center justify-between px-2 py-1 border-b border-[var(--surface-border)] shrink-0">
-            <div class="flex">
-              <button
-                class="px-4 py-3 bg-transparent border-0 border-b-2 border-b-transparent text-sm font-medium text-[var(--text-secondary)] cursor-pointer transition-all duration-200 hover:text-[var(--text-color)]"
-                :class="{ '!text-[var(--primary-color)] !border-b-[var(--primary-color)]': activeTab === 'comments' }"
+        <!-- Inline Right Sidebar (non-expanded mode) -->
+        <div v-if="sidebarOpen && !expanded" class="w-80 bg-[var(--surface-card)] rounded-[10px] flex flex-col overflow-hidden shrink-0 max-md:w-full max-md:max-h-[300px]">
+          <div class="flex items-center justify-between px-2 py-1.5 border-b border-[var(--surface-border)] shrink-0">
+            <div class="flex items-center gap-1">
+              <Button
+                icon="pi pi-comments"
+                :text="activeTab !== 'comments'"
+                :outlined="activeTab === 'comments'"
+                rounded
+                size="small"
                 @click="activeTab = 'comments'"
-              >
-                {{ $t('documentViewer.commentsCount', { count: versionCommentCount }) }}
-              </button>
-              <button
+                :aria-label="$t('documentViewer.commentsCount', { count: versionCommentCount })"
+                :badge="versionCommentCount > 0 ? String(versionCommentCount) : undefined"
+                badgeSeverity="contrast"
+              />
+              <Button
                 v-if="versioningEnabled"
-                class="px-4 py-3 bg-transparent border-0 border-b-2 border-b-transparent text-sm font-medium text-[var(--text-secondary)] cursor-pointer transition-all duration-200 hover:text-[var(--text-color)]"
-                :class="{ '!text-[var(--primary-color)] !border-b-[var(--primary-color)]': activeTab === 'versions' }"
+                icon="pi pi-history"
+                :text="activeTab !== 'versions'"
+                :outlined="activeTab === 'versions'"
+                rounded
+                size="small"
                 @click="activeTab = 'versions'"
-              >
-                {{ $t('documentViewer.versionHistory') }}
-              </button>
+                :aria-label="$t('documentViewer.versionHistory')"
+              />
+              <Button
+                v-if="showActivityTab"
+                icon="pi pi-clock"
+                :text="activeTab !== 'activity'"
+                :outlined="activeTab === 'activity'"
+                rounded
+                size="small"
+                @click="activeTab = 'activity'"
+                :aria-label="$t('documentViewer.activity')"
+              />
             </div>
             <Button
               icon="pi pi-times"
@@ -481,6 +655,9 @@ async function uploadNewVersion() {
               @click="closeSidebar"
               :aria-label="$t('documentViewer.closeSidebar')"
             />
+          </div>
+          <div class="px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide border-b border-[var(--surface-border)] shrink-0">
+            {{ activeTabLabel }}
           </div>
 
           <!-- Comments Tab -->
@@ -521,17 +698,118 @@ async function uploadNewVersion() {
               </div>
             </div>
           </div>
+
+          <!-- Activity Tab -->
+          <div v-if="activeTab === 'activity'" class="flex-1 overflow-y-auto">
+            <ActivityTimeline
+              :approvals="approvals"
+              :signature-status="signatureStatus"
+              :loading="loading"
+            />
+          </div>
         </div>
 
-        <!-- Sidebar Toggle (when closed) -->
+        <!-- Sidebar Toggle (when closed, non-expanded mode) -->
         <Button
-          v-if="!sidebarOpen"
+          v-if="!sidebarOpen && !expanded"
           icon="pi pi-comments"
-          class="fixed right-6 top-1/2 -translate-y-1/2 z-10"
+          class="!absolute right-6 top-1/2 -translate-y-1/2 z-10"
           @click="openSidebar"
           :aria-label="$t('documentViewer.openSidebar')"
         />
+
       </div>
+
+      <!-- Drawer (expanded mode only) -->
+      <Drawer v-model:visible="drawerOpen" position="right" class="!w-96 max-sm:!w-full">
+        <template #header>
+          <div class="flex items-center gap-1">
+            <Button
+              icon="pi pi-comments"
+              :text="activeTab !== 'comments'"
+              :outlined="activeTab === 'comments'"
+              rounded
+              size="small"
+              @click="activeTab = 'comments'"
+              :aria-label="$t('documentViewer.commentsCount', { count: versionCommentCount })"
+              :badge="versionCommentCount > 0 ? String(versionCommentCount) : undefined"
+              badgeSeverity="contrast"
+            />
+            <Button
+              v-if="versioningEnabled"
+              icon="pi pi-history"
+              :text="activeTab !== 'versions'"
+              :outlined="activeTab === 'versions'"
+              rounded
+              size="small"
+              @click="activeTab = 'versions'"
+              :aria-label="$t('documentViewer.versionHistory')"
+            />
+            <Button
+              v-if="showActivityTab"
+              icon="pi pi-clock"
+              :text="activeTab !== 'activity'"
+              :outlined="activeTab === 'activity'"
+              rounded
+              size="small"
+              @click="activeTab = 'activity'"
+              :aria-label="$t('documentViewer.activity')"
+            />
+          </div>
+        </template>
+
+        <div class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide -mx-5 px-5 pb-2 mb-3 border-b border-[var(--surface-border)]">
+          {{ activeTabLabel }}
+        </div>
+
+        <!-- Comments Tab -->
+        <div v-if="activeTab === 'comments'" class="h-full overflow-y-auto -mx-5 -mb-5">
+          <CommentTable
+            :project-id="projectId"
+            :document-id="documentId"
+            :file-id="activeFileId"
+            :file-version="activeVersion?.version ?? 1"
+            :current-user="currentUser"
+            @jump-to-marker="onJumpToMarker"
+          />
+        </div>
+
+        <!-- Version History Tab -->
+        <div v-if="activeTab === 'versions'" class="h-full overflow-y-auto -mx-5 -mb-5">
+          <div class="flex flex-col">
+            <div
+              v-for="version in document.versions"
+              :key="version.fileId"
+              class="flex items-center gap-3 p-3 border-b border-[var(--surface-border)] cursor-pointer transition-[background] duration-150 hover:bg-[var(--surface-hover,#f8fafc)]"
+              :class="{ 'bg-[color-mix(in_srgb,var(--primary-color)_8%,transparent)]': version.fileId === activeFileId }"
+              @click="switchVersion(version.fileId)"
+            >
+              <span
+                class="flex items-center justify-center w-8 h-8 min-w-8 rounded-full text-white text-[11px] font-semibold select-none"
+                :style="{ backgroundColor: getAvatarColor(`v${version.version}`) }"
+              >
+                v{{ version.version }}
+              </span>
+              <div class="flex-1">
+                <div class="text-sm font-semibold text-[var(--text-color)]">{{ $t('documentViewer.versionLabel', { version: version.version }) }}</div>
+                <div class="flex gap-2 items-center mt-0.5">
+                  <span class="text-xs text-[var(--text-secondary)]">{{ formatDate(version.uploadedAt) }}</span>
+                </div>
+              </div>
+              <i v-if="version.fileId === document.currentVersion?.id" class="pi pi-check text-[#27ae60] text-sm"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Tab -->
+        <div v-if="activeTab === 'activity'" class="h-full overflow-y-auto -mx-5 -mb-5">
+          <ActivityTimeline
+            :approvals="approvals"
+            :signature-status="signatureStatus"
+            :loading="loading"
+          />
+        </div>
+      </Drawer>
     </template>
 
     <!-- Document Info Dialog -->
@@ -582,7 +860,7 @@ async function uploadNewVersion() {
             <FloatLabel variant="on">
               <InputText
                 id="docStatus"
-                :model-value="document?.status"
+                :model-value="document?.status === DocumentStatus.APPROVED ? t('documentViewer.documentApproved') : document?.status === DocumentStatus.DECLINED ? t('documentViewer.documentDeclined') : t('documentViewer.pendingAction')"
                 class="w-full"
                 readonly
               />
@@ -636,7 +914,6 @@ async function uploadNewVersion() {
               v-model="uploadPassword"
               type="password"
               class="w-full"
-              :placeholder="$t('documentViewer.pdfPasswordPlaceholder')"
             />
             <label for="versionPassword">{{ $t('documentViewer.pdfPassword') }}</label>
           </FloatLabel>
@@ -675,6 +952,13 @@ async function uploadNewVersion() {
         <Button :label="$t('documentViewer.sendInvite')" icon="pi pi-send" />
       </template>
     </Dialog>
+
+    <!-- Decline Dialog -->
+    <DeclineDialog
+      v-model:visible="showDeclineDialog"
+      :loading="actionLoading"
+      @confirm="onDecline"
+    />
   </div>
 </template>
 
@@ -692,4 +976,16 @@ async function uploadNewVersion() {
 .pdf-viewer-container :deep(.bottom-controls) {
   border-radius: 0 0 10px 10px;
 }
+
+.pdf-viewer-container :deep(.toolbar-bubble-btn) {
+  background: var(--surface-ground) !important;
+  border: 1px solid var(--surface-border) !important;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08) !important;
+  color: var(--text-color) !important;
+}
+
+.pdf-viewer-container :deep(.toolbar-bubble-btn:hover) {
+  background: var(--surface-border) !important;
+}
+
 </style>

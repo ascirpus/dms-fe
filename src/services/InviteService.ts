@@ -2,8 +2,9 @@ import axios, { type AxiosInstance } from 'axios';
 import { ApiService } from './ApiService';
 import type { ApiResponse } from '@/types/response';
 import type { TenantInvite, UserPendingInvite, CreateInviteRequest, AcceptedInvite, JoinTenantRequest } from '@/types';
+import { config } from '@/config';
 
-const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
+const API_URL = config.apiUrl;
 
 export class InviteService extends ApiService<TenantInvite> {
   private plainClient: AxiosInstance;

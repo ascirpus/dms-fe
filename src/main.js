@@ -21,15 +21,16 @@ import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 import { vueKeycloak } from "@josempgon/vue-keycloak";
 import { initPostHog } from "./composables/usePostHog.js";
+import { config } from "./config.ts";
 
 const detectedLocale = detectLocale();
 const keycloakLocale = detectedLocale.split('-')[0];
 
 const keycloakConfig = {
     config: {
-        url: import.meta.env.VITE_AUTH_PROVIDER,
-        realm: import.meta.env.VITE_AUTH_REALM,
-        clientId: import.meta.env.VITE_AUTH_CLIENT_ID,
+        url: config.authUrl,
+        realm: config.authRealm,
+        clientId: config.authClientId,
     },
     initOptions: {
         onLoad: "check-sso",

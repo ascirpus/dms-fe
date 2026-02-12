@@ -12,8 +12,5 @@ DROPLET_IP=1.2.3.4
 # Defaults to "deploy"
 # DROPLET_USER=deploy
 
-# Auto-detected from doctl if not set
-# DOCR_REGISTRY_NAME=your-registry-name
-
 # Leave empty to skip deploy notifications
 # DISCORD_WEBHOOK_URL=

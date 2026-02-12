@@ -88,6 +88,6 @@ User overrides are managed through the document's permission settings or the pro
 
 ## Admin Bypass
 
-Users with the **Admin** or **Owner** role at the workspace level, or those with the **Manage Documents** capability, bypass document-level permission checks entirely. They can access all documents in any project within their workspace.
+Users with the **Admin** or **Owner** role at the workspace level, or those with the **Manage Documents** capability, bypass document-level permission checks for **View** and **Comment** actions. They can see and comment on all documents in any project within their workspace.
 
-System administrators (Keycloak ADMIN role) bypass all permission checks across all workspaces.
+However, **Decide** actions (approve, decline, sign) are **never bypassed** — workspace admins must have explicit Decide permission on a document (via party permissions or a user override) to approve, decline, or sign it. This ensures all approval and signature actions have proper authorization and audit trails.

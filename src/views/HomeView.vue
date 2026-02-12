@@ -370,7 +370,7 @@
 
       <div class="flex items-center justify-center gap-3 mb-10 text-[15px] text-[var(--text-secondary)]">
         <span :class="{ 'text-[var(--text-color)] font-semibold': !isYearly }">{{ $t('home.monthly') }}</span>
-        <button class="toggle-switch" :class="{ toggled: isYearly }" @click="isYearly = !isYearly">
+        <button class="toggle-switch" :class="{ toggled: isYearly }" @click="isYearly = !isYearly; posthog.capture('billing_interval_toggled', { interval: isYearly ? 'yearly' : 'monthly' })">
           <span class="toggle-knob"></span>
         </button>
         <span :class="{ 'text-[var(--text-color)] font-semibold': isYearly }">{{ $t('home.yearly') }}</span>
@@ -388,6 +388,7 @@
             <div class="text-[13px] text-[var(--text-secondary)] text-center mt-1 min-h-[20px]">&nbsp;</div>
           </div>
           <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-users text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureFreeUsers') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureFreeProjects') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureFreeDocs') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureFreeStorage') }}</li>
@@ -415,6 +416,7 @@
             </div>
           </div>
           <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-users text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureTeamUsers') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureTeamProjects') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureTeamDocs') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureTeamStorage') }}</li>
@@ -440,6 +442,7 @@
             </div>
           </div>
           <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-users text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureBusinessUsers') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureBusinessAll') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureBusinessStorage') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-building text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureBusinessWorkspaces') }}</li>
@@ -458,6 +461,7 @@
             <div class="text-[13px] text-[var(--text-secondary)] text-center mt-1 min-h-[20px]">&nbsp;</div>
           </div>
           <ul class="list-none p-0 mb-6 flex-1">
+            <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-users text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureEnterpriseUsers') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-check text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureEnterpriseAll') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-building text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureEnterpriseWorkspaces') }}</li>
             <li class="flex items-center gap-3 py-2 text-sm text-[var(--text-color)]"><i class="pi pi-cloud text-sm text-[var(--primary-color)]"></i> {{ $t('home.featureEnterpriseStorage') }}</li>
@@ -544,10 +548,11 @@ import { useI18n } from 'vue-i18n';
 import Button from 'primevue/button';
 import Slider from 'primevue/slider';
 import Logo from '@/components/base/Logo.vue';
-import posthog from "posthog-js";
+import { usePostHog } from "@/composables/usePostHog.js";
 
 const { t } = useI18n();
 const router = useRouter();
+const posthog = usePostHog();
 const isYearly = ref(true);
 
 const AVG_PDF_SIZE_MB = 2.5;
@@ -570,17 +575,17 @@ const recommendedTier = computed(() => {
   if (calcProjects.value <= 5 && calcDocs.value <= 10 && estimatedStorageMB.value <= 250) {
     return { name: 'Free', monthlyPrice: 0, yearlyMonthlyPrice: 0, yearlyTotal: 0 };
   }
-  if (storageGB <= 10) {
+  if (storageGB <= 1) {
     return { name: 'Team', monthlyPrice: 49, yearlyMonthlyPrice: 41, yearlyTotal: 490 };
   }
-  if (storageGB <= 100) {
+  if (storageGB <= 15) {
     return { name: 'Business', monthlyPrice: 149, yearlyMonthlyPrice: 124, yearlyTotal: 1490 };
   }
   return { name: 'Enterprise', monthlyPrice: null, yearlyMonthlyPrice: null, yearlyTotal: null };
 });
 
 function handleGetStarted(plan?: string) {
-  posthog.capture('landing_get_started_click', { plan: plan || 'unspecified' });
+  posthog.capture('plan_selected', { plan: plan || 'unspecified' });
   router.push({ name: 'register', query: plan ? { plan } : undefined });
 }
 

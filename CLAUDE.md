@@ -32,12 +32,33 @@ Environment files:
 - `deploy.conf` — Deployment infra config: DROPLET_IP, SSH user, registry, Discord webhook (gitignored). Used by `deploy.sh`.
 - `deploy.conf.example` — Template for `deploy.conf` (committed).
 
-App variables (`VITE_*`):
-- `VITE_DOCUMENT_STORE_URL` - API base URL (proxied through Vite)
+App variables (`VITE_*`) — these are build-time defaults. In Docker, they are overridden at runtime via `docker-entrypoint.sh` (see Runtime Configuration below):
+- `VITE_DOCUMENT_STORE_URL` - API base URL (proxied through Vite in dev)
 - `VITE_AUTH_PROVIDER` - Keycloak URL
 - `VITE_AUTH_CLIENT_ID` - Keycloak client ID
 - `VITE_AUTH_REALM` - Keycloak realm
 - `VITE_TURNSTILE_SITE_KEY` - Cloudflare Turnstile site key
+
+### Runtime Configuration (Docker)
+
+The app supports runtime config injection so the same Docker image works across environments (tests, staging, production) without rebuilding.
+
+**How it works:**
+1. `src/config.ts` — centralized config module that reads from `window.__RUNTIME_CONFIG__` with fallback to `import.meta.env.VITE_*`
+2. `public/runtime-config.js` — loaded in `index.html` before the app; no-op in dev
+3. `docker-entrypoint.sh` — generates `runtime-config.js` from env vars at container startup
+
+**Docker env vars** (set at `docker run` time):
+
+| Env var | Overrides | Example |
+|---------|-----------|---------|
+| `API_URL` | `VITE_DOCUMENT_STORE_URL` | `http://localhost:8085` |
+| `AUTH_URL` | `VITE_AUTH_PROVIDER` | `http://localhost:32768` |
+| `AUTH_REALM` | `VITE_AUTH_REALM` | `dms` |
+| `AUTH_CLIENT_ID` | `VITE_AUTH_CLIENT_ID` | `dms-fe` |
+| `TURNSTILE_SITE_KEY` | `VITE_TURNSTILE_SITE_KEY` | `1x00000000000000000000AA` |
+
+**When adding new config values:** Add to `src/config.ts`, `docker-entrypoint.sh`, and `public/runtime-config.js`. Then use `config.myValue` instead of `import.meta.env.VITE_MY_VALUE` in your code.
 
 ## Backend API Reference
 

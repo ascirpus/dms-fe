@@ -42,7 +42,9 @@ Navigate to **Workspace > Settings > Document Types** (`/app/workspace/settings/
 
 ### Editing a Document Type
 
-Click the pencil icon on a document type to edit any of its fields. Changes apply to new documents; existing documents retain their current settings.
+Click the pencil icon on a document type to edit any of its fields.
+
+**Settings propagation:** When you update a document type's workflow settings (requires approval, approval threshold, requires signature), the changes automatically propagate to existing documents that haven't been touched yet — meaning documents with no approvals and no signatures. Documents that already have approvals or signatures are not affected, since changing their workflow mid-process could cause confusion.
 
 ### Deleting a Document Type
 
@@ -65,7 +67,7 @@ If a document type has **Requires Approval** enabled:
 
 ### Signature Configuration
 
-If **Requires Signature** is enabled on a type, documents of that type are flagged for signature collection. Admins can then assign required signers on individual documents.
+If **Requires Signature** is enabled on a type, documents of that type require signatures as a final seal after approval. Once a document is approved and signed, it becomes immutable — no new versions can be uploaded. Signing requires Decide permission.
 
 ## Plan Limits
 

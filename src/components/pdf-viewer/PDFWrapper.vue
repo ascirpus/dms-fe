@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, provide, ref, watch, computed, nextTick, type ComponentPublicInstance } from 'vue';
+import { onMounted, onBeforeUnmount, provide, ref, watch, computed, nextTick, type ComponentPublicInstance } from 'vue';
 import Markers from '@/components/pdf-viewer/Markers.vue';
 import { createLoadingTask } from 'vue3-pdfjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
@@ -35,7 +35,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'show-version-history': [];
   'show-document-info': [];
-  'confirm-version': [];
   'download': [];
   'print': [];
   'share': [];
@@ -100,6 +99,26 @@ appState.$subscribe((_mutations, state) => {
 });
 
 const scrollAreaRef = ref<HTMLElement | null>(null);
+const containerRef = ref<HTMLElement | null>(null);
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (containerRef.value) {
+    let lastWidth = containerRef.value.clientWidth;
+    resizeObserver = new ResizeObserver((entries) => {
+      const newWidth = entries[0]?.contentRect.width ?? 0;
+      if (Math.abs(newWidth - lastWidth) > 1) {
+        lastWidth = newWidth;
+        window.dispatchEvent(new Event('resize'));
+      }
+    });
+    resizeObserver.observe(containerRef.value);
+  }
+});
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+});
 
 function jumpToPage(page: number, scrollToY?: number) {
   if (page >= 1 && page <= pageCount.value) {
@@ -119,7 +138,7 @@ defineExpose({ jumpToPage });
 </script>
 
 <template>
-  <div class="relative w-full h-full flex flex-col">
+  <div ref="containerRef" class="relative w-full h-full flex flex-col">
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top controls: page navigation -->
       <Controls
@@ -127,7 +146,11 @@ defineExpose({ jumpToPage });
         :current-page="currentPage"
         :page-count="pageCount"
         @update:page="onPageUpdate"
-      />
+      >
+        <template #actions>
+          <slot name="top-actions"></slot>
+        </template>
+      </Controls>
 
       <div ref="scrollAreaRef" class="flex-1 relative overflow-auto">
         <VuePdf
@@ -169,7 +192,6 @@ defineExpose({ jumpToPage });
         @expand-all-comments="emit('expand-all-comments')"
         @collapse-all-comments="emit('collapse-all-comments')"
         @show-version-history="emit('show-version-history')"
-        @confirm-version="emit('confirm-version')"
         @show-document-info="emit('show-document-info')"
         @download="emit('download')"
         @print="emit('print')"

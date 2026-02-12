@@ -9,7 +9,9 @@ import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { RegistrationService } from '@/services/RegistrationService';
 import { generateWorkspaceName } from '@/utils/workspaceNames';
+import { usePostHog } from '@/composables/usePostHog.js';
 import type { RegistrationErrorResponse } from '@/types';
+import { config } from '@/config';
 
 interface TurnstileInstance {
   render: (element: HTMLElement, options: {
@@ -32,6 +34,7 @@ declare global {
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
+const posthog = usePostHog();
 const service = new RegistrationService();
 
 const email = ref('');
@@ -45,7 +48,7 @@ const captchaToken = ref('');
 const turnstileRef = ref<HTMLElement | null>(null);
 let widgetId: string | null = null;
 
-const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+const siteKey = config.turnstileSiteKey;
 
 const plan = computed(() => route.query.plan as string | undefined);
 
@@ -97,6 +100,8 @@ const submitRegistration = async () => {
   isLoading.value = true;
   errorMessage.value = '';
 
+  posthog.capture('registration_attempted', { plan: plan.value, has_first_name: !!firstName.value.trim(), has_last_name: !!lastName.value.trim() });
+
   try {
     await service.registerCompany({
       email: email.value,
@@ -105,6 +110,7 @@ const submitRegistration = async () => {
       lastName: lastName.value.trim() || undefined,
       //captchaToken: captchaToken.value,
     });
+    posthog.capture('registration_succeeded', { plan: plan.value });
     isSubmitted.value = true;
   } catch (error) {
     if (widgetId && window.turnstile) {
@@ -114,12 +120,14 @@ const submitRegistration = async () => {
 
     if (error instanceof AxiosError && error.response) {
       const data = error.response.data as RegistrationErrorResponse;
+      posthog.capture('registration_failed', { plan: plan.value, error_code: data?.error?.code ?? error.response.status });
       if (error.response.status === 409 && data?.error?.code === 'USER_ALREADY_EXISTS') {
         errorMessage.value = t('register.accountExists');
       } else {
         errorMessage.value = data?.error?.message || t('register.registrationFailed');
       }
     } else {
+      posthog.capture('registration_failed', { plan: plan.value, error_code: 'network_error' });
       errorMessage.value = t('register.serverError');
     }
   } finally {
@@ -208,7 +216,7 @@ const goToLogin = () => {
             </div>
           </div>
 
-          <div ref="turnstileRef" data-testid="turnstile-container"></div>
+          <div ref="turnstileRef" data-testid="turnstile-container" class="turnstile-container"></div>
 
           <div class="flex justify-between items-center max-[540px]:flex-col max-[540px]:gap-3 max-[540px]:items-start">
             <Button
@@ -247,3 +255,14 @@ const goToLogin = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.turnstile-container {
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.turnstile-container :deep(iframe) {
+  border: none !important;
+}
+</style>

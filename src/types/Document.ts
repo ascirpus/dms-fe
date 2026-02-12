@@ -21,11 +21,30 @@ export interface FileVersion {
     uploadedAt: string;
 }
 
+export interface SignatureUser {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+}
+
 export interface Signature {
-    user: { id: string; email: string; firstName?: string; lastName?: string };
-    required: boolean;
-    assignedAt: string;
-    signedAt: string | null;
+    user: SignatureUser;
+    signedAt: string;
+    contentHash: string;
+}
+
+export interface DocumentApproval {
+    id: string;
+    user: SignatureUser;
+    action: 'APPROVE' | 'DECLINE';
+    comment: string | null;
+    createdAt: string;
+}
+
+export interface SignatureStatus {
+    signatures: Signature[];
+    signedCount: number;
 }
 
 export interface Document {
@@ -33,8 +52,15 @@ export interface Document {
     title: string;
     documentType: DocumentTypeDTO;
     description?: string;
-    status: DocumentStatus;
+    status: DocumentStatus | null;
     currentVersion?: CurrentFile;
     versions: FileVersion[];
     signatures?: Signature[];
+    approvals?: DocumentApproval[];
+    requiredApprovals?: number;
+    requiresSignature?: boolean;
+    isSigned?: boolean;
+    approvalDeadline?: string | null;
+    signatureDeadline?: string | null;
+    effectivePermission?: 'NONE' | 'VIEW' | 'COMMENT' | 'DECIDE';
 }

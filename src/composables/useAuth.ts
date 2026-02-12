@@ -4,8 +4,9 @@ import { useAuthStore } from "@/stores/authStore";
 import type { User } from "@/types";
 import type { UserTenantsResponse } from "@/types/Tenant";
 import { computed, ref } from "vue";
+import { config } from "@/config";
 
-const API_URL = import.meta.env.VITE_DOCUMENT_STORE_URL;
+const API_URL = config.apiUrl;
 
 let apiClientInstance: AxiosInstance | null = null;
 let interceptorsRegistered = false;

@@ -28,7 +28,6 @@ const emit = defineEmits<{
   'expand-all-comments': [];
   'collapse-all-comments': [];
   'show-version-history': [];
-  'confirm-version': [];
   'show-document-info': [];
   'download': [];
   'print': [];
@@ -66,7 +65,6 @@ const commentsMenuItems = computed(() => [
 
 const versionMenuItems = computed(() => [
   { label: t('pdfControls.showVersionHistory'), icon: 'pi pi-history', command: () => emit('show-version-history') },
-  { label: t('pdfControls.confirmVersion'), icon: 'pi pi-check-circle', command: () => emit('confirm-version') },
 ]);
 
 const moreMenuItems = computed(() => [
@@ -78,7 +76,8 @@ const moreMenuItems = computed(() => [
 
 <template>
   <!-- Top variant: page navigation only -->
-  <div v-if="variant === 'top'" class="flex items-center px-3 py-2 bg-[var(--surface-card)] border-[var(--surface-border)] justify-center border-b border-solid border-b-[var(--surface-border)]">
+  <div v-if="variant === 'top'" class="flex items-center px-3 py-2 bg-[var(--surface-card)] border-[var(--surface-border)] border-b border-solid border-b-[var(--surface-border)]">
+    <div class="flex-1"></div>
     <div class="flex items-center gap-2">
       <Button
         icon="pi pi-angle-left"
@@ -97,6 +96,9 @@ const moreMenuItems = computed(() => [
         @click="nextPage"
         :disabled="currentPage >= pageCount"
       />
+    </div>
+    <div class="flex-1 flex justify-end">
+      <slot name="actions"></slot>
     </div>
   </div>
 

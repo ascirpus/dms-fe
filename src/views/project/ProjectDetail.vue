@@ -79,6 +79,7 @@ const {
   loading: documentsLoading,
   getDocumentUrl,
   uploadDocument,
+  deleteDocument: deleteDocumentApi,
 } = useProjectDocuments(() => projectId.value);
 
 // --- Project state ---
@@ -203,6 +204,12 @@ function onCardSaveTitle(doc: Document, newTitle: string) {
   });
 }
 
+// --- Legend popover ---
+const legendPopover = ref();
+function toggleLegend(event: Event) {
+  legendPopover.value.toggle(event);
+}
+
 // --- Settings popover (column visibility) ---
 const settingsPopover = ref();
 const columnSettings = reactive({
@@ -322,7 +329,7 @@ function formatDate(date: Date): string {
   return `${day}.${month}.${year}`;
 }
 
-function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger" | "secondary" | "info" | "contrast" | undefined {
+function getStatusSeverity(status: DocumentStatus | null): "success" | "warn" | "danger" | "secondary" | "info" | "contrast" | undefined {
   switch (status) {
     case DocumentStatus.APPROVED: return 'success';
     case DocumentStatus.PENDING: return 'warn';
@@ -332,7 +339,7 @@ function getStatusSeverity(status: DocumentStatus): "success" | "warn" | "danger
 }
 
 function getStatusLabel(doc: Document): string {
-  if (doc.status === DocumentStatus.PENDING && doc.signatures?.length) {
+  if (doc.status !== DocumentStatus.APPROVED && doc.status !== DocumentStatus.DECLINED && doc.signatures?.length) {
     const signed = doc.signatures.filter(s => s.signedAt).length;
     const total = doc.signatures.length;
     return t('projectDetail.signaturesProgress', { signed, total });
@@ -374,7 +381,7 @@ function confirmDeleteDocument(doc: Document) {
 
 async function deleteDocument(documentId: string) {
   try {
-    documents.value = documents.value.filter(d => d.id !== documentId);
+    await deleteDocumentApi(documentId);
     toast.add({
       severity: 'success',
       summary: t('projectDetail.documentDeleted'),
@@ -490,9 +497,13 @@ const currentUserId = computed(() => {
   return (auth.decodedToken.value as Record<string, unknown> | null)?.sub as string | undefined;
 });
 
-function getUserDisplayName(user: { firstName?: string; lastName?: string; email: string }): string {
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-  return fullName || user.email;
+function isValidName(val: unknown): val is string {
+  return typeof val === 'string' && val.length > 0 && val !== 'null';
+}
+
+function getUserDisplayName(user: { firstName?: string | null; lastName?: string | null; email: string }): string {
+  const parts = [user.firstName, user.lastName].filter(isValidName);
+  return parts.join(' ') || user.email;
 }
 
 // Available users (not already a member in any party)
@@ -509,7 +520,11 @@ const allMemberIds = computed(() => {
 const availableUsers = computed(() => {
   return tenantUsers.value
     .filter(u => !allMemberIds.value.has(u.userId))
-    .map(u => ({ ...u, displayName: getUserDisplayName(u) }));
+    .map(u => {
+      const name = getUserDisplayName(u);
+      const displayName = name !== u.email ? `${name} (${u.email})` : u.email;
+      return { ...u, displayName };
+    });
 });
 
 const permissionOptions = computed(() => [
@@ -1185,7 +1200,32 @@ async function removeMemberHandler(partyId: string, memberId: string) {
         </DataTable>
 
         <!-- Pagination -->
-        <div class="table-pagination flex justify-center py-2 px-4 border-t border-[var(--ui-button-outlined-stroke)]">
+        <div class="table-pagination flex items-center justify-between py-2 px-4 border-t border-[var(--ui-button-outlined-stroke)]">
+          <div class="shrink-0">
+            <Button
+              v-if="documentTypes && documentTypes.length > 0"
+              icon="pi pi-info-circle"
+              text
+              rounded
+              size="small"
+              severity="secondary"
+              :aria-label="$t('projectDetail.documentTypeLegend')"
+              @click="toggleLegend"
+            />
+            <Popover ref="legendPopover">
+              <div class="flex flex-col gap-1.5 py-1 min-w-[160px]">
+                <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide px-2 pb-1">{{ $t('projectDetail.documentTypeLegend') }}</span>
+                <div
+                  v-for="dt in documentTypes"
+                  :key="dt.id"
+                  class="flex items-center gap-2 px-2 py-1 text-sm text-[var(--text-color)]"
+                >
+                  <i :class="'pi ' + sanitizeIcon(dt.meta?.icon)" :style="{ color: docTypeColorMap.get(dt.id) }" />
+                  <span>{{ dt.name }}</span>
+                </div>
+              </div>
+            </Popover>
+          </div>
           <Paginator
             :first="first"
             :rows="rows"
@@ -1194,6 +1234,7 @@ async function removeMemberHandler(partyId: string, memberId: string) {
             @page="onPageChange"
             template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
           />
+          <div class="shrink-0 w-[32px]"></div>
         </div>
       </div>
     </template>
@@ -1252,7 +1293,6 @@ async function removeMemberHandler(partyId: string, memberId: string) {
               v-model="uploadForm.password"
               type="password"
               class="w-full"
-              :placeholder="$t('projectDetail.pdfPasswordPlaceholder')"
             />
             <label for="uploadPassword">{{ $t('projectDetail.pdfPassword') }}</label>
           </FloatLabel>
@@ -1373,7 +1413,7 @@ async function removeMemberHandler(partyId: string, memberId: string) {
                   >
                     <div class="flex items-center gap-2.5 min-w-0">
                       <div class="w-7 h-7 rounded-full bg-[var(--primary-color)] text-white flex items-center justify-center text-xs font-semibold shrink-0">
-                        {{ (member.firstName?.[0] || member.email[0]).toUpperCase() }}
+                        {{ (isValidName(member.firstName) ? member.firstName[0] : member.email[0]).toUpperCase() }}
                       </div>
                       <div class="flex flex-col min-w-0">
                         <span class="text-sm font-medium text-[var(--text-color)] truncate">

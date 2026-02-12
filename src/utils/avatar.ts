@@ -21,20 +21,21 @@ export function getAvatarColor(identifier: string): string {
 
 type UserLike = Pick<User, 'firstName' | 'lastName' | 'email'>;
 
+function isValidName(val: unknown): val is string {
+    return typeof val === 'string' && val.length > 0 && val !== 'null';
+}
+
 export function getDisplayName(user: UserLike): string {
-    if (user.firstName && user.lastName) {
-        return `${user.firstName} ${user.lastName}`;
-    }
-    if (user.firstName) return user.firstName;
-    return user.email || '';
+    const parts = [user.firstName, user.lastName].filter(isValidName);
+    return parts.join(' ') || user.email || '';
 }
 
 export function getInitialsFromUser(user: UserLike): string {
-    if (user.firstName && user.lastName) {
+    if (isValidName(user.firstName) && isValidName(user.lastName)) {
         return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
     }
 
-    if (user.firstName) {
+    if (isValidName(user.firstName)) {
         return user.firstName[0].toUpperCase();
     }
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The document viewer is a full-screen PDF viewing experience with annotation tools, a comment sidebar, and version history. It is the primary interface for reviewing and collaborating on documents.
+The document viewer is a full-screen PDF viewing experience with annotation tools, a comment sidebar, version history, and approval/signing workflows. It is the primary interface for reviewing and collaborating on documents.
 
 ## Route
 
@@ -15,6 +15,9 @@ The document viewer is a full-screen PDF viewing experience with annotation tool
 - `src/components/pdf-viewer/Controls.vue` - Page navigation and zoom controls
 - `src/components/pdf-viewer/Markers.vue` - Comment position markers on PDF
 - `src/components/pdf-viewer/CommentTable.vue` - Comment list sidebar
+- `src/components/pdf-viewer/DocumentActionBar.vue` - Approval/signature action bar
+- `src/components/pdf-viewer/DeclineDialog.vue` - Decline confirmation dialog
+- `src/components/pdf-viewer/ActivityTimeline.vue` - Approval/signature activity timeline
 
 ## Layout
 
@@ -32,12 +35,25 @@ The document viewer is a full-screen PDF viewing experience with annotation tool
 - "Add Version" button (visible when versioning is enabled)
 - "Invite User" button
 
+### Document Action Bar
+
+Shown between the header and PDF viewer when the document has an approval workflow or signatures:
+
+- **Approval row** (when `documentType.requiresApproval`):
+  - PENDING: Shows "X of Y approvals" progress + [Approve] and [Decline] buttons + optional deadline
+  - APPROVED: Green "Approved" badge (no buttons)
+  - DECLINED: Red "Declined" badge (no buttons)
+- **Signature row** (when signatures exist):
+  - Shows "X of Y signatures" (if required) or "X signatures" (if voluntary) + [Sign Document] button + optional deadline
+- Hidden for plain documents with no approval workflow and no signatures
+
 ### Main Area
 
 - **Left:** PDF viewer taking most of the width. Displays the current page of the PDF with interactive markers overlaid at comment positions.
-- **Right sidebar** (toggleable): Two tabs:
+- **Right sidebar** (toggleable): Three tabs:
   - **Comments tab** - list of all comments on the document
   - **Versions tab** - version history timeline
+  - **Activity tab** - chronological timeline of approvals and signatures (only shown when relevant)
 
 ### Bottom Toolbar
 
@@ -46,7 +62,6 @@ The document viewer is a full-screen PDF viewing experience with annotation tool
 | Show All Comments | Toggle to display all comments |
 | Show My Comments | Toggle to display only your comments |
 | Show Version History | Toggle the versions sidebar tab |
-| Confirm Version | Approve the current document version |
 | Document Info | Show document metadata dialog |
 | Download | Opens the PDF file in a new browser tab |
 | Print | Triggers browser print dialog |
@@ -89,6 +104,22 @@ Each version entry shows:
 - Upload date
 - "Current" badge on the active version
 
+### Document Approval
+
+| Action | How | Result |
+|--------|-----|--------|
+| Approve | Click "Approve" in the action bar | API call, document status updates, toast feedback, activity timeline updated |
+| Decline | Click "Decline" in the action bar | Opens decline dialog with optional comment, submits, toast feedback |
+| Sign | Click "Sign Document" in the action bar | API call, signature status updates, toast feedback |
+
+The action bar is only shown when the document type has `requiresApproval` or when signatures exist.
+
+### Activity Timeline
+
+The Activity tab in the sidebar shows:
+- **Pending section** (top): lists users who still need to sign
+- **Completed timeline** (newest first): each entry shows user avatar, action text ("approved this document" / "declined: reason" / "signed this document"), and relative timestamp
+
 ### Document Info
 
 Clicking "Document Info" opens a dialog showing:
@@ -98,16 +129,15 @@ Clicking "Document Info" opens a dialog showing:
 - Status (Pending / Approved / Declined)
 - Description
 
-### Document Approval
+## Composables
 
-- Click "Confirm Version" in the bottom toolbar
-- The document status is updated to Approved via the API
-- Status change reflected in the document info
+- `useApprovals` (`src/composables/useApprovals.ts`) - Manages approval and signature state using vue-query. Provides `fetchApprovals`, `fetchSignatureStatus`, `approveDocument`, `declineDocument`, `signDocument`.
 
 ## States
 
 - **Loading:** Spinner while document and PDF load
 - **Viewing:** PDF displayed with controls active
-- **Sidebar open:** Comments or versions panel visible alongside PDF
+- **Sidebar open:** Comments, versions, or activity panel visible alongside PDF
 - **Sidebar closed:** Full-width PDF viewing
 - **Error:** Error message if document fails to load
+- **Action loading:** Approve/decline/sign buttons show loading state during API calls
