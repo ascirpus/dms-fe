@@ -31,6 +31,7 @@ describe('RegistrationService', () => {
 
         const request: RegisterCompanyRequest = {
             email: 'test@example.com',
+            password: 'password123',
             tenantName: 'Acme Corp',
         };
 
@@ -47,6 +48,7 @@ describe('RegistrationService', () => {
 
         const request: RegisterCompanyRequest = {
             email: 'test@example.com',
+            password: 'password123',
             tenantName: 'Acme Corp',
             firstName: 'John',
             lastName: 'Doe',
@@ -70,6 +72,7 @@ describe('RegistrationService', () => {
 
         const request: RegisterCompanyRequest = {
             email: 'test@example.com',
+            password: 'password123',
             tenantName: 'Acme Corp',
             checkout: { planId: 'plan-team', interval: 'MONTHLY' },
         };
@@ -93,6 +96,7 @@ describe('RegistrationService', () => {
 
         await expect(service.registerCompany({
             email: 'existing@example.com',
+            password: 'password123',
             tenantName: 'Acme Corp',
         })).rejects.toThrow('Conflict');
     });
@@ -102,6 +106,7 @@ describe('RegistrationService', () => {
 
         await expect(service.registerCompany({
             email: 'test@example.com',
+            password: 'password123',
             tenantName: 'Acme Corp',
         })).rejects.toThrow('Network Error');
     });

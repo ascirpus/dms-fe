@@ -1,7 +1,44 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
+import { createI18n } from 'vue-i18n';
 import { AxiosError } from 'axios';
 import Register from '../Register.vue';
+
+const i18n = createI18n({
+    legacy: false,
+    locale: 'en',
+    messages: {
+        en: {
+            register: {
+                createAccount: 'Create Account',
+                emailAddress: 'Email Address',
+                emailPlaceholder: "you@company.com",
+                password: 'Password',
+                passwordPlaceholder: 'Create a password',
+                confirmPassword: 'Confirm Password',
+                confirmPasswordPlaceholder: 'Confirm your password',
+                passwordTooShort: 'Password must be at least 8 characters',
+                passwordsDoNotMatch: 'Passwords do not match',
+                workspaceName: 'Workspace Name',
+                workspacePlaceholder: 'Your company or team name',
+                suggestName: 'Suggest a name',
+                firstName: 'First Name',
+                firstNamePlaceholder: 'First name',
+                lastName: 'Last Name',
+                lastNamePlaceholder: 'Last name',
+                alreadyHaveAccount: 'Already have an account?',
+                verificationSent: 'We\'ve sent a verification link to {email}. Please check your inbox to complete your registration.',
+                continueToSignIn: 'Continue to Sign In',
+                accountExists: 'An account with this email already exists. Please sign in instead.',
+                registrationFailed: 'Registration failed. Please try again.',
+                serverError: 'Unable to connect to the server.',
+            },
+            common: { optional: 'optional' },
+        },
+    },
+    missingWarn: false,
+    fallbackWarn: false,
+});
 
 const mockPush = vi.fn();
 const mockRegisterCompany = vi.fn();
@@ -26,6 +63,10 @@ const globalStubs = {
     InputText: {
         template: '<input :id="id" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" @keypress="$emit(\'keypress\', $event)" />',
         props: ['modelValue', 'type', 'placeholder', 'id'],
+    },
+    Password: {
+        template: '<input :id="id" type="password" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+        props: ['modelValue', 'placeholder', 'id', 'feedback', 'toggleMask', 'inputClass', 'invalid'],
     },
     Message: {
         template: '<div class="p-message" role="alert"><slot /></div>',
@@ -59,7 +100,7 @@ describe('Register.vue', () => {
     });
 
     function mountRegister() {
-        return mount(Register, { global: { stubs: globalStubs } });
+        return mount(Register, { global: { stubs: globalStubs, plugins: [i18n] } });
     }
 
     it('should render the form with all fields', () => {
@@ -67,6 +108,8 @@ describe('Register.vue', () => {
 
         expect(wrapper.text()).toContain('Create Account');
         expect(wrapper.find('#email').exists()).toBe(true);
+        expect(wrapper.find('#password').exists()).toBe(true);
+        expect(wrapper.find('#confirmPassword').exists()).toBe(true);
         expect(wrapper.find('#tenantName').exists()).toBe(true);
         expect(wrapper.find('#firstName').exists()).toBe(true);
         expect(wrapper.find('#lastName').exists()).toBe(true);
@@ -106,17 +149,83 @@ describe('Register.vue', () => {
         const wrapper = mountRegister();
 
         await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
 
         const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
         expect(submitButton?.attributes('disabled')).toBeDefined();
     });
 
-    it('should enable submit with valid email, workspace name, and captcha token', async () => {
+    it('should disable submit when passwords do not match', async () => {
         const wrapper = mountRegister();
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('different');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
+        await flushPromises();
+
+        const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
+        expect(submitButton?.attributes('disabled')).toBeDefined();
+    });
+
+    it('should show password too short hint when typing', async () => {
+        const wrapper = mountRegister();
+        await flushPromises();
+
+        await wrapper.find('#password').setValue('short');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Password must be at least 8 characters');
+    });
+
+    it('should hide password too short hint once valid', async () => {
+        const wrapper = mountRegister();
+        await flushPromises();
+
+        await wrapper.find('#password').setValue('short');
+        await flushPromises();
+        expect(wrapper.text()).toContain('Password must be at least 8 characters');
+
+        await wrapper.find('#password').setValue('password123');
+        await flushPromises();
+        expect(wrapper.text()).not.toContain('Password must be at least 8 characters');
+    });
+
+    it('should show passwords do not match hint', async () => {
+        const wrapper = mountRegister();
+        await flushPromises();
+
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('different');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Passwords do not match');
+    });
+
+    it('should disable submit when password is too short', async () => {
+        const wrapper = mountRegister();
+        await flushPromises();
+
+        await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('short');
+        await wrapper.find('#confirmPassword').setValue('short');
+        await wrapper.find('#tenantName').setValue('Acme Corp');
+        await flushPromises();
+
+        const submitButton = wrapper.findAll('button').find(b => b.text() === 'Create Account');
+        expect(submitButton?.attributes('disabled')).toBeDefined();
+    });
+
+    it('should enable submit with valid email, password, workspace name, and captcha token', async () => {
+        const wrapper = mountRegister();
+        await flushPromises();
+
+        await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
@@ -124,7 +233,7 @@ describe('Register.vue', () => {
         expect(submitButton?.attributes('disabled')).toBeUndefined();
     });
 
-    it('should include captchaToken in registration request', async () => {
+    it('should include password in registration request', async () => {
         mockRegisterCompany.mockResolvedValue({
             user: { id: 'u1', email: 'test@example.com', firstName: '', lastName: '' },
             tenantId: 't1',
@@ -134,6 +243,8 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
@@ -143,10 +254,10 @@ describe('Register.vue', () => {
 
         expect(mockRegisterCompany).toHaveBeenCalledWith({
             email: 'test@example.com',
+            password: 'password123',
             tenantName: 'Acme Corp',
             firstName: undefined,
             lastName: undefined,
-            captchaToken: 'test-captcha-token',
         });
     });
 
@@ -160,6 +271,8 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
@@ -186,6 +299,8 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
@@ -210,6 +325,8 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('existing@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 
@@ -246,6 +363,8 @@ describe('Register.vue', () => {
         await flushPromises();
 
         await wrapper.find('#email').setValue('test@example.com');
+        await wrapper.find('#password').setValue('password123');
+        await wrapper.find('#confirmPassword').setValue('password123');
         await wrapper.find('#tenantName').setValue('Acme Corp');
         await flushPromises();
 

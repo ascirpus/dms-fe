@@ -9,6 +9,7 @@ import type { TenantInvite, TenantRole, ProjectPartyAssignment } from '@/types';
 
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
@@ -37,6 +38,7 @@ const { fetchParties, parties: partiesList } = useParties();
 const form = reactive({
   email: '',
   role: 'MEMBER' as TenantRole,
+  message: '',
 });
 const isSubmitting = ref(false);
 
@@ -72,6 +74,7 @@ watch(() => props.visible, (visible) => {
   if (visible) {
     form.email = '';
     form.role = 'MEMBER';
+    form.message = '';
     isSubmitting.value = false;
     showProjectAccess.value = !!props.context?.projectId;
     selectedProjectId.value = props.context?.projectId ?? null;
@@ -121,6 +124,7 @@ async function submit() {
     const invite = await createInvite({
       email: form.email.trim(),
       role: form.role,
+      message: form.message.trim() || undefined,
       projectAssignments: assignments.length > 0 ? assignments : undefined,
     });
 
@@ -128,9 +132,14 @@ async function submit() {
     emit('created', invite);
     toast.add({ severity: 'success', summary: t('inviteDialog.inviteSent'), detail: t('inviteDialog.inviteSentDetail', { email: form.email }), life: 3000 });
   } catch (err: any) {
-    const detail = err?.response?.status === 409
-      ? t('inviteDialog.alreadyInvited')
-      : err instanceof Error ? err.message : t('inviteDialog.failedToCreate');
+    let detail: string;
+    if (err?.response?.status === 409) {
+      detail = t('inviteDialog.alreadyInvited');
+    } else if (err?.response?.status === 400 && err?.response?.data?.error?.code === 'INVALID_INVITE') {
+      detail = t('inviteDialog.pendingInviteExists');
+    } else {
+      detail = err instanceof Error ? err.message : t('inviteDialog.failedToCreate');
+    }
     toast.add({ severity: 'error', summary: t('common.error'), detail, life: 5000 });
   } finally {
     isSubmitting.value = false;
@@ -162,6 +171,18 @@ async function submit() {
           optionLabel="label"
           optionValue="value"
           class="w-full"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="inviteMessage" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('inviteDialog.message') }}</label>
+        <Textarea
+          id="inviteMessage"
+          v-model="form.message"
+          :placeholder="$t('inviteDialog.messagePlaceholder')"
+          class="w-full"
+          rows="3"
+          autoResize
         />
       </div>
 

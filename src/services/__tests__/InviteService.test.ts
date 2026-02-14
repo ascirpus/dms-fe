@@ -125,8 +125,8 @@ describe('InviteService', () => {
   describe('joinTenant', () => {
     it('should join a tenant via plain client (unauthenticated)', async () => {
       const request: JoinTenantRequest = {
-        email: 'new@test.com',
-        tenantId: 't1',
+        inviteId: 'inv-1',
+        password: 'securepass123',
         firstName: 'John',
         lastName: 'Doe',
       };

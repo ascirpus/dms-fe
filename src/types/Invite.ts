@@ -35,6 +35,7 @@ export interface UserPendingInvite {
 export interface CreateInviteRequest {
   email: string;
   role?: TenantRole;
+  message?: string;
   projectAssignments?: ProjectPartyAssignment[];
 }
 
@@ -43,8 +44,8 @@ export interface AcceptedInvite {
 }
 
 export interface JoinTenantRequest {
-  email: string;
-  tenantId: string;
+  inviteId: string;
+  password: string;
   firstName?: string;
   lastName?: string;
 }

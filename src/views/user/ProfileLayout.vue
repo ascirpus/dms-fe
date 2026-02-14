@@ -17,6 +17,7 @@ const fullName = computed(() => {
 
 const navItems = computed(() => [
   { label: t('profileLayout.general'), icon: 'pi pi-user', route: 'profile-general' },
+  { label: t('profileLayout.security'), icon: 'pi pi-lock', route: 'profile-security' },
   { label: t('profileLayout.notifications'), icon: 'pi pi-bell', route: 'profile-notifications' },
   { label: t('profileLayout.appearance'), icon: 'pi pi-palette', route: 'profile-appearance' },
 ]);

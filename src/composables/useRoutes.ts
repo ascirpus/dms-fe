@@ -118,6 +118,11 @@ export function createRouter(app: App): Router {
                                 name: 'profile-appearance',
                                 component: () => import("@/views/user/ProfileAppearance.vue"),
                             },
+                            {
+                                path: 'security',
+                                name: 'profile-security',
+                                component: () => import("@/views/user/ProfileSecurity.vue"),
+                            },
                         ],
                     },
                     {

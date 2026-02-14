@@ -4,13 +4,13 @@ import { useAuth } from './useAuth';
 import { InviteService } from '@/services/InviteService';
 import type { TenantInvite, UserPendingInvite, CreateInviteRequest, AcceptedInvite, JoinTenantRequest } from '@/types';
 
+const pendingInvites = ref<TenantInvite[]>([]);
+const userPendingInvites = ref<UserPendingInvite[]>([]);
+
 export function useInvites() {
   const { apiClient } = useAuth();
   const queryClient = useQueryClient();
   const inviteService = new InviteService(apiClient);
-
-  const pendingInvites = ref<TenantInvite[]>([]);
-  const userPendingInvites = ref<UserPendingInvite[]>([]);
 
   async function fetchPendingInvites(): Promise<TenantInvite[]> {
     const result = await queryClient.fetchQuery<TenantInvite[]>({

@@ -7,6 +7,7 @@ import { useAuth } from '@/composables/useAuth';
 import { useInvites } from '@/composables/useInvites';
 import { useWorkspace } from '@/composables/useWorkspace';
 import Logo from '@/components/base/Logo.vue';
+import Password from 'primevue/password';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
@@ -27,10 +28,24 @@ const workspaceName = computed(() => (route.query.workspace as string) ?? 'a wor
 type PageState = 'loading' | 'invite-prompt' | 'register-form' | 'accepting' | 'success' | 'register-success' | 'error';
 const state = ref<PageState>('loading');
 const errorMessage = ref('');
+const showSignInLink = ref(false);
 
 const firstName = ref('');
 const lastName = ref('');
+const password = ref('');
+const confirmPassword = ref('');
 const isSubmitting = ref(false);
+
+const isValidPassword = computed(() => password.value.length >= 8);
+const showPasswordHint = computed(() =>
+  password.value.length > 0 && !isValidPassword.value,
+);
+const passwordsMatch = computed(() =>
+  confirmPassword.value === '' || password.value === confirmPassword.value,
+);
+const canSubmit = computed(() =>
+  isValidPassword.value && password.value === confirmPassword.value,
+);
 
 onMounted(async () => {
   if (auth.isAuthenticated.value) {
@@ -81,18 +96,15 @@ function showRegisterForm() {
 }
 
 async function submitRegistration() {
-  if (!email.value || !tenantId.value) {
-    errorMessage.value = t('invite.invalidLink');
-    state.value = 'error';
-    return;
-  }
+  if (!canSubmit.value) return;
 
   isSubmitting.value = true;
   errorMessage.value = '';
+  showSignInLink.value = false;
   try {
     await joinTenant({
-      email: email.value,
-      tenantId: tenantId.value,
+      inviteId: inviteId.value,
+      password: password.value,
       firstName: firstName.value.trim() || undefined,
       lastName: lastName.value.trim() || undefined,
     });
@@ -102,6 +114,7 @@ async function submitRegistration() {
       const data = err.response.data;
       if (err.response.status === 409) {
         errorMessage.value = t('invite.accountExists');
+        showSignInLink.value = true;
       } else {
         errorMessage.value = data?.error?.message ?? t('invite.registrationFailed');
       }
@@ -169,16 +182,12 @@ function goToProjects() {
 
           <Message v-if="errorMessage" severity="error" :closable="false">
             {{ errorMessage }}
+            <a v-if="showSignInLink" class="font-semibold underline cursor-pointer ml-1" @click="loginAndReturn">{{ $t('invite.signInInstead') }}</a>
           </Message>
 
           <div class="flex flex-col gap-1.5">
-            <label for="regEmail" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('invite.emailAddress') }}</label>
-            <InputText
-              id="regEmail"
-              :model-value="email"
-              readonly
-              class="w-full bg-[var(--surface-ground)]"
-            />
+            <span class="font-semibold text-sm text-[var(--text-color)]">{{ $t('invite.emailAddress') }}</span>
+            <span class="text-sm text-[var(--text-color)]">{{ email }}</span>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
@@ -191,7 +200,6 @@ function goToProjects() {
                 v-model="firstName"
                 :placeholder="$t('invite.firstName')"
                 class="w-full"
-                @keypress.enter="submitRegistration"
               />
             </div>
             <div class="flex flex-col gap-1.5">
@@ -203,9 +211,38 @@ function goToProjects() {
                 v-model="lastName"
                 :placeholder="$t('invite.lastName')"
                 class="w-full"
-                @keypress.enter="submitRegistration"
               />
             </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="regPassword" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('invite.password') }}</label>
+            <Password
+              id="regPassword"
+              v-model="password"
+              :placeholder="$t('invite.passwordPlaceholder')"
+              toggleMask
+              :feedback="false"
+              class="w-full"
+              inputClass="w-full"
+              :invalid="showPasswordHint"
+            />
+            <small v-if="showPasswordHint" class="text-[var(--color-danger)] text-xs">{{ $t('invite.passwordTooShort') }}</small>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="regConfirmPassword" class="font-semibold text-sm text-[var(--text-color)]">{{ $t('invite.confirmPassword') }}</label>
+            <Password
+              id="regConfirmPassword"
+              v-model="confirmPassword"
+              :placeholder="$t('invite.confirmPasswordPlaceholder')"
+              toggleMask
+              :feedback="false"
+              class="w-full"
+              inputClass="w-full"
+              :invalid="!passwordsMatch"
+            />
+            <small v-if="!passwordsMatch" class="text-[var(--color-danger)] text-xs">{{ $t('invite.passwordsDoNotMatch') }}</small>
           </div>
 
           <div class="flex gap-3">
@@ -219,6 +256,7 @@ function goToProjects() {
               :label="$t('invite.createAccount')"
               icon="pi pi-user-plus"
               @click="submitRegistration"
+              :disabled="!canSubmit"
               :loading="isSubmitting"
             />
           </div>
@@ -231,9 +269,9 @@ function goToProjects() {
             <h1 class="font-[Inter,sans-serif] font-semibold text-[28px] leading-[1.25] text-[var(--text-color)] m-0 text-center">
               {{ $t('invite.accountCreated') }}
             </h1>
-            <i18n-t keypath="invite.checkEmail" tag="p" class="text-sm text-[var(--text-secondary)] m-0 text-center">
-              <template #workspace><strong>{{ workspaceName }}</strong></template>
-            </i18n-t>
+            <p class="text-sm text-[var(--text-secondary)] m-0 text-center">
+              {{ $t('invite.accountCreatedDetail') }}
+            </p>
           </div>
           <Button
             :label="$t('common.signIn')"

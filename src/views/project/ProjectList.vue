@@ -48,7 +48,7 @@ const filteredProjects = computed(() => {
 });
 
 const showGettingStarted = computed(() =>
-  projects.value && projects.value.length > 0 && projects.value.length <= 5
+  !loading.value && projects.value && projects.value.length <= 5
 );
 
 function onProjectCreated(project: Project) {
@@ -219,30 +219,31 @@ async function handleDeleteProject(projectId: string) {
           </div>
         </div>
 
-        <!-- Getting Started Tips -->
-        <div v-if="showGettingStarted" class="mt-8 border border-dashed border-[var(--surface-border)] rounded-[10px] p-6">
-          <h4 class="text-sm font-semibold text-[var(--text-color)] m-0 mb-4">{{ $t('projects.gettingStarted') }}</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="flex items-start gap-3">
-              <i class="pi pi-upload text-lg text-[var(--primary-color)] mt-0.5"></i>
-              <div>
-                <p class="text-sm font-medium text-[var(--text-color)] m-0">{{ $t('projects.tipUploadDocs') }}</p>
-                <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">{{ $t('projects.tipUploadDocsDetail') }}</p>
-              </div>
+      </div>
+
+      <!-- Getting Started Tips -->
+      <div v-if="showGettingStarted" class="border border-dashed border-[var(--surface-border)] rounded-[10px] p-6">
+        <h4 class="text-sm font-semibold text-[var(--text-color)] m-0 mb-4">{{ $t('projects.gettingStarted') }}</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-upload text-lg text-[var(--primary-color)] mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-[var(--text-color)] m-0">{{ $t('projects.tipUploadDocs') }}</p>
+              <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">{{ $t('projects.tipUploadDocsDetail') }}</p>
             </div>
-            <div class="flex items-start gap-3">
-              <i class="pi pi-users text-lg text-[var(--primary-color)] mt-0.5"></i>
-              <div>
-                <p class="text-sm font-medium text-[var(--text-color)] m-0">{{ $t('projects.tipInviteTeam') }}</p>
-                <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">{{ $t('projects.tipInviteTeamDetail') }}</p>
-              </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-users text-lg text-[var(--primary-color)] mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-[var(--text-color)] m-0">{{ $t('projects.tipInviteTeam') }}</p>
+              <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">{{ $t('projects.tipInviteTeamDetail') }}</p>
             </div>
-            <div class="flex items-start gap-3">
-              <i class="pi pi-comments text-lg text-[var(--primary-color)] mt-0.5"></i>
-              <div>
-                <p class="text-sm font-medium text-[var(--text-color)] m-0">{{ $t('projects.tipLeaveComments') }}</p>
-                <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">{{ $t('projects.tipLeaveCommentsDetail') }}</p>
-              </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-comments text-lg text-[var(--primary-color)] mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-[var(--text-color)] m-0">{{ $t('projects.tipLeaveComments') }}</p>
+              <p class="text-xs text-[var(--text-secondary)] m-0 mt-1">{{ $t('projects.tipLeaveCommentsDetail') }}</p>
             </div>
           </div>
         </div>

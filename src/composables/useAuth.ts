@@ -206,6 +206,10 @@ export function useAuth() {
         return currentUser.value;
     }
 
+    async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+        await apiClient.put('/api/me/password', { currentPassword, newPassword });
+    }
+
     return {
         apiClient,
         login,
@@ -220,5 +224,6 @@ export function useAuth() {
         currentUser,
         fetchCurrentUser,
         updateProfile,
+        changePassword,
     };
 }

@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { AxiosError } from 'axios';
 import Logo from '@/components/base/Logo.vue';
 import InputText from 'primevue/inputtext';
+import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { RegistrationService } from '@/services/RegistrationService';
@@ -38,6 +39,8 @@ const posthog = usePostHog();
 const service = new RegistrationService();
 
 const email = ref('');
+const password = ref('');
+const confirmPassword = ref('');
 const tenantName = ref('');
 const firstName = ref('');
 const lastName = ref('');
@@ -57,8 +60,22 @@ const isValidEmail = computed(() => {
   return emailRegex.test(email.value);
 });
 
+const isValidPassword = computed(() => password.value.length >= 8);
+
+const showPasswordHint = computed(() =>
+  password.value.length > 0 && !isValidPassword.value,
+);
+
+const passwordsMatch = computed(() =>
+  confirmPassword.value === '' || password.value === confirmPassword.value,
+);
+
 const canSubmit = computed(() =>
-  isValidEmail.value && tenantName.value.trim().length > 0 && captchaToken.value.length > 0,
+  isValidEmail.value
+  && isValidPassword.value
+  && password.value === confirmPassword.value
+  && tenantName.value.trim().length > 0
+  && captchaToken.value.length > 0,
 );
 
 const renderTurnstile = () => {
@@ -105,6 +122,7 @@ const submitRegistration = async () => {
   try {
     await service.registerCompany({
       email: email.value,
+      password: password.value,
       tenantName: tenantName.value.trim(),
       firstName: firstName.value.trim() || undefined,
       lastName: lastName.value.trim() || undefined,
@@ -169,6 +187,36 @@ const goToLogin = () => {
               class="w-full"
               @keypress="handleKeyPress"
             />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="password" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('register.password') }}</label>
+            <Password
+              id="password"
+              v-model="password"
+              :placeholder="$t('register.passwordPlaceholder')"
+              :feedback="false"
+              toggleMask
+              inputClass="w-full"
+              class="w-full"
+              :invalid="showPasswordHint"
+            />
+            <small v-if="showPasswordHint" class="text-[var(--color-danger)] font-[Inter,sans-serif] text-xs">{{ $t('register.passwordTooShort') }}</small>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="confirmPassword" class="font-[Inter,sans-serif] font-semibold text-sm leading-5 text-[var(--ui-input-label)]">{{ $t('register.confirmPassword') }}</label>
+            <Password
+              id="confirmPassword"
+              v-model="confirmPassword"
+              :placeholder="$t('register.confirmPasswordPlaceholder')"
+              :feedback="false"
+              toggleMask
+              inputClass="w-full"
+              class="w-full"
+              :invalid="!passwordsMatch"
+            />
+            <small v-if="!passwordsMatch" class="text-[var(--color-danger)] font-[Inter,sans-serif] text-xs">{{ $t('register.passwordsDoNotMatch') }}</small>
           </div>
 
           <div class="flex flex-col gap-1.5">

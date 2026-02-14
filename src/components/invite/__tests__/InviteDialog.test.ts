@@ -1,8 +1,46 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { ref } from 'vue';
+import { createI18n } from 'vue-i18n';
 import InviteDialog from '../InviteDialog.vue';
 import type { TenantInvite } from '@/types';
+
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  messages: {
+    en: {
+      inviteDialog: {
+        header: 'Invite Member',
+        emailAddress: 'Email Address',
+        emailPlaceholder: "colleague{'@'}company.com",
+        role: 'Role',
+        roleMember: 'Member',
+        roleAdmin: 'Admin',
+        grantProjectAccess: 'Grant project access',
+        project: 'Project',
+        selectProject: 'Select a project',
+        party: 'Party (group)',
+        selectParty: 'Select a party',
+        noParties: 'No parties found.',
+        message: 'Personal message (optional)',
+        messagePlaceholder: 'Add a note for the invitee...',
+        sendInvite: 'Send Invite',
+        inviteSent: 'Invite Sent',
+        inviteSentDetail: 'Invite created for {email}',
+        alreadyInvited: 'This email has already been invited',
+        pendingInviteExists: 'A pending invite already exists for this email address',
+        failedToCreate: 'Failed to create invite',
+      },
+      common: {
+        cancel: 'Cancel',
+        add: 'Add',
+        remove: 'Remove',
+        error: 'Error',
+      },
+    },
+  },
+});
 
 const mockCreateInvite = vi.fn();
 const mockFetchParties = vi.fn();
@@ -51,6 +89,10 @@ const globalStubs = {
     template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-for="opt in options" :value="opt[optionValue]">{{ opt[optionLabel] }}</option></select>',
     props: ['modelValue', 'options', 'optionLabel', 'optionValue', 'placeholder', 'loading', 'disabled'],
   },
+  Textarea: {
+    template: '<textarea :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)"></textarea>',
+    props: ['modelValue', 'placeholder', 'rows', 'autoResize'],
+  },
   Tag: {
     template: '<span class="tag-stub">{{ value }}</span>',
     props: ['value', 'severity'],
@@ -70,7 +112,7 @@ describe('InviteDialog.vue', () => {
   it('should render dialog when visible', () => {
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     expect(wrapper.find('.dialog-stub').exists()).toBe(true);
@@ -79,7 +121,7 @@ describe('InviteDialog.vue', () => {
   it('should not render dialog when not visible', () => {
     const wrapper = mount(InviteDialog, {
       props: { visible: false },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     expect(wrapper.find('.dialog-stub').exists()).toBe(false);
@@ -88,13 +130,14 @@ describe('InviteDialog.vue', () => {
   it('should reset form when dialog opens', async () => {
     const wrapper = mount(InviteDialog, {
       props: { visible: false },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     await wrapper.setProps({ visible: true });
 
     expect(wrapper.vm.form.email).toBe('');
     expect(wrapper.vm.form.role).toBe('MEMBER');
+    expect(wrapper.vm.form.message).toBe('');
     expect(wrapper.vm.isSubmitting).toBe(false);
   });
 
@@ -111,7 +154,7 @@ describe('InviteDialog.vue', () => {
           partyName: 'Reviewers',
         },
       },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     // Trigger the watch by changing visible to true
@@ -136,11 +179,68 @@ describe('InviteDialog.vue', () => {
 
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     wrapper.vm.form.email = 'test@example.com';
     wrapper.vm.form.role = 'MEMBER';
+
+    await wrapper.vm.submit();
+    await flushPromises();
+
+    expect(mockCreateInvite).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      role: 'MEMBER',
+    });
+  });
+
+  it('should include message when provided', async () => {
+    const mockInvite: TenantInvite = {
+      id: 'inv-1',
+      email: 'test@example.com',
+      invitedBy: { userId: 'u1', email: 'admin@test.com' },
+      role: 'MEMBER',
+      expiresAt: '2025-02-01',
+      createdAt: '2025-01-01',
+    };
+    mockCreateInvite.mockResolvedValue(mockInvite);
+
+    const wrapper = mount(InviteDialog, {
+      props: { visible: true },
+      global: { stubs: globalStubs, plugins: [i18n] },
+    });
+
+    wrapper.vm.form.email = 'test@example.com';
+    wrapper.vm.form.message = 'Welcome to the team!';
+
+    await wrapper.vm.submit();
+    await flushPromises();
+
+    expect(mockCreateInvite).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      role: 'MEMBER',
+      message: 'Welcome to the team!',
+    });
+  });
+
+  it('should not include message when empty', async () => {
+    const mockInvite: TenantInvite = {
+      id: 'inv-1',
+      email: 'test@example.com',
+      invitedBy: { userId: 'u1', email: 'admin@test.com' },
+      role: 'MEMBER',
+      expiresAt: '2025-02-01',
+      createdAt: '2025-01-01',
+    };
+    mockCreateInvite.mockResolvedValue(mockInvite);
+
+    const wrapper = mount(InviteDialog, {
+      props: { visible: true },
+      global: { stubs: globalStubs, plugins: [i18n] },
+    });
+
+    wrapper.vm.form.email = 'test@example.com';
+    wrapper.vm.form.message = '   ';
 
     await wrapper.vm.submit();
     await flushPromises();
@@ -170,7 +270,7 @@ describe('InviteDialog.vue', () => {
 
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     wrapper.vm.form.email = 'test@example.com';
@@ -207,7 +307,7 @@ describe('InviteDialog.vue', () => {
 
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     wrapper.vm.form.email = 'test@example.com';
@@ -222,7 +322,7 @@ describe('InviteDialog.vue', () => {
   it('should not submit with empty email', async () => {
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     wrapper.vm.form.email = '';
@@ -234,7 +334,7 @@ describe('InviteDialog.vue', () => {
   it('should compute project options from projects list', () => {
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     expect(wrapper.vm.projectOptions).toEqual([
@@ -246,7 +346,7 @@ describe('InviteDialog.vue', () => {
   it('should show project access section when projects exist', () => {
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     expect(wrapper.text()).toContain('Grant project access');
@@ -257,7 +357,7 @@ describe('InviteDialog.vue', () => {
 
     const wrapper = mount(InviteDialog, {
       props: { visible: true },
-      global: { stubs: globalStubs },
+      global: { stubs: globalStubs, plugins: [i18n] },
     });
 
     expect(wrapper.text()).not.toContain('Grant project access');

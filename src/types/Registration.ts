@@ -1,5 +1,6 @@
 export interface RegisterCompanyRequest {
     email: string;
+    password: string;
     tenantName: string;
     firstName?: string;
     lastName?: string;
