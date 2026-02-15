@@ -224,7 +224,13 @@
     "cancelledDetail": "Einladung für {email} wurde zurückgezogen",
     "failedToCancel": "Einladung konnte nicht zurückgezogen werden",
     "failedToLoadMembers": "Mitglieder konnten nicht geladen werden",
-    "failedToLoadInvites": "Einladungen konnten nicht geladen werden"
+    "failedToLoadInvites": "Einladungen konnten nicht geladen werden",
+    "removeMember": "Mitglied entfernen",
+    "removeMemberHeader": "Mitglied entfernen",
+    "removeMemberConfirm": "Sind Sie sicher, dass Sie {name} aus diesem Arbeitsbereich entfernen möchten? Der Zugriff auf alle Projekte und Dokumente geht verloren.",
+    "memberRemoved": "Mitglied entfernt",
+    "memberRemovedDetail": "{name} wurde aus dem Arbeitsbereich entfernt",
+    "failedToRemove": "Mitglied konnte nicht entfernt werden"
   },
   "workspaceDocTypes": {
     "addDocumentType": "Dokumenttyp hinzufügen",
@@ -233,6 +239,7 @@
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
     "noDocTypes": "Keine Dokumenttypen",
     "createToStart": "Erstellen Sie einen Dokumenttyp, um zu beginnen.",
+    "noDocTypesYet": "Es wurden noch keine Dokumenttypen konfiguriert.",
     "columnName": "Name",
     "columnRequiresApproval": "Genehmigung erforderlich",
     "columnThreshold": "Schwellenwert",
@@ -264,7 +271,9 @@
     "deleted": "Gelöscht",
     "deletedDetail": "Dokumenttyp \"{name}\" wurde gelöscht",
     "cannotDelete": "Löschen nicht möglich: Dokumente verwenden diesen Typ",
-    "failedToDelete": "Dokumenttyp konnte nicht gelöscht werden"
+    "failedToDelete": "Dokumenttyp konnte nicht gelöscht werden",
+    "upgradeTip": "Upgraden Sie Ihren Plan, um weitere Dokumenttypen hinzuzufügen",
+    "docTypeCount": "{count} / {max} Dokumenttypen"
   },
   "workspaceOverview": {
     "loadingWorkspace": "Arbeitsbereich wird geladen...",
@@ -309,7 +318,14 @@
   "workspaceSettings": {
     "title": "{workspace} Einstellungen",
     "documentTypes": "Dokumenttypen",
-    "members": "Mitglieder"
+    "members": "Mitglieder",
+    "storage": "Speicher"
+  },
+  "workspaceStorage": {
+    "title": "Selbstgehosteter Speicher",
+    "available": "Verfügbar",
+    "comingSoon": "Demnächst verfügbar",
+    "description": "Verbinden Sie Ihren eigenen Speicher-Backend (S3, MinIO oder kompatibel), um Dokumente auf Ihrer Infrastruktur zu behalten. Verfügbar in Enterprise-Plänen."
   },
   "createWorkspace": {
     "title": "Arbeitsbereich erstellen",

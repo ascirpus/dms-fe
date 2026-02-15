@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { useInvites } from '@/composables/useInvites';
+import { usePermissions } from '@/composables/usePermissions';
 import { UsersService, type TenantUser } from '@/services/UsersService';
 import { useAuth } from '@/composables/useAuth';
 import { getDisplayName } from '@/utils/avatar';
@@ -19,15 +21,17 @@ import InviteDialog from '@/components/invite/InviteDialog.vue';
 import InviteLinkDialog from '@/components/invite/InviteLinkDialog.vue';
 
 const { t } = useI18n();
+const router = useRouter();
 const toast = useToast();
 const confirm = useConfirm();
-const { apiClient } = useAuth();
+const { apiClient, currentUser } = useAuth();
 const {
   pendingInvites,
   fetchPendingInvites,
   cancelInvite,
 } = useInvites();
 
+const { canManageMembers } = usePermissions();
 const usersService = new UsersService(apiClient);
 
 const members = ref<TenantUser[]>([]);
@@ -47,6 +51,11 @@ function roleSeverity(role: string): 'info' | 'warn' | 'success' | 'secondary' {
 }
 
 onMounted(async () => {
+  if (!canManageMembers.value) {
+    router.replace({ name: 'workspace-document-types' });
+    return;
+  }
+
   try {
     members.value = await usersService.fetchTenantUsers();
   } catch {
@@ -97,6 +106,30 @@ function formatInviterName(invite: TenantInvite): string {
   if (firstName || lastName) return [firstName, lastName].filter(Boolean).join(' ');
   return email;
 }
+
+function isSelf(member: TenantUser): boolean {
+  return member.email === currentUser.value?.email;
+}
+
+function confirmRemoveMember(member: TenantUser) {
+  confirm.require({
+    message: t('workspaceMembers.removeMemberConfirm', { name: getDisplayName(member) }),
+    header: t('workspaceMembers.removeMemberHeader'),
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: () => handleRemoveMember(member),
+  });
+}
+
+async function handleRemoveMember(member: TenantUser) {
+  try {
+    await usersService.removeTenantUser(member.userId);
+    members.value = members.value.filter(m => m.userId !== member.userId);
+    toast.add({ severity: 'success', summary: t('workspaceMembers.memberRemoved'), detail: t('workspaceMembers.memberRemovedDetail', { name: getDisplayName(member) }), life: 3000 });
+  } catch (err) {
+    toast.add({ severity: 'error', summary: t('common.error'), detail: err instanceof Error ? err.message : t('workspaceMembers.failedToRemove'), life: 5000 });
+  }
+}
 </script>
 
 <template>
@@ -135,6 +168,20 @@ function formatInviterName(invite: TenantInvite): string {
           <Column field="createdAt" :header="$t('workspaceMembers.joined')" sortable style="min-width: 140px">
             <template #body="{ data }">
               {{ formatDate(data.createdAt) }}
+            </template>
+          </Column>
+          <Column header="" style="width: 80px" :exportable="false">
+            <template #body="{ data }">
+              <Button
+                v-if="!isSelf(data) && data.role !== 'OWNER'"
+                icon="pi pi-trash"
+                text
+                rounded
+                size="small"
+                severity="danger"
+                @click="confirmRemoveMember(data)"
+                :aria-label="$t('workspaceMembers.removeMember')"
+              />
             </template>
           </Column>
         </DataTable>

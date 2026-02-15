@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import { useDocumentTypes } from '@/composables/useDocumentTypes';
+import { usePermissions } from '@/composables/usePermissions';
+import { useTenantFeatures } from '@/composables/useTenantFeatures';
 import { sanitizeIcon, buildDocumentTypeColorMap } from '@/utils/documentTypeIcons';
 import type { DocumentTypeDTO, CreateDocumentTypeRequest, UpdateDocumentTypeRequest } from '@/types/DocumentType';
 
@@ -34,6 +36,15 @@ const {
   updateDocumentType,
   deleteDocumentType,
 } = useDocumentTypes();
+
+const { canManageDocumentTypes } = usePermissions();
+const { unlimitedDocumentTypesEnabled } = useTenantFeatures();
+
+const FREE_TIER_DOC_TYPE_LIMIT = 3;
+
+const docTypeLimitReached = computed(() =>
+  !unlimitedDocumentTypesEnabled.value && (documentTypes.value?.length ?? 0) >= FREE_TIER_DOC_TYPE_LIMIT
+);
 
 const docTypeColorMap = computed(() =>
   buildDocumentTypeColorMap((documentTypes.value ?? []).map(dt => dt.id))
@@ -181,13 +192,19 @@ async function handleDelete(dt: DocumentTypeDTO) {
 
 <template>
   <div class="flex flex-col">
-    <div class="flex items-center justify-end mb-4">
-      <Button
-        icon="pi pi-plus"
-        :label="$t('workspaceDocTypes.addDocumentType')"
-        size="small"
-        @click="openAddDialog"
-      />
+    <div v-if="canManageDocumentTypes" class="flex items-center justify-end gap-3 mb-4">
+      <span v-if="!unlimitedDocumentTypesEnabled" class="text-sm text-[var(--text-secondary)]">
+        {{ $t('workspaceDocTypes.docTypeCount', { count: documentTypes?.length ?? 0, max: FREE_TIER_DOC_TYPE_LIMIT }) }}
+      </span>
+      <span v-tooltip.top="docTypeLimitReached ? $t('workspaceDocTypes.upgradeTip') : undefined">
+        <Button
+          icon="pi pi-plus"
+          :label="$t('workspaceDocTypes.addDocumentType')"
+          size="small"
+          :disabled="docTypeLimitReached"
+          @click="openAddDialog"
+        />
+      </span>
     </div>
 
     <!-- Loading -->
@@ -216,12 +233,15 @@ async function handleDelete(dt: DocumentTypeDTO) {
           <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--text-secondary)]">
             <i class="pi pi-file text-5xl mb-4 text-[var(--text-muted)]"></i>
             <h3 class="text-lg font-semibold text-[var(--text-color)] m-0 mb-2">{{ $t('workspaceDocTypes.noDocTypes') }}</h3>
-            <p class="m-0 mb-6">{{ $t('workspaceDocTypes.createToStart') }}</p>
-            <Button
-              icon="pi pi-plus"
-              :label="$t('workspaceDocTypes.addDocumentType')"
-              @click="openAddDialog"
-            />
+            <p class="m-0 mb-6">{{ canManageDocumentTypes ? $t('workspaceDocTypes.createToStart') : $t('workspaceDocTypes.noDocTypesYet') }}</p>
+            <span v-if="canManageDocumentTypes" v-tooltip.top="docTypeLimitReached ? $t('workspaceDocTypes.upgradeTip') : undefined">
+              <Button
+                icon="pi pi-plus"
+                :label="$t('workspaceDocTypes.addDocumentType')"
+                :disabled="docTypeLimitReached"
+                @click="openAddDialog"
+              />
+            </span>
           </div>
         </template>
 
@@ -273,7 +293,7 @@ async function handleDelete(dt: DocumentTypeDTO) {
           </template>
         </Column>
 
-        <Column header="" style="width: 100px" :exportable="false">
+        <Column v-if="canManageDocumentTypes" header="" style="width: 100px" :exportable="false">
           <template #body="{ data }">
             <div class="flex justify-end gap-1">
               <Button

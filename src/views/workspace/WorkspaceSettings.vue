@@ -3,16 +3,28 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useWorkspace } from '@/composables/useWorkspace';
+import { usePermissions } from '@/composables/usePermissions';
+import { useTenantFeatures } from '@/composables/useTenantFeatures';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { currentWorkspaceName } = useWorkspace();
+const { canManageMembers } = usePermissions();
+const { selfStorageEnabled } = useTenantFeatures();
 
-const navItems = computed(() => [
-  { label: t('workspaceSettings.documentTypes'), icon: 'pi pi-file', route: 'workspace-document-types' },
-  { label: t('workspaceSettings.members'), icon: 'pi pi-users', route: 'workspace-members' },
-]);
+const navItems = computed(() => {
+  const items = [
+    { label: t('workspaceSettings.documentTypes'), icon: 'pi pi-file', route: 'workspace-document-types' },
+  ];
+  if (canManageMembers.value) {
+    items.push({ label: t('workspaceSettings.members'), icon: 'pi pi-users', route: 'workspace-members' });
+  }
+  if (selfStorageEnabled.value) {
+    items.push({ label: t('workspaceSettings.storage'), icon: 'pi pi-server', route: 'workspace-storage' });
+  }
+  return items;
+});
 
 function isActive(routeName: string) {
   return route.name === routeName;

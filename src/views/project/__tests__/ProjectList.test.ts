@@ -5,6 +5,7 @@ import { i18n } from '@/plugins/i18n';
 import ProjectList from '../ProjectList.vue';
 import { useProjects } from '@/composables/useProjects';
 import { useWorkspace } from '@/composables/useWorkspace';
+import { usePermissions } from '@/composables/usePermissions';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
@@ -12,6 +13,7 @@ import type { ProjectListItem } from '@/services/ProjectsService';
 
 vi.mock('@/composables/useProjects');
 vi.mock('@/composables/useWorkspace');
+vi.mock('@/composables/usePermissions');
 vi.mock('vue-router');
 vi.mock('primevue/usetoast');
 vi.mock('primevue/useconfirm');
@@ -100,6 +102,13 @@ describe('ProjectList.vue', () => {
       fetchCurrentWorkspace: vi.fn(),
       createWorkspace: vi.fn(),
       switchWorkspace: vi.fn(),
+    } as any);
+    vi.mocked(usePermissions).mockReturnValue({
+      canManageMembers: computed(() => true),
+      canManageInvites: computed(() => true),
+      canManageProjects: computed(() => true),
+      currentRole: ref('OWNER'),
+      isAtLeast: vi.fn(),
     } as any);
   });
 
@@ -490,6 +499,13 @@ describe('ProjectList.vue', () => {
         createWorkspace: vi.fn(),
         switchWorkspace: vi.fn(),
       } as any);
+      vi.mocked(usePermissions).mockReturnValue({
+        canManageMembers: computed(() => false),
+        canManageInvites: computed(() => false),
+        canManageProjects: computed(() => false),
+        currentRole: ref('MEMBER'),
+        isAtLeast: vi.fn(),
+      } as any);
 
       const wrapper = mount(ProjectList, {
         global: globalConfig,
@@ -528,6 +544,13 @@ describe('ProjectList.vue', () => {
         fetchCurrentWorkspace: vi.fn(),
         createWorkspace: vi.fn(),
         switchWorkspace: vi.fn(),
+      } as any);
+      vi.mocked(usePermissions).mockReturnValue({
+        canManageMembers: computed(() => false),
+        canManageInvites: computed(() => false),
+        canManageProjects: computed(() => false),
+        currentRole: ref('MEMBER'),
+        isAtLeast: vi.fn(),
       } as any);
 
       const wrapper = mount(ProjectList, {
@@ -568,6 +591,13 @@ describe('ProjectList.vue', () => {
         fetchCurrentWorkspace: vi.fn(),
         createWorkspace: vi.fn(),
         switchWorkspace: vi.fn(),
+      } as any);
+      vi.mocked(usePermissions).mockReturnValue({
+        canManageMembers: computed(() => true),
+        canManageInvites: computed(() => true),
+        canManageProjects: computed(() => true),
+        currentRole: ref('ADMIN'),
+        isAtLeast: vi.fn(),
       } as any);
 
       const wrapper = mount(ProjectList, {

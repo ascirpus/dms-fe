@@ -168,6 +168,11 @@ export function createRouter(app: App): Router {
                                 name: 'workspace-members',
                                 component: () => import("@/views/workspace/WorkspaceMembers.vue"),
                             },
+                            {
+                                path: 'storage',
+                                name: 'workspace-storage',
+                                component: () => import("@/views/workspace/WorkspaceStorage.vue"),
+                            },
                         ],
                     },
                     {

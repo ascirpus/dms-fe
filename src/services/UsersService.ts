@@ -34,4 +34,8 @@ export class UsersService extends ApiService<TenantUser> {
             createdAt: dto.createdAt,
         }));
     }
+
+    async removeTenantUser(userId: string): Promise<void> {
+        await this.apiClient.delete(`/api/tenants/current/users/${userId}`);
+    }
 }

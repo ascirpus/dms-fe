@@ -10,6 +10,7 @@ import InputIcon from 'primevue/inputicon';
 import IconField from 'primevue/iconfield';
 import { useProjects } from "@/composables/useProjects";
 import { useWorkspace } from "@/composables/useWorkspace";
+import { usePermissions } from "@/composables/usePermissions";
 import type { ProjectListItem } from "@/services/ProjectsService";
 import NewProjectDialog from "@/components/project/NewProjectDialog.vue";
 import type { Project } from "@/types/Project";
@@ -29,10 +30,8 @@ const {
   deleteProject,
 } = useProjects();
 
-const { currentWorkspaceRole, currentWorkspaceName } = useWorkspace();
-const canManageProjects = computed(() =>
-  currentWorkspaceRole.value === 'OWNER' || currentWorkspaceRole.value === 'ADMIN'
-);
+const { currentWorkspaceName } = useWorkspace();
+const { canManageProjects } = usePermissions();
 
 const showNewProjectDialog = ref(false);
 const filterText = ref('');
@@ -113,7 +112,7 @@ async function handleDeleteProject(projectId: string) {
 
     <template v-else>
       <!-- Toolbar -->
-      <div class="flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch">
+      <div v-if="!loading && projects?.length" class="flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch">
         <div class="flex items-center gap-3">
           <Button
             v-if="canManageProjects"

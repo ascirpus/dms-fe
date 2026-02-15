@@ -103,6 +103,8 @@ describe('useTenantFeatures', () => {
         { feature: 'DOCUMENT_VERSIONING', enabled: true, config: {} },
         { feature: 'OCR_PROCESSING', enabled: false, config: {} },
         { feature: 'API_ACCESS', enabled: true, config: {} },
+        { feature: 'UNLIMITED_DOCUMENT_TYPES', enabled: true, config: {} },
+        { feature: 'SELF_STORAGE', enabled: false, config: {} },
       ]),
     );
 
@@ -113,5 +115,51 @@ describe('useTenantFeatures', () => {
     expect(isFeatureEnabled('OCR_PROCESSING')).toBe(false);
     expect(isFeatureEnabled('API_ACCESS')).toBe(true);
     expect(isFeatureEnabled('ADVANCED_REPORTING')).toBe(false);
+    expect(isFeatureEnabled('UNLIMITED_DOCUMENT_TYPES')).toBe(true);
+    expect(isFeatureEnabled('SELF_STORAGE')).toBe(false);
+  });
+
+  it('should report unlimitedDocumentTypesEnabled correctly when enabled', async () => {
+    mockQueryClient.fetchQuery.mockResolvedValue(
+      makeTenant([{ feature: 'UNLIMITED_DOCUMENT_TYPES', enabled: true, config: {} }]),
+    );
+
+    const { fetchTenant, unlimitedDocumentTypesEnabled } = useTenantFeatures();
+    await fetchTenant();
+
+    expect(unlimitedDocumentTypesEnabled.value).toBe(true);
+  });
+
+  it('should report unlimitedDocumentTypesEnabled as false when not present', async () => {
+    mockQueryClient.fetchQuery.mockResolvedValue(
+      makeTenant([{ feature: 'DOCUMENT_VERSIONING', enabled: true, config: {} }]),
+    );
+
+    const { fetchTenant, unlimitedDocumentTypesEnabled } = useTenantFeatures();
+    await fetchTenant();
+
+    expect(unlimitedDocumentTypesEnabled.value).toBe(false);
+  });
+
+  it('should report selfStorageEnabled correctly when enabled', async () => {
+    mockQueryClient.fetchQuery.mockResolvedValue(
+      makeTenant([{ feature: 'SELF_STORAGE', enabled: true, config: {} }]),
+    );
+
+    const { fetchTenant, selfStorageEnabled } = useTenantFeatures();
+    await fetchTenant();
+
+    expect(selfStorageEnabled.value).toBe(true);
+  });
+
+  it('should report selfStorageEnabled as false when disabled', async () => {
+    mockQueryClient.fetchQuery.mockResolvedValue(
+      makeTenant([{ feature: 'SELF_STORAGE', enabled: false, config: {} }]),
+    );
+
+    const { fetchTenant, selfStorageEnabled } = useTenantFeatures();
+    await fetchTenant();
+
+    expect(selfStorageEnabled.value).toBe(false);
   });
 });

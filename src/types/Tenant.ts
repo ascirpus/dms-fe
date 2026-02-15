@@ -1,4 +1,4 @@
-export type FeatureName = 'DOCUMENT_VERSIONING' | 'OCR_PROCESSING' | 'API_ACCESS' | 'ADVANCED_REPORTING';
+export type FeatureName = 'DOCUMENT_VERSIONING' | 'OCR_PROCESSING' | 'API_ACCESS' | 'ADVANCED_REPORTING' | 'UNLIMITED_DOCUMENT_TYPES' | 'SELF_STORAGE';
 
 export interface TenantFeature {
     feature: FeatureName;

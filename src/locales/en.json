@@ -225,7 +225,13 @@
     "cancelledDetail": "Invite for {email} has been cancelled",
     "failedToCancel": "Failed to cancel invite",
     "failedToLoadMembers": "Failed to load members",
-    "failedToLoadInvites": "Failed to load invites"
+    "failedToLoadInvites": "Failed to load invites",
+    "removeMember": "Remove member",
+    "removeMemberHeader": "Remove Member",
+    "removeMemberConfirm": "Are you sure you want to remove {name} from this workspace? They will lose access to all projects and documents.",
+    "memberRemoved": "Member Removed",
+    "memberRemovedDetail": "{name} has been removed from the workspace",
+    "failedToRemove": "Failed to remove member"
   },
   "workspaceDocTypes": {
     "addDocumentType": "Add Document Type",
@@ -234,6 +240,7 @@
     "unexpectedError": "An unexpected error occurred",
     "noDocTypes": "No document types",
     "createToStart": "Create a document type to get started.",
+    "noDocTypesYet": "No document types have been configured yet.",
     "columnName": "Name",
     "columnRequiresApproval": "Requires Approval",
     "columnThreshold": "Threshold",
@@ -265,7 +272,9 @@
     "deleted": "Deleted",
     "deletedDetail": "Document type \"{name}\" has been deleted",
     "cannotDelete": "Cannot delete: documents are using this type",
-    "failedToDelete": "Failed to delete document type"
+    "failedToDelete": "Failed to delete document type",
+    "upgradeTip": "Upgrade your plan to add more document types",
+    "docTypeCount": "{count} / {max} document types"
   },
   "workspaceOverview": {
     "loadingWorkspace": "Loading workspace...",
@@ -310,7 +319,14 @@
   "workspaceSettings": {
     "title": "{workspace} Settings",
     "documentTypes": "Document Types",
-    "members": "Members"
+    "members": "Members",
+    "storage": "Storage"
+  },
+  "workspaceStorage": {
+    "title": "Self-Hosted Storage",
+    "available": "Available",
+    "comingSoon": "Coming Soon",
+    "description": "Connect your own storage backend (S3, MinIO, or compatible) to keep documents on your infrastructure. Available on Enterprise plans."
   },
   "createWorkspace": {
     "title": "Create Workspace",

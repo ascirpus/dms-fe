@@ -28,6 +28,8 @@ export function useTenantFeatures() {
     }
 
     const versioningEnabled = computed(() => isFeatureEnabled('DOCUMENT_VERSIONING'));
+    const unlimitedDocumentTypesEnabled = computed(() => isFeatureEnabled('UNLIMITED_DOCUMENT_TYPES'));
+    const selfStorageEnabled = computed(() => isFeatureEnabled('SELF_STORAGE'));
 
     return {
         tenant,
@@ -35,5 +37,7 @@ export function useTenantFeatures() {
         fetchTenant,
         isFeatureEnabled,
         versioningEnabled,
+        unlimitedDocumentTypesEnabled,
+        selfStorageEnabled,
     };
 }
